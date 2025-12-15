@@ -26,6 +26,7 @@ export interface LineItem {
   id: string
   product_type: ProductType
   product_name: string
+  product_color?: string
   decoration: DecorationType
   print_locations: string[]
   colors: number

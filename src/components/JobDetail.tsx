@@ -2,10 +2,12 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Progress } from '@/components/ui/progress'
+import { ProductMockup } from '@/components/ProductMockup'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, Check } from '@phosphor-icons/react'
 import type { Job, JobStatus } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
+import { useState } from 'react'
 
 interface JobDetailProps {
   job: Job
@@ -19,6 +21,8 @@ export function JobDetail({ job, onBack, onUpdateStatus }: JobDetailProps) {
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const currentStepIndex = statusSteps.indexOf(job.status)
+  const [mockupView, setMockupView] = useState<'front' | 'back'>('front')
+  const primaryItem = job.line_items[0]
   
   return (
     <div className="h-full overflow-auto">
@@ -145,6 +149,47 @@ export function JobDetail({ job, onBack, onUpdateStatus }: JobDetailProps) {
           </div>
         </Card>
         
+        {primaryItem && (
+          <Card className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
+                Product Preview
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={mockupView === 'front' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMockupView('front')}
+                >
+                  Front
+                </Button>
+                <Button
+                  variant={mockupView === 'back' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMockupView('back')}
+                >
+                  Back
+                </Button>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <ProductMockup
+                productType={primaryItem.product_type}
+                color={primaryItem.product_color || '#94a3b8'}
+                size="large"
+                showPrintArea={true}
+                view={mockupView}
+              />
+            </div>
+            <div className="text-center mt-4 space-y-1">
+              <div className="font-semibold">{primaryItem.product_name}</div>
+              <div className="text-sm text-muted-foreground">
+                {primaryItem.print_locations.map(l => l.replace('-', ' ')).join(', ')}
+              </div>
+            </div>
+          </Card>
+        )}
+        
         <div>
           <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
             Line Items
@@ -152,7 +197,14 @@ export function JobDetail({ job, onBack, onUpdateStatus }: JobDetailProps) {
           <div className="space-y-3">
             {job.line_items.map((item) => (
               <Card key={item.id} className="p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12">
+                    <ProductMockup
+                      productType={item.product_type}
+                      color={item.product_color || '#94a3b8'}
+                      size="small"
+                    />
+                  </div>
                   <div className="flex-1">
                     <div className="font-semibold text-lg mb-1">
                       {item.quantity}× {item.product_name} ({item.product_type})

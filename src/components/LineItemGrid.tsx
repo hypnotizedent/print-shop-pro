@@ -2,6 +2,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { SizeInputRow } from './SizeInputRow'
+import { ProductMockup } from './ProductMockup'
 import { Trash } from '@phosphor-icons/react'
 import type { LineItem, ProductType, DecorationType, Sizes } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
@@ -35,6 +36,14 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
       {items.map((item, index) => (
         <div key={item.id} className="border border-border rounded-lg p-4 space-y-3">
           <div className="grid grid-cols-12 gap-3">
+            <div className="col-span-1 flex items-center justify-center pt-6">
+              <ProductMockup 
+                productType={item.product_type} 
+                color={item.product_color || '#94a3b8'}
+                size="small"
+              />
+            </div>
+            
             <div className="col-span-2">
               <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
                 Product Type
@@ -56,7 +65,7 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
               </Select>
             </div>
             
-            <div className="col-span-3">
+            <div className="col-span-2">
               <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
                 Product Name/Style
               </label>
@@ -65,6 +74,18 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
                 onChange={(e) => updateItem(index, { product_name: e.target.value })}
                 placeholder="e.g., Gildan G500"
                 className="h-9"
+              />
+            </div>
+            
+            <div className="col-span-1">
+              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
+                Color
+              </label>
+              <Input
+                type="color"
+                value={item.product_color || '#94a3b8'}
+                onChange={(e) => updateItem(index, { product_color: e.target.value })}
+                className="h-9 p-1 cursor-pointer"
               />
             </div>
             

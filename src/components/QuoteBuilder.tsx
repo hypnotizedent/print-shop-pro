@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerSearch } from '@/components/CustomerSearch'
 import { LineItemGrid } from '@/components/LineItemGrid'
 import { PricingSummary } from '@/components/PricingSummary'
+import { ProductMockup } from '@/components/ProductMockup'
 import { ArrowLeft, Plus, FloppyDisk, X } from '@phosphor-icons/react'
-import type { Quote, Customer, DiscountType } from '@/lib/types'
+import type { Quote, Customer, DiscountType, LineItem } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId } from '@/lib/data'
 import { toast } from 'sonner'
 
@@ -31,6 +33,13 @@ export function QuoteBuilder({
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [selectedLineItem, setSelectedLineItem] = useState<LineItem | null>(null)
+  
+  useEffect(() => {
+    if (quote.line_items.length > 0 && !selectedLineItem) {
+      setSelectedLineItem(quote.line_items[0])
+    }
+  }, [quote.line_items])
   
   useEffect(() => {
     const updated = calculateQuoteTotals(quote)
@@ -191,10 +200,52 @@ export function QuoteBuilder({
                 </Button>
               </div>
             ) : (
-              <LineItemGrid
-                items={quote.line_items}
-                onChange={(items) => setQuote({ ...quote, line_items: items })}
-              />
+              <div className="grid grid-cols-3 gap-6">
+                <div className="col-span-2">
+                  <LineItemGrid
+                    items={quote.line_items}
+                    onChange={(items) => {
+                      setQuote({ ...quote, line_items: items })
+                      if (selectedLineItem) {
+                        const updated = items.find(i => i.id === selectedLineItem.id)
+                        if (updated) setSelectedLineItem(updated)
+                      }
+                    }}
+                  />
+                </div>
+                
+                {selectedLineItem && (
+                  <div className="col-span-1">
+                    <Card className="p-4 sticky top-6">
+                      <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-4">
+                        Preview
+                      </div>
+                      <div className="flex flex-col items-center space-y-3">
+                        <ProductMockup
+                          productType={selectedLineItem.product_type}
+                          color={selectedLineItem.product_color || '#94a3b8'}
+                          size="medium"
+                          showPrintArea={true}
+                          view="front"
+                        />
+                        <div className="text-center space-y-1">
+                          <div className="font-semibold text-sm">
+                            {selectedLineItem.product_name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {selectedLineItem.quantity} pieces
+                          </div>
+                          {selectedLineItem.print_locations.length > 0 && (
+                            <div className="text-xs text-emerald-400">
+                              Print: {selectedLineItem.print_locations.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           

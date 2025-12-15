@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { StatusBadge } from './StatusBadge'
 import { Progress } from '@/components/ui/progress'
+import { ProductMockup } from './ProductMockup'
 import type { Job } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -13,19 +14,32 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const itemCount = job.line_items.reduce((sum, item) => sum + item.quantity, 0)
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  const primaryItem = job.line_items[0]
   
   return (
     <Card 
       className="p-4 cursor-pointer hover:border-slate-600 transition-colors w-64 flex-shrink-0"
       onClick={onClick}
     >
-      <div className="mb-3">
-        <div className="font-semibold text-foreground mb-1">{job.job_number}</div>
-        <div className="text-sm text-muted-foreground mb-2">
-          {job.customer.company || job.customer.name}
+      <div className="flex gap-3 mb-3">
+        {primaryItem && (
+          <div className="flex-shrink-0 w-10 h-10">
+            <ProductMockup
+              productType={primaryItem.product_type}
+              color={primaryItem.product_color || '#94a3b8'}
+              size="small"
+            />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-foreground mb-1">{job.job_number}</div>
+          <div className="text-sm text-muted-foreground mb-2 truncate">
+            {job.customer.company || job.customer.name}
+          </div>
         </div>
-        <StatusBadge status={job.status} className="text-xs" />
       </div>
+      
+      <StatusBadge status={job.status} className="text-xs mb-2" />
       
       <div className="text-sm mb-2">
         <span className="text-muted-foreground">{itemCount} pieces</span>
