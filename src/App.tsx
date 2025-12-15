@@ -47,12 +47,10 @@ function App() {
         return [...existing, quote]
       }
     })
-    toast.success('Quote saved')
   }
   
   const handleCreateCustomer = (customer: Customer) => {
     setCustomers((current) => [...(current || []), customer])
-    toast.success('Customer created')
   }
   
   const handleNewQuote = () => {
@@ -121,12 +119,6 @@ function App() {
           <Sparkle size={28} weight="fill" className="text-emerald-500" />
           <h1 className="text-xl font-bold tracking-tight">MINT PRINTS</h1>
         </div>
-        
-        {currentPage.type === 'quote-builder' && currentPage.quote.status === 'approved' && (
-          <Button onClick={() => handleConvertToJob(currentPage.quote)}>
-            Convert to Job
-          </Button>
-        )}
       </header>
       
       <div className="flex-1 flex min-h-0">
@@ -158,8 +150,12 @@ function App() {
           {currentPage.type === 'list' && currentPage.view === 'quotes' && (
             <QuotesList
               quotes={quotes || []}
+              customers={customers || []}
               onSelectQuote={handleSelectQuote}
               onNewQuote={handleNewQuote}
+              onSaveQuote={handleSaveQuote}
+              onCreateCustomer={handleCreateCustomer}
+              onConvertToJob={handleConvertToJob}
             />
           )}
           

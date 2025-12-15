@@ -7,9 +7,10 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerSearch } from '@/components/CustomerSearch'
 import { LineItemGrid } from '@/components/LineItemGrid'
 import { PricingSummary } from '@/components/PricingSummary'
-import { ArrowLeft, Plus } from '@phosphor-icons/react'
+import { ArrowLeft, Plus, FloppyDisk, X } from '@phosphor-icons/react'
 import type { Quote, Customer, DiscountType } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId } from '@/lib/data'
+import { toast } from 'sonner'
 
 interface QuoteBuilderProps {
   quote: Quote
@@ -17,9 +18,17 @@ interface QuoteBuilderProps {
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
+  isInline?: boolean
 }
 
-export function QuoteBuilder({ quote: initialQuote, customers, onSave, onBack, onCreateCustomer }: QuoteBuilderProps) {
+export function QuoteBuilder({ 
+  quote: initialQuote, 
+  customers, 
+  onSave, 
+  onBack, 
+  onCreateCustomer,
+  isInline = false
+}: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   
@@ -41,9 +50,30 @@ export function QuoteBuilder({ quote: initialQuote, customers, onSave, onBack, o
     return () => clearInterval(autoSave)
   }, [quote, onSave])
   
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        handleSave()
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault()
+        handleAddLineItem()
+      }
+      if (e.key === 'Escape' && isInline) {
+        e.preventDefault()
+        onBack()
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [quote, isInline])
+  
   const handleSave = () => {
     onSave(quote)
     setLastSaved(new Date())
+    toast.success('Quote saved')
   }
   
   const handleAddLineItem = () => {
@@ -72,16 +102,20 @@ export function QuoteBuilder({ quote: initialQuote, customers, onSave, onBack, o
   }
   
   return (
-    <div className="h-full overflow-auto">
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className={`h-full ${isInline ? '' : 'overflow-auto'}`}>
+      <div className={`${isInline ? 'p-6' : 'max-w-6xl mx-auto p-6'} space-y-6`}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={onBack}>
-              <ArrowLeft size={20} />
-            </Button>
+            {!isInline && (
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft size={20} />
+              </Button>
+            )}
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">Quote {quote.quote_number}</h1>
+                <h1 className={`${isInline ? 'text-xl' : 'text-2xl'} font-bold`}>
+                  Quote {quote.quote_number}
+                </h1>
                 <StatusBadge status={quote.status} />
               </div>
               <div className="text-sm text-muted-foreground mt-1">
@@ -90,8 +124,19 @@ export function QuoteBuilder({ quote: initialQuote, customers, onSave, onBack, o
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSave}>
+            {isInline && (
+              <Button variant="ghost" size="icon" onClick={onBack} title="Close (Esc)">
+                <X size={20} />
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              onClick={handleSave}
+              title="Save (⌘S)"
+            >
+              <FloppyDisk size={16} className="mr-2" />
               Save Draft
+              <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded">⌘S</kbd>
             </Button>
             <Button 
               onClick={() => {
@@ -125,9 +170,15 @@ export function QuoteBuilder({ quote: initialQuote, customers, onSave, onBack, o
               <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
                 Line Items
               </div>
-              <Button onClick={handleAddLineItem} size="sm" variant="outline">
+              <Button 
+                onClick={handleAddLineItem} 
+                size="sm" 
+                variant="outline"
+                title="Add Line Item (⌘N)"
+              >
                 <Plus size={16} className="mr-1" />
                 Add Line Item
+                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded">⌘N</kbd>
               </Button>
             </div>
             
