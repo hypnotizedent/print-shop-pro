@@ -2,7 +2,13 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X } from '@phosphor-icons/react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle } from '@phosphor-icons/react'
 import type { Decoration, DecorationType } from '@/lib/types'
 import { generateId } from '@/lib/data'
 import { toast } from 'sonner'
@@ -23,10 +29,74 @@ const DECORATION_METHODS: { value: DecorationType; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 
+const DECORATION_PRESETS: { name: string; decorations: Omit<Decoration, 'id'>[] }[] = [
+  {
+    name: 'Front Logo Only',
+    decorations: [{
+      method: 'screen-print',
+      location: 'Front',
+      inkThreadColors: '',
+      setupFee: 0,
+    }]
+  },
+  {
+    name: 'Front + Back',
+    decorations: [
+      {
+        method: 'screen-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Full Embroidery',
+    decorations: [
+      {
+        method: 'embroidery',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'embroidery',
+        location: 'Left Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Mixed (Front Screen + Back Digital)',
+    decorations: [
+      {
+        method: 'screen-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'digital-print',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+]
+
 export function DecorationManager({ decorations, onChange }: DecorationManagerProps) {
   const [customInputs, setCustomInputs] = useState<Record<string, { location: boolean; method: boolean }>>({})
   const [collapsedDecorations, setCollapsedDecorations] = useState<Set<string>>(new Set())
   const [editingDecoration, setEditingDecoration] = useState<string | null>(null)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   const addDecoration = () => {
     const newDecoration: Decoration = {
@@ -38,6 +108,48 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
     }
     onChange([...decorations, newDecoration])
     setEditingDecoration(newDecoration.id)
+  }
+
+  const duplicateDecoration = (decoration: Decoration) => {
+    const duplicated: Decoration = {
+      ...decoration,
+      id: generateId('dec'),
+      artwork: decoration.artwork ? {
+        ...decoration.artwork,
+      } : undefined,
+    }
+    onChange([...decorations, duplicated])
+    toast.success('Decoration duplicated')
+  }
+
+  const applyPreset = (preset: typeof DECORATION_PRESETS[0]) => {
+    const newDecorations = preset.decorations.map(d => ({
+      ...d,
+      id: generateId('dec'),
+    }))
+    onChange([...decorations, ...newDecorations])
+    toast.success(`Applied "${preset.name}" preset`)
+  }
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === index) return
+    
+    const newDecorations = [...decorations]
+    const draggedItem = newDecorations[draggedIndex]
+    newDecorations.splice(draggedIndex, 1)
+    newDecorations.splice(index, 0, draggedItem)
+    
+    onChange(newDecorations)
+    setDraggedIndex(index)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
   }
 
   const toggleCollapse = (id: string) => {
@@ -131,6 +243,23 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
     return parts.join(' • ')
   }
 
+  const getSingleLineSummary = (decoration: Decoration): string => {
+    const displayLocation = decoration.customLocation || decoration.location
+    const displayMethod = decoration.customMethod || DECORATION_METHODS.find(m => m.value === decoration.method)?.label || decoration.method
+    
+    let summary = `${displayLocation} | ${displayMethod}`
+    
+    if (decoration.inkThreadColors) {
+      summary += ` | ${decoration.inkThreadColors}`
+    }
+    
+    if (decoration.artwork) {
+      summary += ' | ✓ Art'
+    }
+    
+    return summary
+  }
+
   const isDecorationComplete = (decoration: Decoration): boolean => {
     return !!(
       decoration.location &&
@@ -169,49 +298,59 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
         return (
           <div 
             key={decoration.id} 
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragEnd={handleDragEnd}
             className={`border rounded-lg bg-card/50 transition-all ${
               isComplete ? 'border-primary/30' : 'border-border'
-            }`}
+            } ${draggedIndex === index ? 'opacity-50' : ''}`}
           >
-            <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/20 transition-colors" onClick={() => toggleCollapse(decoration.id)}>
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <button className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors">
-                  {isCollapsed ? (
-                    <CaretRight size={16} weight="bold" />
-                  ) : (
-                    <CaretDown size={16} weight="bold" />
-                  )}
-                </button>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-foreground">
-                      Decoration {index + 1}
-                    </h4>
-                    {isComplete && (
-                      <span className="flex items-center gap-1 text-xs text-primary">
-                        <CheckCircle size={12} weight="fill" />
-                        Complete
-                      </span>
-                    )}
-                  </div>
-                  {isCollapsed && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {getDecorationSummary(decoration)}
-                    </p>
-                  )}
-                </div>
-
-                {decoration.artwork && (
-                  <img
-                    src={decoration.artwork.dataUrl}
-                    alt="Preview"
-                    className="w-10 h-10 object-contain bg-muted rounded flex-shrink-0"
-                  />
+            <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-muted/20 transition-colors" onClick={() => toggleCollapse(decoration.id)}>
+              <button 
+                className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing p-1"
+                draggable
+                onDragStart={(e) => {
+                  e.stopPropagation()
+                  handleDragStart(index)
+                }}
+              >
+                <DotsSixVertical size={16} weight="bold" />
+              </button>
+              
+              <button className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors p-1">
+                {isCollapsed ? (
+                  <CaretRight size={14} weight="bold" />
+                ) : (
+                  <CaretDown size={14} weight="bold" />
                 )}
+              </button>
+
+              <div className="flex-1 min-w-0 text-xs text-foreground font-medium truncate">
+                {getSingleLineSummary(decoration)}
               </div>
 
-              <div className="flex items-center gap-1 ml-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              {decoration.artwork && (
+                <img
+                  src={decoration.artwork.dataUrl}
+                  alt="Preview"
+                  className="w-8 h-8 object-contain bg-muted rounded flex-shrink-0"
+                />
+              )}
+
+              <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    duplicateDecoration(decoration)
+                  }}
+                  className="h-7 w-7 text-muted-foreground hover:text-primary"
+                  title="Duplicate decoration"
+                >
+                  <Copy size={14} />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -220,6 +359,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                     removeDecoration(decoration.id)
                   }}
                   className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  title="Delete decoration"
                 >
                   <Trash size={14} />
                 </Button>
@@ -227,11 +367,11 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
             </div>
 
             {!isCollapsed && (
-              <div className="px-4 pb-4 space-y-3 border-t border-border/50 pt-3">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="px-3 pb-3 space-y-3 border-t border-border/50 pt-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                      Print Location
+                      Location
                     </label>
                     {!customInputs[decoration.id]?.location ? (
                       <div className="flex gap-1">
@@ -245,7 +385,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                             }
                           }}
                         >
-                          <SelectTrigger className="h-9">
+                          <SelectTrigger className="h-8 text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -262,7 +402,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                           value={decoration.customLocation || ''}
                           onChange={(e) => updateDecoration(decoration.id, { customLocation: e.target.value, location: e.target.value })}
                           placeholder="Enter custom location"
-                          className="h-9"
+                          className="h-8 text-xs"
                         />
                         <Button
                           variant="ghost"
@@ -271,7 +411,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                             toggleCustomLocation(decoration.id)
                             updateDecoration(decoration.id, { location: 'Front', customLocation: undefined })
                           }}
-                          className="h-9 w-9 flex-shrink-0"
+                          className="h-8 w-8 flex-shrink-0"
                         >
                           ×
                         </Button>
@@ -281,7 +421,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
 
                   <div>
                     <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                      Decoration Method
+                      Method
                     </label>
                     {!customInputs[decoration.id]?.method ? (
                       <Select
@@ -294,7 +434,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                           }
                         }}
                       >
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -309,7 +449,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                           value={decoration.customMethod || ''}
                           onChange={(e) => updateDecoration(decoration.id, { customMethod: e.target.value })}
                           placeholder="Enter custom method"
-                          className="h-9"
+                          className="h-8 text-xs"
                         />
                         <Button
                           variant="ghost"
@@ -318,7 +458,7 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                             toggleCustomMethod(decoration.id)
                             updateDecoration(decoration.id, { method: 'screen-print', customMethod: undefined })
                           }}
-                          className="h-9 w-9 flex-shrink-0"
+                          className="h-8 w-8 flex-shrink-0"
                         >
                           ×
                         </Button>
@@ -328,42 +468,25 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
 
                   <div>
                     <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                      Ink / Thread Colors
+                      Colors
                     </label>
                     <Input
                       value={decoration.inkThreadColors}
                       onChange={(e) => updateDecoration(decoration.id, { inkThreadColors: e.target.value })}
                       placeholder="e.g., White, Black"
-                      className="h-9"
+                      className="h-8 text-xs"
                     />
-                  </div>
-
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                      Setup Fee
-                    </label>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-muted-foreground text-xs">$</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={decoration.setupFee}
-                        onChange={(e) => updateDecoration(decoration.id, { setupFee: Number(e.target.value) })}
-                        className="h-9 tabular-nums"
-                      />
-                    </div>
                   </div>
                 </div>
 
                 <div>
                   <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                    Artwork
+                    Artwork {decoration.imprintSize && <span className="text-primary ml-1">({decoration.imprintSize})</span>}
                   </label>
                   {!decoration.artwork ? (
-                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg px-4 py-6 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
-                      <Upload size={18} className="text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
+                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg px-3 py-4 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
                         Drag & drop or click to upload
                       </span>
                       <input
@@ -374,37 +497,37 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                       />
                     </label>
                   ) : (
-                    <div className="border border-border rounded-lg p-3 bg-background">
-                      <div className="flex items-start gap-3">
+                    <div className="border border-border rounded-lg p-2 bg-background">
+                      <div className="flex items-start gap-2">
                         <img
                           src={decoration.artwork.dataUrl}
                           alt={decoration.artwork.fileName}
-                          className="w-20 h-20 object-contain bg-muted rounded"
+                          className="w-16 h-16 object-contain bg-muted rounded"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{decoration.artwork.fileName}</div>
-                          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                          <div className="font-medium text-xs truncate">{decoration.artwork.fileName}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
                             {decoration.artwork.fileSize && (
                               <div>{(decoration.artwork.fileSize / 1024).toFixed(1)} KB</div>
                             )}
                             {decoration.imprintSize && (
                               <div className="flex items-center gap-1 text-primary">
-                                <CheckCircle size={12} weight="fill" />
-                                <span>Imprint size: {decoration.imprintSize}</span>
+                                <CheckCircle size={11} weight="fill" />
+                                <span>{decoration.imprintSize}</span>
                               </div>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-0.5">
                           <label className="cursor-pointer">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
                               asChild
                             >
                               <div>
-                                <Upload size={14} />
+                                <Upload size={12} />
                               </div>
                             </Button>
                             <input
@@ -418,9 +541,9 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
                             variant="ghost"
                             size="icon"
                             onClick={() => updateDecoration(decoration.id, { artwork: undefined, imprintSize: undefined })}
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
                           >
-                            <Trash size={14} />
+                            <Trash size={12} />
                           </Button>
                         </div>
                       </div>
@@ -433,14 +556,32 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
         )
       })}
 
-      <Button
-        variant="outline"
-        onClick={addDecoration}
-        className="w-full h-9 text-sm"
-      >
-        <Plus size={16} className="mr-2" />
-        Add Decoration
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={addDecoration}
+          className="flex-1 h-8 text-xs"
+        >
+          <Plus size={14} className="mr-1.5" />
+          Add Decoration
+        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="h-8 text-xs px-3">
+              <Sparkle size={14} className="mr-1.5" />
+              Presets
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {DECORATION_PRESETS.map((preset) => (
+              <DropdownMenuItem key={preset.name} onClick={() => applyPreset(preset)}>
+                {preset.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   )
 }

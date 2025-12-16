@@ -377,6 +377,10 @@ function App() {
                   setCurrentPage({ type: 'customer-detail', customer })
                 }
               } : undefined}
+              onDuplicateQuote={(duplicatedQuote) => {
+                handleSaveQuote(duplicatedQuote)
+                setCurrentPage({ type: 'quote-builder', quote: duplicatedQuote })
+              }}
             />
           )}
           

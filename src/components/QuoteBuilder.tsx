@@ -14,9 +14,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck } from '@phosphor-icons/react'
+import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy } from '@phosphor-icons/react'
 import type { Quote, Customer, DiscountType } from '@/lib/types'
-import { createEmptyLineItem, calculateQuoteTotals, generateId } from '@/lib/data'
+import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
 
 interface QuoteBuilderProps {
@@ -26,6 +26,7 @@ interface QuoteBuilderProps {
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
   onNavigateToCustomer?: () => void
+  onDuplicateQuote?: (quote: Quote) => void
   isInline?: boolean
 }
 
@@ -36,6 +37,7 @@ export function QuoteBuilder({
   onBack, 
   onCreateCustomer,
   onNavigateToCustomer,
+  onDuplicateQuote,
   isInline = false
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
@@ -110,6 +112,30 @@ export function QuoteBuilder({
     return `Saved ${Math.floor(seconds / 60)} min ago`
   }
   
+  const handleDuplicateQuote = () => {
+    if (onDuplicateQuote) {
+      const duplicatedQuote: Quote = {
+        ...quote,
+        id: generateId('q'),
+        quote_number: generateQuoteNumber(),
+        status: 'draft',
+        nickname: quote.nickname ? `${quote.nickname} (Copy)` : undefined,
+        created_at: new Date().toISOString(),
+        valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        line_items: quote.line_items.map(item => ({
+          ...item,
+          id: generateId('li'),
+          decorations: item.decorations?.map(dec => ({
+            ...dec,
+            id: generateId('dec'),
+          }))
+        }))
+      }
+      onDuplicateQuote(duplicatedQuote)
+      toast.success('Quote duplicated')
+    }
+  }
+  
   return (
     <div className={`h-full ${isInline ? '' : 'overflow-auto'}`}>
       <div className={`${isInline ? 'p-6' : 'max-w-6xl mx-auto p-6'} space-y-6`}>
@@ -152,6 +178,15 @@ export function QuoteBuilder({
                     <DropdownMenuItem onClick={onNavigateToCustomer}>
                       <UserCircle size={18} className="mr-2" />
                       View Customer Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {onDuplicateQuote && (
+                  <>
+                    <DropdownMenuItem onClick={handleDuplicateQuote}>
+                      <Copy size={18} className="mr-2" />
+                      Duplicate Quote
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
