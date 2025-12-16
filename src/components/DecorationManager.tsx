@@ -29,9 +29,10 @@ const DECORATION_METHODS: { value: DecorationType; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 
-const DECORATION_PRESETS: { name: string; decorations: Omit<Decoration, 'id'>[] }[] = [
+const DECORATION_PRESETS: { name: string; description: string; decorations: Omit<Decoration, 'id'>[] }[] = [
   {
     name: 'Front Logo Only',
+    description: 'Single front chest logo',
     decorations: [{
       method: 'screen-print',
       location: 'Front',
@@ -41,6 +42,7 @@ const DECORATION_PRESETS: { name: string; decorations: Omit<Decoration, 'id'>[] 
   },
   {
     name: 'Front + Back',
+    description: 'Front chest and full back design',
     decorations: [
       {
         method: 'screen-print',
@@ -57,11 +59,114 @@ const DECORATION_PRESETS: { name: string; decorations: Omit<Decoration, 'id'>[] 
     ]
   },
   {
-    name: 'Full Embroidery',
+    name: 'Front + Back + Left Sleeve',
+    description: 'Front, back, and sleeve branding',
+    decorations: [
+      {
+        method: 'screen-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Left Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Front + Both Sleeves',
+    description: 'Front chest with matching sleeve designs',
+    decorations: [
+      {
+        method: 'screen-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Left Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Right Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'All-Over (Front + Back + Sleeves)',
+    description: 'Maximum coverage - 4 locations',
+    decorations: [
+      {
+        method: 'screen-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Left Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Right Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Embroidered Front + Back',
+    description: 'Classic embroidery setup',
     decorations: [
       {
         method: 'embroidery',
         location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'embroidery',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Premium Embroidery (3 Locations)',
+    description: 'Front, back, and sleeve embroidery',
+    decorations: [
+      {
+        method: 'embroidery',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'embroidery',
+        location: 'Back',
         inkThreadColors: '',
         setupFee: 0,
       },
@@ -74,7 +179,8 @@ const DECORATION_PRESETS: { name: string; decorations: Omit<Decoration, 'id'>[] 
     ]
   },
   {
-    name: 'Mixed (Front Screen + Back Digital)',
+    name: 'Hoodie Special (Front + Back + Hood)',
+    description: 'Popular hoodie decoration combo',
     decorations: [
       {
         method: 'screen-print',
@@ -83,7 +189,121 @@ const DECORATION_PRESETS: { name: string; decorations: Omit<Decoration, 'id'>[] 
         setupFee: 0,
       },
       {
+        method: 'screen-print',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Hood',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Mixed Method (Screen Front + Embroidery Sleeves)',
+    description: 'Combine techniques for premium look',
+    decorations: [
+      {
+        method: 'screen-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'embroidery',
+        location: 'Left Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'embroidery',
+        location: 'Right Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Digital Front + Screen Back',
+    description: 'Full color front, solid back',
+    decorations: [
+      {
         method: 'digital-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Team Jersey (Front + Back + Both Sleeves)',
+    description: 'Complete team uniform setup',
+    decorations: [
+      {
+        method: 'screen-print',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Left Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'screen-print',
+        location: 'Right Sleeve',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'DTG Full Coverage',
+    description: 'Direct-to-garment front and back',
+    decorations: [
+      {
+        method: 'dtg',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'dtg',
+        location: 'Back',
+        inkThreadColors: '',
+        setupFee: 0,
+      }
+    ]
+  },
+  {
+    name: 'Vinyl Transfer (Front + Back)',
+    description: 'Heat transfer vinyl setup',
+    decorations: [
+      {
+        method: 'vinyl',
+        location: 'Front',
+        inkThreadColors: '',
+        setupFee: 0,
+      },
+      {
+        method: 'vinyl',
         location: 'Back',
         inkThreadColors: '',
         setupFee: 0,
@@ -573,10 +793,18 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
               Presets
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-80">
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+              Quick Templates
+            </div>
             {DECORATION_PRESETS.map((preset) => (
-              <DropdownMenuItem key={preset.name} onClick={() => applyPreset(preset)}>
-                {preset.name}
+              <DropdownMenuItem 
+                key={preset.name} 
+                onClick={() => applyPreset(preset)}
+                className="flex flex-col items-start gap-0.5 py-2"
+              >
+                <div className="font-medium text-xs">{preset.name}</div>
+                <div className="text-xs text-muted-foreground">{preset.description}</div>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
