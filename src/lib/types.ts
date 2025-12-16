@@ -170,3 +170,28 @@ export interface PaymentReminder {
   smsSent?: number
   highPriority?: boolean
 }
+
+export type SmsTemplateType = 'payment-reminder' | 'order-ready' | 'order-shipped' | 'quote-approved' | 'custom'
+
+export interface SmsTemplate {
+  id: string
+  name: string
+  type: SmsTemplateType
+  message: string
+  variables?: string[]
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CustomerSmsPreferences {
+  customerId: string
+  optedOut: boolean
+  optedOutDate?: string
+  optedOutReason?: string
+  preferredNumber?: string
+  allowPaymentReminders: boolean
+  allowOrderUpdates: boolean
+  allowMarketingMessages: boolean
+  lastUpdated: string
+}
