@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { UploadSimple, X, Check, Clock, Images } from '@phosphor-icons/react'
-import type { ArtworkFile } from '@/lib/types'
+import type { LegacyArtworkFile } from '@/lib/types'
 import { toast } from 'sonner'
 
 function formatFileSize(bytes: number): string {
@@ -13,13 +13,13 @@ function formatFileSize(bytes: number): string {
 
 interface ArtworkUploadProps {
   location: string
-  artwork?: ArtworkFile
-  onUpload: (artwork: ArtworkFile) => void
+  artwork?: LegacyArtworkFile
+  onUpload: (artwork: LegacyArtworkFile) => void
   onRemove: () => void
   canApprove?: boolean
   onApprove?: (approved: boolean) => void
   allowMultiple?: boolean
-  onBulkUpload?: (artworks: ArtworkFile[]) => void
+  onBulkUpload?: (artworks: LegacyArtworkFile[]) => void
 }
 
 export function ArtworkUpload({ 
@@ -69,7 +69,7 @@ export function ArtworkUpload({
     }
 
     const artworkPromises = imageFiles.map(file => {
-      return new Promise<ArtworkFile>((resolve) => {
+      return new Promise<LegacyArtworkFile>((resolve) => {
         const reader = new FileReader()
         reader.onload = (e) => {
           const dataUrl = e.target?.result as string

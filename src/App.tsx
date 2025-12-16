@@ -20,7 +20,7 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, ArtworkFile } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -123,7 +123,7 @@ function App() {
     })
   }
 
-  const handleUpdateJobArtwork = (jobId: string, itemId: string, artwork: ArtworkFile[]) => {
+  const handleUpdateJobArtwork = (jobId: string, itemId: string, artwork: LegacyArtworkFile[]) => {
     setJobs((current) => {
       const existing = current || []
       const updatedJobs = existing.map(j => {

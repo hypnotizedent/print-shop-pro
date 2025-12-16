@@ -1,7 +1,7 @@
 export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired'
 export type JobStatus = 'pending' | 'art-approval' | 'scheduled' | 'printing' | 'finishing' | 'ready' | 'shipped' | 'delivered'
 export type ProductType = 'tshirt' | 'hoodie' | 'polo' | 'hat' | 'other'
-export type DecorationType = 'screen-print' | 'dtg' | 'embroidery' | 'vinyl'
+export type DecorationType = 'screen-print' | 'dtg' | 'embroidery' | 'vinyl' | 'digital-print' | 'digital-transfer' | 'other'
 export type DiscountType = 'percent' | 'fixed'
 
 export type CustomerTier = 'bronze' | 'silver' | 'gold' | 'platinum'
@@ -33,12 +33,29 @@ export interface Sizes {
 }
 
 export interface ArtworkFile {
-  location: string
   dataUrl: string
   fileName: string
   fileSize?: number
+  width?: number
+  height?: number
   approved?: boolean
   uploadedAt: string
+}
+
+export interface LegacyArtworkFile extends ArtworkFile {
+  location: string
+}
+
+export interface Decoration {
+  id: string
+  method: DecorationType
+  customMethod?: string
+  location: string
+  customLocation?: string
+  inkThreadColors: string
+  imprintSize?: string
+  artwork?: ArtworkFile
+  setupFee: number
 }
 
 export interface LineItem {
@@ -48,7 +65,8 @@ export interface LineItem {
   product_color?: string
   decoration: DecorationType
   print_locations: string[]
-  artwork?: ArtworkFile[]
+  decorations?: Decoration[]
+  artwork?: LegacyArtworkFile[]
   colors: number
   sizes: Sizes
   quantity: number

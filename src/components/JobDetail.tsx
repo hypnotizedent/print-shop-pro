@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck } from '@phosphor-icons/react'
-import type { Job, JobStatus, ArtworkFile } from '@/lib/types'
+import type { Job, JobStatus, LegacyArtworkFile } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
@@ -22,7 +22,7 @@ interface JobDetailProps {
   job: Job
   onBack: () => void
   onUpdateStatus: (status: JobStatus) => void
-  onUpdateArtwork?: (itemId: string, artwork: ArtworkFile[]) => void
+  onUpdateArtwork?: (itemId: string, artwork: LegacyArtworkFile[]) => void
   onNavigateToCustomer?: () => void
   onUpdateNickname?: (nickname: string) => void
   isInline?: boolean
@@ -71,7 +71,7 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
     }
 
     const artworkPromises = imageFiles.map((file, index) => {
-      return new Promise<ArtworkFile>((resolve) => {
+      return new Promise<LegacyArtworkFile>((resolve) => {
         const reader = new FileReader()
         reader.onload = (e) => {
           const dataUrl = e.target?.result as string

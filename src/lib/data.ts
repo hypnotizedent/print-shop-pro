@@ -80,6 +80,7 @@ export const createEmptyLineItem = (): LineItem => ({
   product_color: '#000000',
   decoration: 'screen-print',
   print_locations: ['front'],
+  decorations: [],
   colors: 1,
   sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, '2XL': 0, '3XL': 0 },
   quantity: 0,
@@ -127,7 +128,10 @@ export function generateJobNumber(): string {
 }
 
 export function calculateLineItemTotal(item: LineItem): number {
-  return (item.quantity * item.unit_price) + item.setup_fee
+  const productTotal = item.quantity * item.unit_price
+  const decorationSetupFees = (item.decorations || []).reduce((sum, dec) => sum + dec.setupFee, 0)
+  const legacySetupFee = item.setup_fee || 0
+  return productTotal + decorationSetupFees + legacySetupFee
 }
 
 export function calculateSizesTotal(sizes: Sizes): number {
