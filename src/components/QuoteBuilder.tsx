@@ -189,16 +189,28 @@ export function QuoteBuilder({
         </div>
         
         <div className="space-y-6">
-          <div>
-            <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
-              Customer
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
+                Customer
+              </div>
+              <CustomerSearch
+                customers={customers}
+                selectedCustomer={quote.customer.id ? quote.customer : null}
+                onSelect={(customer) => setQuote({ ...quote, customer })}
+                onCreateNew={handleCreateCustomer}
+              />
             </div>
-            <CustomerSearch
-              customers={customers}
-              selectedCustomer={quote.customer.id ? quote.customer : null}
-              onSelect={(customer) => setQuote({ ...quote, customer })}
-              onCreateNew={handleCreateCustomer}
-            />
+            <div>
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
+                Quote Nickname (Optional)
+              </div>
+              <Input
+                value={quote.nickname || ''}
+                onChange={(e) => setQuote({ ...quote, nickname: e.target.value })}
+                placeholder="e.g., Summer Promo, Church Event..."
+              />
+            </div>
           </div>
           
           <Separator />

@@ -20,7 +20,7 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, ArtworkFile } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, ArtworkFile } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -160,6 +160,7 @@ function App() {
       artwork_approved: false,
       assigned_to: [],
       progress: 0,
+      nickname: quote.nickname,
     }
     
     setJobs((current) => [...(current || []), newJob])
@@ -171,6 +172,34 @@ function App() {
     
     toast.success('Quote converted to job!')
     setCurrentPage({ type: 'list', view: 'jobs' })
+  }
+  
+  const handleDeleteQuotes = (quoteIds: string[]) => {
+    setQuotes((current) => {
+      const existing = current || []
+      return existing.filter(q => !quoteIds.includes(q.id))
+    })
+  }
+  
+  const handleBulkQuoteStatusChange = (quoteIds: string[], status: QuoteStatus) => {
+    setQuotes((current) => {
+      const existing = current || []
+      return existing.map(q => quoteIds.includes(q.id) ? { ...q, status } : q)
+    })
+  }
+  
+  const handleDeleteJobs = (jobIds: string[]) => {
+    setJobs((current) => {
+      const existing = current || []
+      return existing.filter(j => !jobIds.includes(j.id))
+    })
+  }
+  
+  const handleBulkJobStatusChange = (jobIds: string[], status: JobStatus) => {
+    setJobs((current) => {
+      const existing = current || []
+      return existing.map(j => jobIds.includes(j.id) ? { ...j, status } : j)
+    })
   }
   
   const handleSearchSelectQuote = (quote: Quote) => {
@@ -259,6 +288,8 @@ function App() {
               onSaveQuote={handleSaveQuote}
               onCreateCustomer={handleCreateCustomer}
               onConvertToJob={handleConvertToJob}
+              onDeleteQuotes={handleDeleteQuotes}
+              onBulkStatusChange={handleBulkQuoteStatusChange}
             />
           )}
           
@@ -274,6 +305,8 @@ function App() {
                   setCurrentPage({ type: 'customer-detail', customer })
                 }
               }}
+              onDeleteJobs={handleDeleteJobs}
+              onBulkStatusChange={handleBulkJobStatusChange}
             />
           )}
           

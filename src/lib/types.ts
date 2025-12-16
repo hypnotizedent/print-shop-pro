@@ -59,6 +59,7 @@ export interface LineItem {
 export interface Quote {
   id: string
   quote_number: string
+  nickname?: string
   status: QuoteStatus
   customer: Customer
   line_items: LineItem[]

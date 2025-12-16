@@ -27,18 +27,39 @@ This is a multi-view production management system with complex state management,
 - **Success criteria**: Search responds within 200ms; searches customer name, company, quote number, job number, and job nickname; results limited to 10; clicking result navigates correctly
 
 ### Quote Builder (Full Screen Mode)
-- **Functionality**: Create and edit quotes with line items, customer info, pricing, and terms in dedicated full-screen view with filtering and sorting
-- **Purpose**: Primary revenue generation tool - converts customer requests into billable orders
+- **Functionality**: Create and edit quotes with optional nickname, line items, customer info, pricing, and terms in dedicated full-screen view with filtering and sorting; export approved quotes as invoices
+- **Purpose**: Primary revenue generation tool - converts customer requests into billable orders with professional invoicing
 - **Trigger**: Click "+ New Quote" button or click existing quote card from list
-- **Progression**: Select customer → Add line items (product/decoration/sizes/quantity) → Set pricing/discount → Add notes/due date → Save/Send
-- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace; filter by status; sort by date
+- **Progression**: Select customer → Add optional nickname → Add line items (product/decoration/sizes/quantity) → Set pricing/discount → Add notes/due date → Save/Send → Export as invoice if approved
+- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace; filter by status; sort by date; nickname field helps identify quotes; approved quotes can export as formatted PDF invoices
+
+### Bulk Actions for Quotes
+- **Functionality**: Select multiple quotes and perform batch operations (status changes, delete, export invoices)
+- **Purpose**: Increase efficiency when managing large numbers of quotes
+- **Trigger**: Click checkboxes on quote cards or "Select All"
+- **Progression**: Select quotes via checkbox → Bulk action bar appears → Choose action (change status/export invoices/delete) → Confirm → Action applied to all selected
+- **Success criteria**: Can select/deselect individual quotes; select all works; bulk status change updates all selected quotes; bulk invoice export generates invoice for each approved quote; bulk delete removes selected quotes after confirmation
 
 ### Job Management (List View with Inline Expansion)
-- **Functionality**: View jobs in searchable/filterable list, click to expand details inline without leaving the list view
-- **Purpose**: Quick job details review while maintaining context of overall job list; easier scanning than kanban
+- **Functionality**: View jobs with optional nicknames in searchable/filterable list, click to expand details inline without leaving the list view
+- **Purpose**: Quick job details review while maintaining context of overall job list; easier scanning than kanban; nicknames help identify jobs quickly
 - **Trigger**: Navigate to Jobs page
-- **Progression**: View job list → Filter by status/search → Sort by due date → Click job card → Details expand inline below card → Review/update → Click to collapse or click another job
-- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt list layout; can switch between jobs quickly; filter by status works; search by job number/nickname/customer works; date sorting works
+- **Progression**: View job list → Filter by status/search by nickname → Sort by due date → Click job card → Details expand inline below card → Review/update → Click to collapse or click another job
+- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt list layout; can switch between jobs quickly; filter by status works; search by job number/nickname/customer works; date sorting works; nickname displays prominently
+
+### Bulk Actions for Jobs
+- **Functionality**: Select multiple jobs and perform batch operations (status changes, delete)
+- **Purpose**: Increase efficiency when managing production workflows
+- **Trigger**: Click checkboxes on job cards or "Select All"
+- **Progression**: Select jobs via checkbox → Bulk action bar appears → Choose action (change status/delete) → Confirm → Action applied to all selected
+- **Success criteria**: Can select/deselect individual jobs; select all works; bulk status change updates all selected jobs; bulk delete removes selected jobs after confirmation
+
+### Invoice Generation & PDF Export
+- **Functionality**: Generate professional invoices from approved quotes with formatted HTML/PDF output
+- **Purpose**: Provide customers with professional billing documentation
+- **Trigger**: Click "Invoice" button on approved quote or select multiple approved quotes and bulk export
+- **Progression**: Approved quote selected → Click invoice button → PDF preview opens in new window → Print or save as PDF
+- **Success criteria**: Invoice includes all quote details (line items, pricing, customer info, nickname); formatting is professional and print-ready; bulk export works for multiple quotes; PDF opens in new browser window for printing/saving
 
 ### Customer Management with Addresses
 - **Functionality**: Browse customer list, view individual customer details with contact info, address, quote history, and job history

@@ -122,7 +122,12 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
               <ArrowLeft size={20} />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">Job {job.job_number}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold">Job {job.job_number}</h1>
+                {job.nickname && (
+                  <span className="text-lg text-muted-foreground">({job.nickname})</span>
+                )}
+              </div>
               <div className="text-sm text-muted-foreground mt-1">
                 From Quote {job.quote_id ? `Q-${job.quote_id.split('-')[1]}` : 'Direct Order'}
               </div>
