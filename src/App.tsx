@@ -57,6 +57,29 @@ function App() {
       document.documentElement.style.setProperty('--accent', accentColor)
     }
   }, [])
+
+  useEffect(() => {
+    if (customerArtworkFiles && customerArtworkFiles.length > 0) {
+      const needsMigration = customerArtworkFiles.some(
+        (file) => file.currentVersion === undefined
+      )
+      
+      if (needsMigration) {
+        setCustomerArtworkFiles((current) => {
+          return (current || []).map((file) => {
+            if (file.currentVersion === undefined) {
+              return {
+                ...file,
+                currentVersion: 1,
+                versionHistory: [],
+              }
+            }
+            return file
+          })
+        })
+      }
+    }
+  }, [])
   
   const handleLogin = (email: string, password: string) => {
     setIsLoggedIn(true)

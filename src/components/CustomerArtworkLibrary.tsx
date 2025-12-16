@@ -18,8 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Trash, DotsThree, Pencil, Copy, Image as ImageIcon } from '@phosphor-icons/react'
-import type { CustomerArtworkFile } from '@/lib/types'
+import { Plus, Trash, DotsThree, Pencil, Copy, Image as ImageIcon, ClockCounterClockwise, Upload } from '@phosphor-icons/react'
+import type { CustomerArtworkFile, ArtworkVersion } from '@/lib/types'
 import { toast } from 'sonner'
 
 interface CustomerArtworkLibraryProps {
@@ -39,12 +39,14 @@ export function CustomerArtworkLibrary({
 }: CustomerArtworkLibraryProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingArtwork, setEditingArtwork] = useState<CustomerArtworkFile | null>(null)
+  const [viewingVersionHistory, setViewingVersionHistory] = useState<CustomerArtworkFile | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: 'neck-tag' as CustomerArtworkFile['category'],
     imprintSize: '',
     notes: '',
+    changeNotes: '',
   })
   const [selectedFile, setSelectedFile] = useState<{ dataUrl: string; fileName: string; fileSize: number } | null>(null)
 
@@ -80,23 +82,75 @@ export function CustomerArtworkLibrary({
       return
     }
 
-    const artworkFile: CustomerArtworkFile = {
-      id: editingArtwork?.id || `caf-${Date.now()}`,
-      customerId,
-      name: formData.name,
-      description: formData.description,
-      category: formData.category,
-      imprintSize: formData.imprintSize,
-      notes: formData.notes,
-      file: selectedFile || editingArtwork!.file,
-      uploadedAt: editingArtwork?.uploadedAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
+    const now = new Date().toISOString()
+    const isNewVersion = editingArtwork && selectedFile
 
-    if (editingArtwork) {
+    if (editingArtwork && isNewVersion) {
+      const previousVersion: ArtworkVersion = {
+        versionNumber: editingArtwork.currentVersion,
+        file: editingArtwork.file,
+        uploadedAt: editingArtwork.updatedAt,
+        imprintSize: editingArtwork.imprintSize,
+        changeNotes: undefined,
+      }
+
+      const artworkFile: CustomerArtworkFile = {
+        ...editingArtwork,
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        imprintSize: formData.imprintSize,
+        notes: formData.notes,
+        file: selectedFile!,
+        updatedAt: now,
+        currentVersion: editingArtwork.currentVersion + 1,
+        versionHistory: [
+          ...(editingArtwork.versionHistory || []),
+          previousVersion,
+        ],
+      }
+
+      const newVersion: ArtworkVersion = {
+        versionNumber: artworkFile.currentVersion,
+        file: selectedFile!,
+        uploadedAt: now,
+        imprintSize: formData.imprintSize,
+        changeNotes: formData.changeNotes,
+      }
+      
+      artworkFile.versionHistory = [...(artworkFile.versionHistory || []).slice(-9), newVersion]
+
+      onUpdateArtworkFile(artworkFile)
+      toast.success(`Artwork updated to version ${artworkFile.currentVersion}`)
+    } else if (editingArtwork) {
+      const artworkFile: CustomerArtworkFile = {
+        ...editingArtwork,
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        imprintSize: formData.imprintSize,
+        notes: formData.notes,
+        updatedAt: now,
+      }
+
       onUpdateArtworkFile(artworkFile)
       toast.success('Artwork updated')
     } else {
+      const artworkFile: CustomerArtworkFile = {
+        id: `caf-${Date.now()}`,
+        customerId,
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        imprintSize: formData.imprintSize,
+        notes: formData.notes,
+        file: selectedFile!,
+        uploadedAt: now,
+        updatedAt: now,
+        currentVersion: 1,
+        versionHistory: [],
+      }
+
       onSaveArtworkFile(artworkFile)
       toast.success('Artwork saved to customer library')
     }
@@ -113,6 +167,7 @@ export function CustomerArtworkLibrary({
       category: 'neck-tag',
       imprintSize: '',
       notes: '',
+      changeNotes: '',
     })
     setSelectedFile(null)
   }
@@ -125,6 +180,7 @@ export function CustomerArtworkLibrary({
       category: artwork.category,
       imprintSize: artwork.imprintSize || '',
       notes: artwork.notes || '',
+      changeNotes: '',
     })
     setSelectedFile(null)
     setIsAddDialogOpen(true)
@@ -223,6 +279,10 @@ export function CustomerArtworkLibrary({
                       <Pencil size={16} className="mr-2" />
                       Edit
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setViewingVersionHistory(artwork)}>
+                      <ClockCounterClockwise size={16} className="mr-2" />
+                      Version History ({artwork.currentVersion})
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleCopyInfo(artwork)}>
                       <Copy size={16} className="mr-2" />
                       Copy Info
@@ -263,11 +323,20 @@ export function CustomerArtworkLibrary({
                       {artwork.imprintSize}
                     </Badge>
                   )}
+                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                    v{artwork.currentVersion}
+                  </Badge>
                 </div>
 
                 <div className="text-xs text-muted-foreground">
                   {artwork.file.fileName} • {formatFileSize(artwork.file.fileSize)}
                 </div>
+                
+                {artwork.versionHistory && artwork.versionHistory.length > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    {artwork.versionHistory.length} previous version{artwork.versionHistory.length !== 1 ? 's' : ''}
+                  </div>
+                )}
               </div>
             </Card>
           ))}
@@ -341,6 +410,11 @@ export function CustomerArtworkLibrary({
 
             <div className="space-y-2">
               <Label htmlFor="artwork-file">Artwork File {!editingArtwork && '*'}</Label>
+              {editingArtwork && selectedFile && (
+                <p className="text-xs text-amber-500 mb-2">
+                  Uploading a new file will create version {editingArtwork.currentVersion + 1}
+                </p>
+              )}
               <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                 {selectedFile ? (
                   <div className="space-y-3">
@@ -398,6 +472,22 @@ export function CustomerArtworkLibrary({
                 />
               </div>
             </div>
+
+            {editingArtwork && selectedFile && (
+              <div className="space-y-2">
+                <Label htmlFor="change-notes">Version Change Notes</Label>
+                <Textarea
+                  id="change-notes"
+                  placeholder="What changed in this version? (optional)"
+                  value={formData.changeNotes}
+                  onChange={(e) => setFormData({ ...formData, changeNotes: e.target.value })}
+                  rows={2}
+                />
+                <p className="text-xs text-muted-foreground">
+                  These notes will help you track what changed between versions
+                </p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -406,6 +496,149 @@ export function CustomerArtworkLibrary({
             </Button>
             <Button onClick={handleSubmit}>
               {editingArtwork ? 'Update' : 'Save'} Artwork
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingVersionHistory} onOpenChange={(open) => !open && setViewingVersionHistory(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Version History - {viewingVersionHistory?.name}</DialogTitle>
+          </DialogHeader>
+
+          {viewingVersionHistory && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="flex items-start gap-4">
+                  <img
+                    src={viewingVersionHistory.file.dataUrl}
+                    alt="Current version"
+                    className="w-32 h-32 object-contain rounded border border-border bg-background"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-primary text-primary-foreground">
+                        Current - v{viewingVersionHistory.currentVersion}
+                      </Badge>
+                    </div>
+                    <div className="text-sm space-y-1">
+                      <div>
+                        <span className="text-muted-foreground">File:</span>{' '}
+                        {viewingVersionHistory.file.fileName}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Size:</span>{' '}
+                        {formatFileSize(viewingVersionHistory.file.fileSize)}
+                      </div>
+                      {viewingVersionHistory.imprintSize && (
+                        <div>
+                          <span className="text-muted-foreground">Imprint Size:</span>{' '}
+                          {viewingVersionHistory.imprintSize}
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-muted-foreground">Updated:</span>{' '}
+                        {new Date(viewingVersionHistory.updatedAt).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {viewingVersionHistory.versionHistory && viewingVersionHistory.versionHistory.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Previous Versions</h3>
+                  <div className="space-y-3">
+                    {[...viewingVersionHistory.versionHistory].reverse().map((version, index) => (
+                      <div key={version.versionNumber} className="border border-border rounded-lg p-4">
+                        <div className="flex items-start gap-4">
+                          <img
+                            src={version.file.dataUrl}
+                            alt={`Version ${version.versionNumber}`}
+                            className="w-24 h-24 object-contain rounded border border-border bg-background"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline">v{version.versionNumber}</Badge>
+                            </div>
+                            <div className="text-sm space-y-1">
+                              <div>
+                                <span className="text-muted-foreground">File:</span>{' '}
+                                {version.file.fileName}
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Size:</span>{' '}
+                                {formatFileSize(version.file.fileSize)}
+                              </div>
+                              {version.imprintSize && (
+                                <div>
+                                  <span className="text-muted-foreground">Imprint Size:</span>{' '}
+                                  {version.imprintSize}
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-muted-foreground">Date:</span>{' '}
+                                {new Date(version.uploadedAt).toLocaleString()}
+                              </div>
+                              {version.changeNotes && (
+                                <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                                  <span className="text-muted-foreground">Notes:</span> {version.changeNotes}
+                                </div>
+                              )}
+                            </div>
+                            <div className="mt-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const restoredArtwork: CustomerArtworkFile = {
+                                    ...viewingVersionHistory,
+                                    file: version.file,
+                                    imprintSize: version.imprintSize,
+                                    currentVersion: viewingVersionHistory.currentVersion + 1,
+                                    updatedAt: new Date().toISOString(),
+                                    versionHistory: [
+                                      ...(viewingVersionHistory.versionHistory || []),
+                                      {
+                                        versionNumber: viewingVersionHistory.currentVersion,
+                                        file: viewingVersionHistory.file,
+                                        uploadedAt: viewingVersionHistory.updatedAt,
+                                        imprintSize: viewingVersionHistory.imprintSize,
+                                        changeNotes: `Restored from v${version.versionNumber}`,
+                                      },
+                                    ].slice(-10),
+                                  }
+                                  onUpdateArtworkFile(restoredArtwork)
+                                  setViewingVersionHistory(null)
+                                  toast.success(`Restored to version ${version.versionNumber}`)
+                                }}
+                              >
+                                <Upload size={16} className="mr-2" />
+                                Restore This Version
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(!viewingVersionHistory.versionHistory || viewingVersionHistory.versionHistory.length === 0) && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ClockCounterClockwise size={48} className="mx-auto mb-2 opacity-50" />
+                  <p>No previous versions yet</p>
+                  <p className="text-sm mt-1">Upload a new file when editing to create version history</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingVersionHistory(null)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

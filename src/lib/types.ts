@@ -198,6 +198,19 @@ export interface CustomerSmsPreferences {
 
 export type ArtworkCategory = 'neck-tag' | 'private-label' | 'logo' | 'graphic' | 'other'
 
+export interface ArtworkVersion {
+  versionNumber: number
+  file: {
+    dataUrl: string
+    fileName: string
+    fileSize: number
+  }
+  uploadedAt: string
+  uploadedBy?: string
+  changeNotes?: string
+  imprintSize?: string
+}
+
 export interface CustomerArtworkFile {
   id: string
   customerId: string
@@ -213,4 +226,6 @@ export interface CustomerArtworkFile {
   }
   uploadedAt: string
   updatedAt: string
+  currentVersion: number
+  versionHistory?: ArtworkVersion[]
 }
