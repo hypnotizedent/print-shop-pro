@@ -61,6 +61,13 @@ This is a multi-view production management system with complex state management,
 - **Progression**: Click upload area → Select image file(s) → File uploads → File size automatically detected and displayed → Thumbnail shows with file info → Hover preview icon shows mockup with all artwork locations → Imprint dimensions estimated from file size → Approve/reject artwork
 - **Success criteria**: File size displays in human-readable format (KB/MB); supports drag and drop; shows file size on artwork thumbnail; bulk upload supports multiple files; file size stored with artwork metadata; hovering over preview icon shows large mockup with artwork details and estimated imprint sizes (width × height in inches); dimensions calculated based on file size ranges; preview shows all artwork locations with color-coded status
 
+### Enhanced Decoration Editing
+- **Functionality**: Collapsible decoration cards with inline editing for all decoration properties after creation; visual completion status; quick expand/collapse to review multiple decorations efficiently
+- **Purpose**: Allow users to review and modify decoration details at any time; reduce visual clutter by collapsing complete decorations; provide clear visual feedback on decoration completeness
+- **Trigger**: Click decoration card header to expand/collapse; edit any field within expanded decoration
+- **Progression**: Create decoration → All fields editable → Fill required fields → Decoration marked complete → Collapse to show summary → Click to expand and edit → Change location/method/colors/setup fee → Upload/replace artwork → Collapse again
+- **Success criteria**: Decorations collapse to single line showing summary (location • method • colors • imprint size); complete decorations show green checkmark; incomplete decorations have normal border; all fields remain editable after creation; changing values updates immediately; collapsing preserves all data; artwork can be replaced by uploading new file; visual preview thumbnail shows in collapsed state if artwork exists; smooth 200ms animation for expand/collapse
+
 ### Production Scheduling Calendar
 - **Functionality**: Weekly calendar view showing jobs organized by due date with visual capacity indicators
 - **Purpose**: Visualize production workload and capacity across the week; identify bottlenecks and balance workload
