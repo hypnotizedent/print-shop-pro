@@ -1,7 +1,13 @@
 import type { Quote } from './types'
 import { generateInvoiceHTML } from './invoice-generator'
+import { shouldSendEmail } from './email-preferences'
 
 export async function sendInvoiceEmail(quote: Quote, recipientEmail?: string): Promise<boolean> {
+  if (!shouldSendEmail(quote.customer.emailPreferences, 'invoiceReminders')) {
+    console.log('Customer has disabled invoice emails')
+    return false
+  }
+
   const html = generateInvoiceHTML(quote)
   const email = recipientEmail || quote.customer.email
   

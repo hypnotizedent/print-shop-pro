@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerArtworkLibrary } from '@/components/CustomerArtworkLibrary'
+import { CustomerEmailPreferences } from '@/components/CustomerEmailPreferences'
 import {
   Select,
   SelectContent,
@@ -13,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin } from '@phosphor-icons/react'
-import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile } from '@/lib/types'
+import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -64,6 +65,12 @@ export function CustomerDetail({
   const handleCancel = () => {
     setEditedCustomer(customer)
     setIsEditing(false)
+  }
+
+  const handleEmailPreferencesSave = (preferences: EmailPrefs) => {
+    const updated = { ...editedCustomer, emailPreferences: preferences }
+    setEditedCustomer(updated)
+    onUpdateCustomer(updated)
   }
   
   const getTierColor = (tier?: CustomerTier) => {
@@ -322,6 +329,12 @@ export function CustomerDetail({
               <div className="text-3xl font-bold">${totalRevenue.toFixed(2)}</div>
             </Card>
           </div>
+
+          <CustomerEmailPreferences
+            preferences={editedCustomer.emailPreferences}
+            onSave={handleEmailPreferencesSave}
+            isEditing={isEditing}
+          />
           
           <CustomerArtworkLibrary
             customerId={customer.id}

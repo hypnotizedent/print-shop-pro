@@ -118,11 +118,18 @@ This is a multi-view production management system with complex state management,
 - **Success criteria**: Invoice includes all quote details (line items, pricing, customer info, nickname); formatting is professional and print-ready; email draft pre-fills customer email and invoice details; bulk send opens individual email drafts; bulk export creates ZIP with all invoices named by quote number and nickname; ZIP downloads correctly
 
 ### Customer Management with Addresses
-- **Functionality**: Browse customer list, view individual customer details with contact info, address, quote history, job history, and reusable artwork library
-- **Purpose**: Centralized customer relationship management and order history tracking with shipping addresses and customer-specific artwork files for recurring orders
+- **Functionality**: Browse customer list, view individual customer details with contact info, address, quote history, job history, reusable artwork library, and email notification preferences
+- **Purpose**: Centralized customer relationship management and order history tracking with shipping addresses, customer-specific artwork files for recurring orders, and granular control over which email notifications each customer receives
 - **Trigger**: Navigate to Customers view from sidebar
-- **Progression**: View customer list → Search/filter customers → Click customer → View profile with stats/history → Edit contact info and address → Manage artwork library → Add/edit/delete artwork files → View related quotes/jobs
-- **Success criteria**: Customer list searchable; customer detail shows all related quotes and jobs; contact info and full address editable; revenue stats calculated correctly; address displays properly when viewing; artwork library displays all saved files with categories; can add new artwork with name, description, category, size, and notes; can edit/delete existing artwork; artwork files persist with customer
+- **Progression**: View customer list → Search/filter customers → Click customer → View profile with stats/history → Edit contact info and address → Manage email preferences (13 notification types) → Toggle specific notification types on/off → Manage artwork library → Add/edit/delete artwork files → View related quotes/jobs
+- **Success criteria**: Customer list searchable; customer detail shows all related quotes and jobs; contact info and full address editable; revenue stats calculated correctly; address displays properly when viewing; email preferences section displays all 13 notification types grouped by category (Quotes & Approvals, Order & Production, Artwork & Design, Payments & Invoices, Marketing & Promotions); preferences toggle individually with switches; preferences save automatically; preference changes reflect in email sending functions; artwork library displays all saved files with categories; can add new artwork with name, description, category, size, and notes; can edit/delete existing artwork; artwork files persist with customer
+
+### Customer Email Notification Preferences
+- **Functionality**: Granular per-customer control over 13 types of email notifications including quote approvals, order updates, artwork notifications, payment reminders, and marketing messages
+- **Purpose**: Respect customer communication preferences; reduce unwanted emails; improve customer satisfaction; maintain compliance with email best practices
+- **Trigger**: Edit customer profile and navigate to Email Preferences section
+- **Progression**: View customer detail → Enter edit mode → Scroll to Email Preferences card → Toggle notification types on/off → System auto-saves changes → Email sending functions check preferences before sending → Customer receives only enabled notification types
+- **Success criteria**: All 13 notification types display in organized groups; each preference has descriptive label and explanation; switches toggle smoothly; changes save immediately; read-only view shows enabled/disabled count; preference check occurs in all email sending functions (invoice emails, artwork notifications, payment reminders); disabled notifications prevent emails from being sent; console logs indicate when email blocked by preference; default preferences applied to new customers (all essential notifications enabled, marketing disabled); existing customers migrated to default preferences on first load
 
 ### Settings Page
 - **Functionality**: Centralized settings for theme customization, SMS configuration, SMS template management, customer opt-out management, and data export

@@ -80,6 +80,42 @@ function App() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (customers && customers.length > 0) {
+      const needsEmailPreferences = customers.some(
+        (customer) => !customer.emailPreferences
+      )
+      
+      if (needsEmailPreferences) {
+        setCustomers((current) => {
+          return (current || []).map((customer) => {
+            if (!customer.emailPreferences) {
+              return {
+                ...customer,
+                emailPreferences: {
+                  quoteApprovalRequests: true,
+                  quoteApprovedConfirmations: true,
+                  quoteReminders: true,
+                  orderStatusUpdates: true,
+                  artworkApprovalRequests: true,
+                  artworkStatusUpdates: true,
+                  paymentReminders: true,
+                  paymentConfirmations: true,
+                  shippingNotifications: true,
+                  pickupNotifications: true,
+                  invoiceReminders: true,
+                  marketingMessages: false,
+                  productionUpdates: false,
+                }
+              }
+            }
+            return customer
+          })
+        })
+      }
+    }
+  }, [])
   
   const handleLogin = (email: string, password: string) => {
     setIsLoggedIn(true)

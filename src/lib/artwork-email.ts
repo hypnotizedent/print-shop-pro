@@ -1,4 +1,5 @@
 import type { Job, LegacyArtworkFile } from './types'
+import { shouldSendEmail } from './email-preferences'
 
 export interface ArtworkNotificationOptions {
   job: Job
@@ -12,6 +13,11 @@ export function sendArtworkNotificationEmail(options: ArtworkNotificationOptions
   const item = job.line_items.find(i => i.id === itemId)
   
   if (!item) return false
+
+  if (!shouldSendEmail(job.customer.emailPreferences, 'artworkStatusUpdates')) {
+    console.log('Customer has disabled artwork status update emails')
+    return false
+  }
   
   const customerEmail = job.customer.email
   const status = approved ? 'APPROVED' : 'REJECTED'
@@ -70,6 +76,11 @@ export function sendBulkArtworkApprovalEmail(
   const item = job.line_items.find(i => i.id === itemId)
   
   if (!item || approvedArtwork.length === 0) return false
+
+  if (!shouldSendEmail(job.customer.emailPreferences, 'artworkStatusUpdates')) {
+    console.log('Customer has disabled artwork status update emails')
+    return false
+  }
   
   const customerEmail = job.customer.email
   const subject = `✅ All Artwork Approved - ${job.job_number}${job.nickname ? ` - ${job.nickname}` : ''}`
@@ -128,6 +139,11 @@ export function sendArtworkRejectionWithFeedbackEmail(
   const item = job.line_items.find(i => i.id === itemId)
   
   if (!item) return false
+
+  if (!shouldSendEmail(job.customer.emailPreferences, 'artworkStatusUpdates')) {
+    console.log('Customer has disabled artwork status update emails')
+    return false
+  }
   
   const customerEmail = job.customer.email
   const subject = `❌ Artwork Revision Needed - ${job.job_number}${job.nickname ? ` - ${job.nickname}` : ''}`

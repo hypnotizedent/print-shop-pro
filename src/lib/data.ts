@@ -1,4 +1,5 @@
 import type { Customer, Quote, Job, LineItem, Sizes } from './types'
+import { getDefaultEmailPreferences } from './email-preferences'
 
 export const sampleCustomers: Customer[] = [
   {
@@ -15,6 +16,7 @@ export const sampleCustomers: Customer[] = [
       zip: '94102',
       country: 'USA',
     },
+    emailPreferences: getDefaultEmailPreferences(),
   },
   {
     id: 'c2',
@@ -28,6 +30,7 @@ export const sampleCustomers: Customer[] = [
       state: 'TX',
       zip: '78701',
     },
+    emailPreferences: getDefaultEmailPreferences(),
   },
   {
     id: 'c3',
@@ -42,6 +45,7 @@ export const sampleCustomers: Customer[] = [
       state: 'WA',
       zip: '98101',
     },
+    emailPreferences: getDefaultEmailPreferences(),
   },
   {
     id: 'c4',
@@ -56,6 +60,7 @@ export const sampleCustomers: Customer[] = [
       state: 'CO',
       zip: '80201',
     },
+    emailPreferences: getDefaultEmailPreferences(),
   },
   {
     id: 'c5',
@@ -70,6 +75,7 @@ export const sampleCustomers: Customer[] = [
       state: 'OR',
       zip: '97201',
     },
+    emailPreferences: getDefaultEmailPreferences(),
   },
 ]
 

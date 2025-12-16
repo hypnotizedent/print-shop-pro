@@ -6,6 +6,22 @@ export type DiscountType = 'percent' | 'fixed'
 
 export type CustomerTier = 'bronze' | 'silver' | 'gold' | 'platinum'
 
+export interface CustomerEmailPreferences {
+  quoteApprovalRequests: boolean
+  quoteApprovedConfirmations: boolean
+  quoteReminders: boolean
+  orderStatusUpdates: boolean
+  artworkApprovalRequests: boolean
+  artworkStatusUpdates: boolean
+  paymentReminders: boolean
+  paymentConfirmations: boolean
+  shippingNotifications: boolean
+  pickupNotifications: boolean
+  invoiceReminders: boolean
+  marketingMessages: boolean
+  productionUpdates: boolean
+}
+
 export interface Customer {
   id: string
   name: string
@@ -20,6 +36,7 @@ export interface Customer {
     zip: string
     country?: string
   }
+  emailPreferences?: CustomerEmailPreferences
 }
 
 export interface Sizes {
