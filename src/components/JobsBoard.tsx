@@ -1,14 +1,20 @@
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { JobCard } from '@/components/JobCard'
 import { JobDetail } from '@/components/JobDetail'
-import type { Job, JobStatus, ArtworkFile } from '@/lib/types'
+import type { Job, JobStatus, ArtworkFile, Customer } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Download } from '@phosphor-icons/react'
+import { exportJobsToCSV } from '@/lib/csv-export'
+import { toast } from 'sonner'
 
 interface JobsBoardProps {
   jobs: Job[]
+  customers: Customer[]
   onUpdateJobStatus: (jobId: string, status: JobStatus) => void
   onUpdateJobArtwork: (jobId: string, itemId: string, artwork: ArtworkFile[]) => void
+  onNavigateToCustomer: (customerId: string) => void
 }
 
 const statusColumns: { status: JobStatus; label: string }[] = [
@@ -18,7 +24,7 @@ const statusColumns: { status: JobStatus; label: string }[] = [
   { status: 'ready', label: 'Ready' },
 ]
 
-export function JobsBoard({ jobs, onUpdateJobStatus, onUpdateJobArtwork }: JobsBoardProps) {
+export function JobsBoard({ jobs, customers, onUpdateJobStatus, onUpdateJobArtwork, onNavigateToCustomer }: JobsBoardProps) {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
   
   const handleJobClick = (job: Job) => {
@@ -29,10 +35,21 @@ export function JobsBoard({ jobs, onUpdateJobStatus, onUpdateJobArtwork }: JobsB
     }
   }
   
+  const handleExportCSV = () => {
+    exportJobsToCSV(jobs)
+    toast.success('Jobs exported to CSV')
+  }
+  
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
-        <h1 className="text-2xl font-bold">Jobs</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Jobs</h1>
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download size={18} className="mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </div>
       
       <div className="flex-1 overflow-hidden p-6">
@@ -75,6 +92,7 @@ export function JobsBoard({ jobs, onUpdateJobStatus, onUpdateJobArtwork }: JobsB
                                   onBack={() => setExpandedJobId(null)}
                                   onUpdateStatus={(status) => onUpdateJobStatus(job.id, status)}
                                   onUpdateArtwork={(itemId, artwork) => onUpdateJobArtwork(job.id, itemId, artwork)}
+                                  onNavigateToCustomer={() => onNavigateToCustomer(job.customer.id)}
                                   isInline
                                 />
                               </div>

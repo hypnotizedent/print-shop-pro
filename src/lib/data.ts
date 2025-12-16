@@ -7,12 +7,14 @@ export const sampleCustomers: Customer[] = [
     email: 'john@acme.com',
     phone: '(555) 123-4567',
     company: 'ACME Corporation',
+    tier: 'platinum',
   },
   {
     id: 'c2',
     name: 'Sarah Johnson',
     email: 'sarah@gmail.com',
     company: 'Smith Family Reunion',
+    tier: 'bronze',
   },
   {
     id: 'c3',
@@ -20,6 +22,7 @@ export const sampleCustomers: Customer[] = [
     email: 'mike@techstartup.com',
     phone: '(555) 234-5678',
     company: 'Tech Startup Inc',
+    tier: 'gold',
   },
   {
     id: 'c4',
@@ -27,6 +30,7 @@ export const sampleCustomers: Customer[] = [
     email: 'pastor@church.org',
     phone: '(555) 345-6789',
     company: 'Local Church',
+    tier: 'silver',
   },
   {
     id: 'c5',
@@ -34,6 +38,7 @@ export const sampleCustomers: Customer[] = [
     email: 'coach@school.edu',
     phone: '(555) 456-7890',
     company: 'High School Athletics',
+    tier: 'gold',
   },
 ]
 

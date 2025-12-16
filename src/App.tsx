@@ -29,11 +29,11 @@ import {
 type View = 'dashboard' | 'quotes' | 'jobs' | 'customers' | 'reports'
 type Page = 
   | { type: 'list'; view: View }
-  | { type: 'quote-builder'; quote: Quote }
+  | { type: 'quote-builder'; quote: Quote; fromCustomerId?: string }
   | { type: 'customer-detail'; customer: Customer }
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useKV<boolean>('is-logged-in', false)
+  const [isLoggedIn, setIsLoggedIn] = useKV<boolean>('is-logged-in', true)
   const [quotes, setQuotes] = useKV<Quote[]>('quotes', sampleQuotes)
   const [jobs, setJobs] = useKV<Job[]>('jobs', sampleJobs)
   const [customers, setCustomers] = useKV<Customer[]>('customers', sampleCustomers)
@@ -81,7 +81,11 @@ function App() {
   }
   
   const handleSelectQuote = (quote: Quote) => {
-    setCurrentPage({ type: 'quote-builder', quote })
+    setCurrentPage({ type: 'quote-builder', quote, fromCustomerId: undefined })
+  }
+  
+  const handleSelectQuoteFromCustomer = (quote: Quote, customerId: string) => {
+    setCurrentPage({ type: 'quote-builder', quote, fromCustomerId: customerId })
   }
   
   const handleSelectCustomer = (customer: Customer) => {
@@ -222,8 +226,15 @@ function App() {
           {currentPage.type === 'list' && currentPage.view === 'jobs' && (
             <JobsBoard
               jobs={jobs || []}
+              customers={customers || []}
               onUpdateJobStatus={handleUpdateJobStatus}
               onUpdateJobArtwork={handleUpdateJobArtwork}
+              onNavigateToCustomer={(customerId) => {
+                const customer = customers?.find(c => c.id === customerId)
+                if (customer) {
+                  setCurrentPage({ type: 'customer-detail', customer })
+                }
+              }}
             />
           )}
           
@@ -259,8 +270,25 @@ function App() {
               quote={currentPage.quote}
               customers={customers || []}
               onSave={handleSaveQuote}
-              onBack={() => setCurrentPage({ type: 'list', view: 'quotes' })}
+              onBack={() => {
+                if (currentPage.fromCustomerId) {
+                  const customer = customers?.find(c => c.id === currentPage.fromCustomerId)
+                  if (customer) {
+                    setCurrentPage({ type: 'customer-detail', customer })
+                  } else {
+                    setCurrentPage({ type: 'list', view: 'quotes' })
+                  }
+                } else {
+                  setCurrentPage({ type: 'list', view: 'quotes' })
+                }
+              }}
               onCreateCustomer={handleCreateCustomer}
+              onNavigateToCustomer={currentPage.quote.customer.id ? () => {
+                const customer = customers?.find(c => c.id === currentPage.quote.customer.id)
+                if (customer) {
+                  setCurrentPage({ type: 'customer-detail', customer })
+                }
+              } : undefined}
             />
           )}
           
@@ -271,7 +299,7 @@ function App() {
               jobs={jobs || []}
               onBack={() => setCurrentPage({ type: 'list', view: 'customers' })}
               onUpdateCustomer={handleUpdateCustomer}
-              onSelectQuote={handleSelectQuote}
+              onSelectQuote={(quote) => handleSelectQuoteFromCustomer(quote, currentPage.customer.id)}
               onSelectJob={(job) => setCurrentPage({ type: 'list', view: 'jobs' })}
             />
           )}

@@ -2,9 +2,17 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/StatusBadge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X } from '@phosphor-icons/react'
-import type { Customer, Quote, Job } from '@/lib/types'
+import type { Customer, Quote, Job, CustomerTier } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -49,6 +57,16 @@ export function CustomerDetail({
     setIsEditing(false)
   }
   
+  const getTierColor = (tier?: CustomerTier) => {
+    switch (tier) {
+      case 'platinum': return 'bg-slate-300 text-slate-900'
+      case 'gold': return 'bg-yellow-500 text-yellow-900'
+      case 'silver': return 'bg-slate-400 text-slate-900'
+      case 'bronze': return 'bg-orange-600 text-white'
+      default: return 'bg-muted text-muted-foreground'
+    }
+  }
+  
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
@@ -89,8 +107,13 @@ export function CustomerDetail({
             
             {!isEditing ? (
               <div className="space-y-4">
-                <div>
+                <div className="flex items-center gap-3">
                   <div className="text-2xl font-bold">{customer.name}</div>
+                  {customer.tier && (
+                    <Badge className={`uppercase text-xs ${getTierColor(customer.tier)}`}>
+                      {customer.tier} Tier
+                    </Badge>
+                  )}
                 </div>
                 {customer.company && (
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -143,6 +166,24 @@ export function CustomerDetail({
                     value={editedCustomer.phone || ''}
                     onChange={(e) => setEditedCustomer({ ...editedCustomer, phone: e.target.value })}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tier">Customer Tier</Label>
+                  <Select 
+                    value={editedCustomer.tier || 'none'} 
+                    onValueChange={(value) => setEditedCustomer({ ...editedCustomer, tier: value === 'none' ? undefined : value as CustomerTier })}
+                  >
+                    <SelectTrigger id="tier">
+                      <SelectValue placeholder="Select tier..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Tier</SelectItem>
+                      <SelectItem value="bronze">Bronze</SelectItem>
+                      <SelectItem value="silver">Silver</SelectItem>
+                      <SelectItem value="gold">Gold</SelectItem>
+                      <SelectItem value="platinum">Platinum</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}

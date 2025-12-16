@@ -7,7 +7,14 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerSearch } from '@/components/CustomerSearch'
 import { LineItemGrid } from '@/components/LineItemGrid'
 import { PricingSummary } from '@/components/PricingSummary'
-import { ArrowLeft, Plus, FloppyDisk, X } from '@phosphor-icons/react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck } from '@phosphor-icons/react'
 import type { Quote, Customer, DiscountType } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId } from '@/lib/data'
 import { toast } from 'sonner'
@@ -18,6 +25,7 @@ interface QuoteBuilderProps {
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
+  onNavigateToCustomer?: () => void
   isInline?: boolean
 }
 
@@ -27,6 +35,7 @@ export function QuoteBuilder({
   onSave, 
   onBack, 
   onCreateCustomer,
+  onNavigateToCustomer,
   isInline = false
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
@@ -129,6 +138,35 @@ export function QuoteBuilder({
                 <X size={20} />
               </Button>
             )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <DotsThree size={20} weight="bold" />
+                  More Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {onNavigateToCustomer && quote.customer.id && (
+                  <>
+                    <DropdownMenuItem onClick={onNavigateToCustomer}>
+                      <UserCircle size={18} className="mr-2" />
+                      View Customer Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={() => toast.info('Label printing coming soon')}>
+                  <Tag size={18} className="mr-2" />
+                  Print Quote Labels
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info('Shipping label coming soon')}>
+                  <Truck size={18} className="mr-2" />
+                  Create Shipping Label
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button 
               variant="outline" 
               onClick={handleSave}

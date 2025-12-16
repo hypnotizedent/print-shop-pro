@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { QuoteCard } from '@/components/QuoteCard'
-import { Plus, MagnifyingGlass } from '@phosphor-icons/react'
+import { Plus, MagnifyingGlass, Download } from '@phosphor-icons/react'
 import type { Quote, Customer } from '@/lib/types'
 import { useState } from 'react'
+import { exportQuotesToCSV } from '@/lib/csv-export'
+import { toast } from 'sonner'
 
 interface QuotesListProps {
   quotes: Quote[]
@@ -40,6 +42,11 @@ export function QuotesList({
     q.status === 'sent'
   ).slice(0, 12)
   
+  const handleExportCSV = () => {
+    exportQuotesToCSV(filteredQuotes)
+    toast.success('Quotes exported to CSV')
+  }
+  
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
@@ -55,6 +62,10 @@ export function QuotesList({
                 className="pl-10 w-64"
               />
             </div>
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download size={18} className="mr-2" />
+              Export CSV
+            </Button>
             <Button onClick={onNewQuote}>
               <Plus size={18} className="mr-2" />
               New Quote

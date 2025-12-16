@@ -5,7 +5,14 @@ import { Progress } from '@/components/ui/progress'
 import { ProductMockup } from '@/components/ProductMockup'
 import { ArtworkUpload } from '@/components/ArtworkUpload'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Check, Images, UploadSimple } from '@phosphor-icons/react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck } from '@phosphor-icons/react'
 import type { Job, JobStatus, ArtworkFile } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useRef } from 'react'
@@ -16,12 +23,13 @@ interface JobDetailProps {
   onBack: () => void
   onUpdateStatus: (status: JobStatus) => void
   onUpdateArtwork?: (itemId: string, artwork: ArtworkFile[]) => void
+  onNavigateToCustomer?: () => void
   isInline?: boolean
 }
 
 const statusSteps: JobStatus[] = ['pending', 'art-approval', 'scheduled', 'printing', 'finishing', 'ready']
 
-export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, isInline = false }: JobDetailProps) {
+export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavigateToCustomer, isInline = false }: JobDetailProps) {
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const currentStepIndex = statusSteps.indexOf(job.status)
@@ -121,6 +129,34 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, isInli
             </div>
           </div>
           <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <DotsThree size={20} weight="bold" />
+                  More Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {onNavigateToCustomer && (
+                  <>
+                    <DropdownMenuItem onClick={onNavigateToCustomer}>
+                      <UserCircle size={18} className="mr-2" />
+                      View Customer Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={() => toast.info('Label printing coming soon')}>
+                  <Tag size={18} className="mr-2" />
+                  Print Job Labels
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info('Shipping label coming soon')}>
+                  <Truck size={18} className="mr-2" />
+                  Create Shipping Label
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button variant="outline">
               Print Work Order
             </Button>

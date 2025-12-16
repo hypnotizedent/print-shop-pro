@@ -4,12 +4,15 @@ export type ProductType = 'tshirt' | 'hoodie' | 'polo' | 'hat' | 'other'
 export type DecorationType = 'screen-print' | 'dtg' | 'embroidery' | 'vinyl'
 export type DiscountType = 'percent' | 'fixed'
 
+export type CustomerTier = 'bronze' | 'silver' | 'gold' | 'platinum'
+
 export interface Customer {
   id: string
   name: string
   email: string
   phone?: string
   company?: string
+  tier?: CustomerTier
 }
 
 export interface Sizes {
