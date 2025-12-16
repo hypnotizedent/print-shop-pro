@@ -1,4 +1,4 @@
-import type { EmailNotification, EmailNotificationType, Customer, Quote, Job } from './types'
+import type { EmailNotification, EmailNotificationType, Customer, Quote, Job, EmailAttachment, EmailTemplate } from './types'
 
 export function generateId(prefix: string = 'email'): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -19,6 +19,7 @@ export interface CreateEmailNotificationParams {
     [key: string]: any
   }
   sentBy?: string
+  attachments?: EmailAttachment[]
 }
 
 export function createEmailNotification(params: CreateEmailNotificationParams): EmailNotification {
@@ -35,6 +36,7 @@ export function createEmailNotification(params: CreateEmailNotificationParams): 
     relatedJobId: params.relatedJobId,
     metadata: params.metadata,
     sentBy: params.sentBy,
+    attachments: params.attachments,
   }
 }
 
@@ -83,6 +85,45 @@ export function createQuoteReminderEmail(quote: Quote, sentBy?: string): EmailNo
       amount: quote.total,
     },
     sentBy,
+  })
+}
+
+export function createQuoteReminderEmailFromTemplate(
+  quote: Quote, 
+  template: EmailTemplate, 
+  sentBy?: string
+): EmailNotification {
+  const daysSinceSent = quote.created_at 
+    ? Math.floor((Date.now() - new Date(quote.created_at).getTime()) / (1000 * 60 * 60 * 24))
+    : 0
+
+  const replaceVariables = (text: string): string => {
+    return text
+      .replace(/\{\{customer_name\}\}/g, quote.customer.name)
+      .replace(/\{\{customer_email\}\}/g, quote.customer.email)
+      .replace(/\{\{customer_company\}\}/g, quote.customer.company || '')
+      .replace(/\{\{quote_number\}\}/g, quote.quote_number)
+      .replace(/\{\{quote_nickname\}\}/g, quote.nickname || 'your order')
+      .replace(/\{\{total_amount\}\}/g, `$${quote.total.toFixed(2)}`)
+      .replace(/\{\{due_date\}\}/g, quote.due_date)
+      .replace(/\{\{valid_until\}\}/g, quote.valid_until)
+      .replace(/\{\{days_since_sent\}\}/g, daysSinceSent.toString())
+  }
+
+  return createEmailNotification({
+    customerId: quote.customer.id,
+    customerEmail: quote.customer.email,
+    type: 'quote-reminder',
+    subject: replaceVariables(template.subject),
+    body: replaceVariables(template.body),
+    relatedQuoteId: quote.id,
+    metadata: {
+      quoteNumber: quote.quote_number,
+      amount: quote.total,
+      daysSinceSent,
+    },
+    sentBy,
+    attachments: template.attachments,
   })
 }
 

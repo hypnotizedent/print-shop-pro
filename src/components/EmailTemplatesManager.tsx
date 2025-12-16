@@ -9,8 +9,10 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
-import { Plus, Pencil, Trash, Copy, FileText, Paperclip, X } from '@phosphor-icons/react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Plus, Pencil, Trash, Copy, FileText, Paperclip, X, Bell } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { QuoteReminderTemplate } from '@/components/QuoteReminderTemplate'
 import type { EmailTemplate, EmailNotificationType, EmailAttachment } from '@/lib/types'
 
 interface EmailTemplatesManagerProps {
@@ -194,9 +196,30 @@ export function EmailTemplatesManager({ templates, onSaveTemplate, onDeleteTempl
 
   const activeTemplates = templates.filter(t => t.isActive)
   const inactiveTemplates = templates.filter(t => !t.isActive)
+  const quoteReminderTemplate = templates.find(t => t.type === 'quote-reminder')
 
   return (
     <div className="space-y-6">
+      <Tabs defaultValue="quote-reminders" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="quote-reminders" className="gap-2">
+            <Bell size={16} />
+            Quote Reminders
+          </TabsTrigger>
+          <TabsTrigger value="all-templates" className="gap-2">
+            <FileText size={16} />
+            All Templates
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="quote-reminders" className="space-y-6 mt-6">
+          <QuoteReminderTemplate
+            onSaveTemplate={onSaveTemplate}
+            existingTemplate={quoteReminderTemplate}
+          />
+        </TabsContent>
+
+        <TabsContent value="all-templates" className="space-y-6 mt-6">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Email Templates</h3>
@@ -490,6 +513,8 @@ export function EmailTemplatesManager({ templates, onSaveTemplate, onDeleteTempl
           ))}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
