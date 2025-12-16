@@ -230,6 +230,8 @@ function App() {
           {currentPage.type === 'list' && currentPage.view === 'customers' && (
             <CustomersList
               customers={customers || []}
+              quotes={quotes || []}
+              jobs={jobs || []}
               onSelectCustomer={handleSelectCustomer}
               onNewCustomer={() => {
                 const newCustomer: Customer = {
