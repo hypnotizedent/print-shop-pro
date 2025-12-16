@@ -19,6 +19,7 @@ import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerE
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { SendCustomEmailDialog } from '@/components/SendCustomEmailDialog'
 
 interface CustomerDetailProps {
   customer: Customer
@@ -33,6 +34,7 @@ interface CustomerDetailProps {
   onSaveArtworkFile: (artwork: CustomerArtworkFile) => void
   onDeleteArtworkFile: (artworkId: string) => void
   onUpdateArtworkFile: (artwork: CustomerArtworkFile) => void
+  onSendEmail: (notification: EmailNotification) => void
 }
 
 export function CustomerDetail({ 
@@ -48,6 +50,7 @@ export function CustomerDetail({
   onSaveArtworkFile,
   onDeleteArtworkFile,
   onUpdateArtworkFile,
+  onSendEmail,
 }: CustomerDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedCustomer, setEditedCustomer] = useState(customer)
@@ -97,24 +100,27 @@ export function CustomerDetail({
             </Button>
             <h1 className="text-2xl font-bold">Customer Details</h1>
           </div>
-          {!isEditing && (
-            <Button variant="outline" onClick={() => setIsEditing(true)}>
-              <Pencil size={18} className="mr-2" />
-              Edit
-            </Button>
-          )}
-          {isEditing && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCancel}>
-                <X size={18} className="mr-2" />
-                Cancel
+          <div className="flex items-center gap-2">
+            <SendCustomEmailDialog customer={customer} onSendEmail={onSendEmail} />
+            {!isEditing && (
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
+                <Pencil size={18} className="mr-2" />
+                Edit
               </Button>
-              <Button onClick={handleSave}>
-                <Check size={18} className="mr-2" />
-                Save
-              </Button>
-            </div>
-          )}
+            )}
+            {isEditing && (
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleCancel}>
+                  <X size={18} className="mr-2" />
+                  Cancel
+                </Button>
+                <Button onClick={handleSave}>
+                  <Check size={18} className="mr-2" />
+                  Save
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       

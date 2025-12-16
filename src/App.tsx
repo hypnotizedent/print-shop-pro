@@ -614,6 +614,7 @@ function App() {
               onSaveArtworkFile={handleSaveArtworkFile}
               onDeleteArtworkFile={handleDeleteArtworkFile}
               onUpdateArtworkFile={handleUpdateArtworkFile}
+              onSendEmail={addEmailNotification}
             />
           )}
         </main>
