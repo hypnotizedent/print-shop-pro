@@ -47,6 +47,7 @@ function App() {
   const [paymentReminders, setPaymentReminders] = useKV<PaymentReminder[]>('payment-reminders', [])
   const [customerArtworkFiles, setCustomerArtworkFiles] = useKV<CustomerArtworkFile[]>('customer-artwork-files', [])
   const [emailNotifications, setEmailNotifications] = useKV<EmailNotification[]>('email-notifications', sampleEmailNotifications)
+  const [emailTemplates, setEmailTemplates] = useKV<import('@/lib/types').EmailTemplate[]>('email-templates', [])
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
   
   useEffect(() => {
@@ -607,6 +608,7 @@ function App() {
               jobs={jobs || []}
               customerArtworkFiles={customerArtworkFiles || []}
               emailNotifications={emailNotifications || []}
+              emailTemplates={emailTemplates || []}
               onBack={() => setCurrentPage({ type: 'list', view: 'customers' })}
               onUpdateCustomer={handleUpdateCustomer}
               onSelectQuote={(quote) => handleSelectQuoteFromCustomer(quote, currentPage.customer.id)}

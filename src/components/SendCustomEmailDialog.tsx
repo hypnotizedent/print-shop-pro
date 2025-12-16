@@ -19,17 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { EnvelopeSimple } from '@phosphor-icons/react'
-import type { Customer, EmailNotification } from '@/lib/types'
+import { EnvelopeSimple, Paperclip, FileText, X } from '@phosphor-icons/react'
+import type { Customer, EmailNotification, EmailTemplate, EmailAttachment } from '@/lib/types'
 import { toast } from 'sonner'
 import { generateId } from '@/lib/data'
 
 interface SendCustomEmailDialogProps {
   customer: Customer
+  emailTemplates?: EmailTemplate[]
   onSendEmail: (notification: EmailNotification) => void
 }
 
-const emailTemplates = [
+const defaultTemplates = [
   { 
     id: 'custom', 
     name: 'Custom Message',
@@ -48,42 +49,84 @@ const emailTemplates = [
     subject: 'Thank you for your business',
     body: `Hi {name},\n\nThank you for choosing Mint Prints for your order! We appreciate your business and look forward to working with you again.\n\nIf you need anything else, please don't hesitate to reach out.\n\nBest regards,\nMint Prints Team`
   },
-  { 
-    id: 'delay-notice', 
-    name: 'Delay Notice',
-    subject: 'Update on your order',
-    body: `Hi {name},\n\nI wanted to reach out regarding your order. We're experiencing a slight delay in production, and your order will now be ready by [NEW DATE].\n\nWe apologize for any inconvenience this may cause and appreciate your patience.\n\nBest regards,\nMint Prints Team`
-  },
-  { 
-    id: 'reorder-prompt', 
-    name: 'Reorder Prompt',
-    subject: 'Ready for another order?',
-    body: `Hi {name},\n\nIt's been a while since your last order with us. We'd love to help you with your next project!\n\nReply to this email or give us a call if you're ready to place a new order.\n\nBest regards,\nMint Prints Team`
-  },
-  { 
-    id: 'special-offer', 
-    name: 'Special Offer',
-    subject: 'Special offer just for you',
-    body: `Hi {name},\n\nAs a valued customer, we'd like to offer you [DISCOUNT/OFFER] on your next order.\n\n[DETAILS ABOUT OFFER]\n\nThis offer is valid until [DATE]. Contact us to take advantage of this special pricing!\n\nBest regards,\nMint Prints Team`
-  },
 ]
 
-export function SendCustomEmailDialog({ customer, onSendEmail }: SendCustomEmailDialogProps) {
+export function SendCustomEmailDialog({ customer, emailTemplates, onSendEmail }: SendCustomEmailDialogProps) {
   const [open, setOpen] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState('custom')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [toEmail, setToEmail] = useState(customer.email)
   const [isSending, setIsSending] = useState(false)
+  const [attachments, setAttachments] = useState<EmailAttachment[]>([])
+
+  const availableTemplates = emailTemplates && emailTemplates.length > 0 
+    ? [defaultTemplates[0], ...emailTemplates.filter(t => t.isActive)] 
+    : defaultTemplates
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId)
-    const template = emailTemplates.find(t => t.id === templateId)
-    if (template) {
-      const customerName = customer.name || 'there'
-      setSubject(template.subject)
-      setBody(template.body.replace('{name}', customerName))
+    
+    const customTemplate = emailTemplates?.find(t => t.id === templateId)
+    if (customTemplate) {
+      const replacedSubject = customTemplate.subject
+        .replace(/\{\{customer_name\}\}/g, customer.name || 'there')
+        .replace(/\{\{customer_email\}\}/g, customer.email)
+        .replace(/\{\{customer_company\}\}/g, customer.company || '')
+      
+      const replacedBody = customTemplate.body
+        .replace(/\{\{customer_name\}\}/g, customer.name || 'there')
+        .replace(/\{\{customer_email\}\}/g, customer.email)
+        .replace(/\{\{customer_company\}\}/g, customer.company || '')
+      
+      setSubject(replacedSubject)
+      setBody(replacedBody)
+      setAttachments(customTemplate.attachments || [])
+      return
     }
+
+    const defaultTemplate = defaultTemplates.find(t => t.id === templateId)
+    if (defaultTemplate) {
+      const customerName = customer.name || 'there'
+      setSubject(defaultTemplate.subject)
+      setBody(defaultTemplate.body.replace('{name}', customerName))
+      setAttachments([])
+    }
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    Array.from(files).forEach(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 10MB)`)
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const attachment: EmailAttachment = {
+          id: `att-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type || 'application/octet-stream',
+          dataUrl: event.target?.result as string,
+        }
+        setAttachments(prev => [...prev, attachment])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const removeAttachment = (attachmentId: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== attachmentId))
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
 
   const handleSend = async () => {
@@ -104,6 +147,7 @@ export function SendCustomEmailDialog({ customer, onSendEmail }: SendCustomEmail
       sentAt: new Date().toISOString(),
       sentBy: 'Manual',
       status: 'sent',
+      attachments: attachments.length > 0 ? attachments : undefined,
     }
 
     setTimeout(() => {
@@ -114,6 +158,7 @@ export function SendCustomEmailDialog({ customer, onSendEmail }: SendCustomEmail
       setSubject('')
       setBody('')
       setToEmail(customer.email)
+      setAttachments([])
       setIsSending(false)
     }, 500)
   }
@@ -125,6 +170,7 @@ export function SendCustomEmailDialog({ customer, onSendEmail }: SendCustomEmail
       setSelectedTemplate('custom')
       setSubject('')
       setBody('')
+      setAttachments([])
     }
   }
 
@@ -152,7 +198,7 @@ export function SendCustomEmailDialog({ customer, onSendEmail }: SendCustomEmail
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {emailTemplates.map(template => (
+                {availableTemplates.map(template => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.name}
                   </SelectItem>
@@ -192,6 +238,49 @@ export function SendCustomEmailDialog({ customer, onSendEmail }: SendCustomEmail
               rows={12}
               className="font-sans resize-none"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Attachments</Label>
+            <div className="border border-dashed border-border rounded-lg p-4">
+              <input
+                type="file"
+                id="email-attachment-upload"
+                className="hidden"
+                multiple
+                onChange={handleFileUpload}
+              />
+              <label htmlFor="email-attachment-upload">
+                <div className="flex flex-col items-center gap-2 cursor-pointer">
+                  <Paperclip size={24} className="text-muted-foreground" />
+                  <div className="text-sm text-muted-foreground text-center">
+                    Click to upload attachments
+                    <div className="text-xs">Max 10MB per file</div>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {attachments.length > 0 && (
+              <div className="space-y-2 mt-3">
+                {attachments.map(attachment => (
+                  <div key={attachment.id} className="flex items-center gap-2 p-2 bg-muted rounded-lg">
+                    <FileText size={16} className="text-muted-foreground" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{attachment.fileName}</div>
+                      <div className="text-xs text-muted-foreground">{formatFileSize(attachment.fileSize)}</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(attachment.id)}
+                    >
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">

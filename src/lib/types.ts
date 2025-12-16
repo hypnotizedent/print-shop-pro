@@ -294,4 +294,47 @@ export interface EmailNotification {
     [key: string]: any
   }
   sentBy?: string
+  attachments?: EmailAttachment[]
+}
+
+export interface EmailAttachment {
+  id: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  dataUrl: string
+}
+
+export interface EmailTemplate {
+  id: string
+  name: string
+  description?: string
+  type: EmailNotificationType
+  subject: string
+  body: string
+  variables: string[]
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  attachments?: EmailAttachment[]
+}
+
+export type ScheduledEmailStatus = 'pending' | 'sent' | 'failed' | 'cancelled'
+
+export interface ScheduledEmail {
+  id: string
+  customerId: string
+  customerEmail: string
+  templateId?: string
+  subject: string
+  body: string
+  attachments?: EmailAttachment[]
+  scheduledFor: string
+  status: ScheduledEmailStatus
+  createdAt: string
+  sentAt?: string
+  errorMessage?: string
+  relatedQuoteId?: string
+  relatedJobId?: string
+  createdBy?: string
 }

@@ -8,12 +8,14 @@ import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences } from '@/lib/types'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock } from '@phosphor-icons/react'
+import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
 import { SmsTemplates } from '@/components/SmsTemplates'
 import { CustomerSmsOptOuts } from '@/components/CustomerSmsOptOuts'
+import { EmailTemplatesManager } from '@/components/EmailTemplatesManager'
+import { ScheduledEmailsManager } from '@/components/ScheduledEmailsManager'
 
 interface SettingsProps {
   quotes: Quote[]
@@ -31,6 +33,8 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
   })
   const [smsTemplates, setSmsTemplates] = useKV<SmsTemplate[]>('sms-templates', [])
   const [smsPreferences, setSmsPreferences] = useKV<CustomerSmsPreferences[]>('customer-sms-preferences', [])
+  const [emailTemplates, setEmailTemplates] = useKV<EmailTemplate[]>('email-templates', [])
+  const [scheduledEmails, setScheduledEmails] = useKV<ScheduledEmail[]>('scheduled-emails', [])
   
   const [primaryInput, setPrimaryInput] = useState(primaryColor || 'oklch(0.7 0.17 166)')
   const [accentInput, setAccentInput] = useState(accentColor || 'oklch(0.78 0.15 166)')
@@ -131,16 +135,63 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
     })
   }
 
+  const handleSaveEmailTemplate = (template: EmailTemplate) => {
+    setEmailTemplates((current) => {
+      const existing = current || []
+      const index = existing.findIndex((t) => t.id === template.id)
+      if (index >= 0) {
+        const updated = [...existing]
+        updated[index] = template
+        return updated
+      } else {
+        return [...existing, template]
+      }
+    })
+  }
+
+  const handleDeleteEmailTemplate = (templateId: string) => {
+    setEmailTemplates((current) => {
+      const existing = current || []
+      return existing.filter((t) => t.id !== templateId)
+    })
+  }
+
+  const handleScheduleEmail = (email: ScheduledEmail) => {
+    setScheduledEmails((current) => [...(current || []), email])
+  }
+
+  const handleCancelScheduledEmail = (emailId: string) => {
+    setScheduledEmails((current) => {
+      const existing = current || []
+      return existing.map((e) => e.id === emailId ? { ...e, status: 'cancelled' as const } : e)
+    })
+  }
+
+  const handleDeleteScheduledEmail = (emailId: string) => {
+    setScheduledEmails((current) => {
+      const existing = current || []
+      return existing.filter((e) => e.id !== emailId)
+    })
+  }
+
   return (
     <div className="h-full overflow-auto p-8">
       <div className="max-w-4xl">
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="general">
               <Palette size={16} className="mr-2" />
               General
+            </TabsTrigger>
+            <TabsTrigger value="email-templates">
+              <Envelope size={16} className="mr-2" />
+              Email Templates
+            </TabsTrigger>
+            <TabsTrigger value="scheduled-emails">
+              <Clock size={16} className="mr-2" />
+              Scheduled Emails
             </TabsTrigger>
             <TabsTrigger value="sms">
               <DeviceMobile size={16} className="mr-2" />
@@ -148,7 +199,7 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
             </TabsTrigger>
             <TabsTrigger value="templates">
               <ChatCircle size={16} className="mr-2" />
-              Templates
+              SMS Templates
             </TabsTrigger>
             <TabsTrigger value="opt-outs">
               <BellSlash size={16} className="mr-2" />
@@ -274,6 +325,29 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
               </p>
             </div>
           </Card>
+          </TabsContent>
+
+          <TabsContent value="email-templates" className="space-y-6">
+            <Card className="p-6">
+              <EmailTemplatesManager
+                templates={emailTemplates || []}
+                onSaveTemplate={handleSaveEmailTemplate}
+                onDeleteTemplate={handleDeleteEmailTemplate}
+              />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="scheduled-emails" className="space-y-6">
+            <Card className="p-6">
+              <ScheduledEmailsManager
+                scheduledEmails={scheduledEmails || []}
+                customers={customers}
+                templates={emailTemplates || []}
+                onScheduleEmail={handleScheduleEmail}
+                onCancelEmail={handleCancelScheduledEmail}
+                onDeleteEmail={handleDeleteScheduledEmail}
+              />
+            </Card>
           </TabsContent>
 
           <TabsContent value="sms" className="space-y-6">

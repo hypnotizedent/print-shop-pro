@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin } from '@phosphor-icons/react'
-import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs, EmailNotification } from '@/lib/types'
+import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs, EmailNotification, EmailTemplate } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -27,6 +27,7 @@ interface CustomerDetailProps {
   jobs: Job[]
   customerArtworkFiles: CustomerArtworkFile[]
   emailNotifications: EmailNotification[]
+  emailTemplates?: EmailTemplate[]
   onBack: () => void
   onUpdateCustomer: (customer: Customer) => void
   onSelectQuote?: (quote: Quote) => void
@@ -43,6 +44,7 @@ export function CustomerDetail({
   jobs, 
   customerArtworkFiles,
   emailNotifications,
+  emailTemplates,
   onBack, 
   onUpdateCustomer,
   onSelectQuote,
@@ -101,7 +103,7 @@ export function CustomerDetail({
             <h1 className="text-2xl font-bold">Customer Details</h1>
           </div>
           <div className="flex items-center gap-2">
-            <SendCustomEmailDialog customer={customer} onSendEmail={onSendEmail} />
+            <SendCustomEmailDialog customer={customer} emailTemplates={emailTemplates} onSendEmail={onSendEmail} />
             {!isEditing && (
               <Button variant="outline" onClick={() => setIsEditing(true)}>
                 <Pencil size={18} className="mr-2" />
