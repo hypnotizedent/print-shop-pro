@@ -20,7 +20,7 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -49,6 +49,8 @@ function App() {
   const [customerArtworkFiles, setCustomerArtworkFiles] = useKV<CustomerArtworkFile[]>('customer-artwork-files', [])
   const [emailNotifications, setEmailNotifications] = useKV<EmailNotification[]>('email-notifications', sampleEmailNotifications)
   const [emailTemplates, setEmailTemplates] = useKV<import('@/lib/types').EmailTemplate[]>('email-templates', sampleEmailTemplates)
+  const [filterPresets, setFilterPresets] = useKV<FilterPreset[]>('filter-presets', [])
+  const [recentSearches, setRecentSearches] = useKV<RecentSearch[]>('recent-searches', [])
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
   
   useEffect(() => {
@@ -426,6 +428,47 @@ function App() {
       return existing.map(a => a.id === artwork.id ? artwork : a)
     })
   }
+
+  const handleSaveFilterPreset = (preset: FilterPreset) => {
+    setFilterPresets((current) => [...(current || []), preset])
+  }
+
+  const handleDeleteFilterPreset = (presetId: string) => {
+    setFilterPresets((current) => {
+      const existing = current || []
+      return existing.filter(p => p.id !== presetId)
+    })
+  }
+
+  const handleTogglePinPreset = (presetId: string) => {
+    setFilterPresets((current) => {
+      const existing = current || []
+      return existing.map(p => 
+        p.id === presetId ? { ...p, isPinned: !p.isPinned, lastUsed: new Date().toISOString() } : p
+      )
+    })
+  }
+
+  const handleAddRecentSearch = (search: RecentSearch) => {
+    setRecentSearches((current) => {
+      const existing = current || []
+      const filtered = existing.filter(s => 
+        !(s.context === search.context && s.query.toLowerCase() === search.query.toLowerCase())
+      )
+      return [search, ...filtered].slice(0, 50)
+    })
+  }
+
+  const handleRemoveRecentSearch = (searchId: string) => {
+    setRecentSearches((current) => {
+      const existing = current || []
+      return existing.filter(s => s.id !== searchId)
+    })
+  }
+
+  const handleClearRecentSearches = () => {
+    setRecentSearches([])
+  }
   
   const navItems = [
     { id: 'quotes' as const, label: 'Quotes', icon: FileText },
@@ -499,6 +542,8 @@ function App() {
               quotes={quotes || []}
               customers={customers || []}
               emailTemplates={emailTemplates || []}
+              filterPresets={filterPresets || []}
+              recentSearches={recentSearches || []}
               onSelectQuote={handleSelectQuote}
               onNewQuote={handleNewQuote}
               onSaveQuote={handleSaveQuote}
@@ -509,6 +554,12 @@ function App() {
               onSendEmails={(notifications) => {
                 notifications.forEach(notification => addEmailNotification(notification))
               }}
+              onSaveFilterPreset={handleSaveFilterPreset}
+              onDeleteFilterPreset={handleDeleteFilterPreset}
+              onTogglePinPreset={handleTogglePinPreset}
+              onAddRecentSearch={handleAddRecentSearch}
+              onRemoveRecentSearch={handleRemoveRecentSearch}
+              onClearRecentSearches={handleClearRecentSearches}
             />
           )}
           
@@ -516,6 +567,8 @@ function App() {
             <JobsBoard
               jobs={jobs || []}
               customers={customers || []}
+              filterPresets={filterPresets || []}
+              recentSearches={recentSearches || []}
               onUpdateJobStatus={handleUpdateJobStatus}
               onUpdateJobArtwork={handleUpdateJobArtwork}
               onUpdateJobNickname={handleUpdateJobNickname}
@@ -528,6 +581,12 @@ function App() {
               }}
               onDeleteJobs={handleDeleteJobs}
               onBulkStatusChange={handleBulkJobStatusChange}
+              onSaveFilterPreset={handleSaveFilterPreset}
+              onDeleteFilterPreset={handleDeleteFilterPreset}
+              onTogglePinPreset={handleTogglePinPreset}
+              onAddRecentSearch={handleAddRecentSearch}
+              onRemoveRecentSearch={handleRemoveRecentSearch}
+              onClearRecentSearches={handleClearRecentSearches}
             />
           )}
           
@@ -536,6 +595,8 @@ function App() {
               customers={customers || []}
               quotes={quotes || []}
               jobs={jobs || []}
+              filterPresets={filterPresets || []}
+              recentSearches={recentSearches || []}
               onSelectCustomer={handleSelectCustomer}
               onNewCustomer={() => {
                 const newCustomer: Customer = {
@@ -545,6 +606,12 @@ function App() {
                 }
                 setCurrentPage({ type: 'customer-detail', customer: newCustomer })
               }}
+              onSaveFilterPreset={handleSaveFilterPreset}
+              onDeleteFilterPreset={handleDeleteFilterPreset}
+              onTogglePinPreset={handleTogglePinPreset}
+              onAddRecentSearch={handleAddRecentSearch}
+              onRemoveRecentSearch={handleRemoveRecentSearch}
+              onClearRecentSearches={handleClearRecentSearches}
             />
           )}
           

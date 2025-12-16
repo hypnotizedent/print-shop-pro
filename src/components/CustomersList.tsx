@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -11,8 +11,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { FilterPresetManager } from '@/components/FilterPresetManager'
+import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
 import { Plus, MagnifyingGlass, EnvelopeSimple, Phone, Buildings, CurrencyDollar, Clock, Download, FunnelSimple, X } from '@phosphor-icons/react'
-import type { Customer, Quote, Job, CustomerTier } from '@/lib/types'
+import type { Customer, Quote, Job, CustomerTier, FilterPreset, RecentSearch } from '@/lib/types'
 import { exportCustomersToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
 
@@ -20,17 +22,50 @@ interface CustomersListProps {
   customers: Customer[]
   quotes: Quote[]
   jobs: Job[]
+  filterPresets?: FilterPreset[]
+  recentSearches?: RecentSearch[]
   onSelectCustomer: (customer: Customer) => void
   onNewCustomer: () => void
+  onSaveFilterPreset?: (preset: FilterPreset) => void
+  onDeleteFilterPreset?: (presetId: string) => void
+  onTogglePinPreset?: (presetId: string) => void
+  onAddRecentSearch?: (search: RecentSearch) => void
+  onRemoveRecentSearch?: (searchId: string) => void
+  onClearRecentSearches?: () => void
 }
 
 type SortOption = 'alphabetical' | 'revenue-high' | 'revenue-low' | 'recent-orders' | 'oldest-orders'
 type GroupByOption = 'none' | 'tier'
 
-export function CustomersList({ customers, quotes, jobs, onSelectCustomer, onNewCustomer }: CustomersListProps) {
+export function CustomersList({ 
+  customers, 
+  quotes, 
+  jobs, 
+  filterPresets = [],
+  recentSearches = [],
+  onSelectCustomer, 
+  onNewCustomer,
+  onSaveFilterPreset,
+  onDeleteFilterPreset,
+  onTogglePinPreset,
+  onAddRecentSearch,
+  onRemoveRecentSearch,
+  onClearRecentSearches,
+}: CustomersListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('alphabetical')
   const [groupBy, setGroupBy] = useState<GroupByOption>('none')
+  
+  const { recordSearch } = useRecentSearches('customers', recentSearches, onAddRecentSearch || (() => {}))
+  
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const timeoutId = setTimeout(() => {
+        recordSearch(searchQuery, filteredAndSortedCustomers.length)
+      }, 1000)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [searchQuery])
   
   const customersWithStats = useMemo(() => {
     return customers.map(customer => {
@@ -162,38 +197,52 @@ export function CustomersList({ customers, quotes, jobs, onSelectCustomer, onNew
           </div>
         </div>
         
-        <div className="relative flex-1 max-w-2xl">
-          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search customers..."
-            className="pl-10 pr-32"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchQuery('')}
-                className="h-7 w-7 p-0"
-                title="Clear search"
-              >
-                <X size={14} />
-              </Button>
-            )}
-            <Popover>
-              <PopoverTrigger asChild>
+        <div className="flex items-center gap-2 max-w-3xl">
+          <div className="relative flex-1">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <MagnifyingGlass className="text-muted-foreground" size={18} />
+              {onAddRecentSearch && onRemoveRecentSearch && onClearRecentSearches && (
+                <RecentSearchesDropdown
+                  context="customers"
+                  searches={recentSearches}
+                  onSelectSearch={setSearchQuery}
+                  onClearSearches={onClearRecentSearches}
+                  onRemoveSearch={onRemoveRecentSearch}
+                  currentQuery={searchQuery}
+                  onQueryChange={setSearchQuery}
+                />
+              )}
+            </div>
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search customers..."
+              className="pl-16 pr-32"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {searchQuery && (
                 <Button
-                  variant={hasActiveFilters ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-7 px-2 gap-1"
-                  title="Filter options"
+                  onClick={() => setSearchQuery('')}
+                  className="h-7 w-7 p-0"
+                  title="Clear search"
                 >
-                  <FunnelSimple size={14} />
-                  {hasActiveFilters && <span className="text-xs">•</span>}
+                  <X size={14} />
                 </Button>
-              </PopoverTrigger>
+              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={hasActiveFilters ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 gap-1"
+                    title="Filter options"
+                  >
+                    <FunnelSimple size={14} />
+                    {hasActiveFilters && <span className="text-xs">•</span>}
+                  </Button>
+                </PopoverTrigger>
               <PopoverContent className="w-72" align="end">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -241,7 +290,23 @@ export function CustomersList({ customers, quotes, jobs, onSelectCustomer, onNew
                 </div>
               </PopoverContent>
             </Popover>
+            </div>
           </div>
+          
+          {onSaveFilterPreset && onDeleteFilterPreset && onTogglePinPreset && (
+            <FilterPresetManager
+              context="customers"
+              currentFilters={{ sortBy, groupBy }}
+              presets={filterPresets}
+              onSavePreset={onSaveFilterPreset}
+              onLoadPreset={(preset) => {
+                if (preset.filters.sortBy) setSortBy(preset.filters.sortBy as SortOption)
+                if (preset.filters.groupBy) setGroupBy(preset.filters.groupBy as GroupByOption)
+              }}
+              onDeletePreset={onDeleteFilterPreset}
+              onTogglePin={onTogglePinPreset}
+            />
+          )}
         </div>
       </div>
       

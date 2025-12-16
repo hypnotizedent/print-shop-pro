@@ -12,9 +12,11 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { QuoteCard } from '@/components/QuoteCard'
 import { BulkQuoteReminders } from '@/components/BulkQuoteReminders'
+import { FilterPresetManager } from '@/components/FilterPresetManager'
+import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
 import { Plus, MagnifyingGlass, FunnelSimple, CheckSquare, FileText, Trash, EnvelopeSimple, FilePlus, X } from '@phosphor-icons/react'
-import type { Quote, Customer, QuoteStatus, EmailTemplate, EmailNotification } from '@/lib/types'
-import { useState } from 'react'
+import type { Quote, Customer, QuoteStatus, EmailTemplate, EmailNotification, FilterPreset, RecentSearch } from '@/lib/types'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { exportInvoiceAsPDF } from '@/lib/invoice-generator'
 import { sendInvoiceEmail } from '@/lib/invoice-email'
@@ -24,6 +26,8 @@ interface QuotesListProps {
   quotes: Quote[]
   customers: Customer[]
   emailTemplates: EmailTemplate[]
+  filterPresets: FilterPreset[]
+  recentSearches: RecentSearch[]
   onSelectQuote: (quote: Quote) => void
   onNewQuote: () => void
   onSaveQuote: (quote: Quote) => void
@@ -32,12 +36,20 @@ interface QuotesListProps {
   onDeleteQuotes?: (quoteIds: string[]) => void
   onBulkStatusChange?: (quoteIds: string[], status: QuoteStatus) => void
   onSendEmails?: (notifications: EmailNotification[]) => void
+  onSaveFilterPreset?: (preset: FilterPreset) => void
+  onDeleteFilterPreset?: (presetId: string) => void
+  onTogglePinPreset?: (presetId: string) => void
+  onAddRecentSearch?: (search: RecentSearch) => void
+  onRemoveRecentSearch?: (searchId: string) => void
+  onClearRecentSearches?: () => void
 }
 
 export function QuotesList({ 
   quotes, 
   customers,
   emailTemplates,
+  filterPresets = [],
+  recentSearches = [],
   onSelectQuote, 
   onNewQuote, 
   onSaveQuote,
@@ -45,7 +57,13 @@ export function QuotesList({
   onConvertToJob,
   onDeleteQuotes,
   onBulkStatusChange,
-  onSendEmails
+  onSendEmails,
+  onSaveFilterPreset,
+  onDeleteFilterPreset,
+  onTogglePinPreset,
+  onAddRecentSearch,
+  onRemoveRecentSearch,
+  onClearRecentSearches,
 }: QuotesListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
@@ -68,6 +86,17 @@ export function QuotesList({
       const dateB = new Date(b.created_at).getTime()
       return dateSort === 'asc' ? dateA - dateB : dateB - dateA
     })
+  
+  const { recordSearch } = useRecentSearches('quotes', recentSearches, onAddRecentSearch || (() => {}))
+  
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const timeoutId = setTimeout(() => {
+        recordSearch(searchQuery, filteredAndSortedQuotes.length)
+      }, 1000)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [searchQuery])
   
   const needsAction = filteredAndSortedQuotes.filter(q => 
     q.status === 'draft' || q.status === 'sent' || q.status === 'approved'
@@ -169,6 +198,20 @@ export function QuotesList({
     setDateSort('desc')
   }
 
+  const handleLoadPreset = (preset: FilterPreset) => {
+    if (preset.filters.statusFilter) {
+      setStatusFilter(preset.filters.statusFilter as QuoteStatus | 'all')
+    }
+    if (preset.filters.dateSort) {
+      setDateSort(preset.filters.dateSort)
+    }
+  }
+
+  const currentFilters = {
+    statusFilter,
+    dateSort,
+  }
+
   const getStatusLabel = (status: QuoteStatus | 'all') => {
     switch (status) {
       case 'all': return 'All Statuses'
@@ -205,87 +248,114 @@ export function QuotesList({
           </div>
         </div>
         
-        <div className="relative flex-1">
-          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search quotes..."
-            className="pl-10 pr-32"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchQuery('')}
-                className="h-7 w-7 p-0"
-                title="Clear search"
-              >
-                <X size={14} />
-              </Button>
-            )}
-            <Popover>
-              <PopoverTrigger asChild>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <MagnifyingGlass className="text-muted-foreground" size={18} />
+              {onAddRecentSearch && onRemoveRecentSearch && onClearRecentSearches && (
+                <RecentSearchesDropdown
+                  context="quotes"
+                  searches={recentSearches}
+                  onSelectSearch={setSearchQuery}
+                  onClearSearches={onClearRecentSearches}
+                  onRemoveSearch={onRemoveRecentSearch}
+                  currentQuery={searchQuery}
+                  onQueryChange={setSearchQuery}
+                />
+              )}
+            </div>
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search quotes..."
+              className="pl-16 pr-32"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {searchQuery && (
                 <Button
-                  variant={hasActiveFilters ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-7 px-2 gap-1"
-                  title="Filter options"
+                  onClick={() => setSearchQuery('')}
+                  className="h-7 w-7 p-0"
+                  title="Clear search"
                 >
-                  <FunnelSimple size={14} />
-                  {hasActiveFilters && <span className="text-xs">•</span>}
+                  <X size={14} />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72" align="end">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm">Filters</h4>
-                    {hasActiveFilters && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearAllFilters}
-                        className="h-7 text-xs"
-                      >
-                        Clear all
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">Status</label>
-                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as QuoteStatus | 'all')}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="sent">Sent</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={hasActiveFilters ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 gap-1"
+                    title="Filter options"
+                  >
+                    <FunnelSimple size={14} />
+                    {hasActiveFilters && <span className="text-xs">•</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72" align="end">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-sm">Filters</h4>
+                      {hasActiveFilters && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="h-7 text-xs"
+                        >
+                          Clear all
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">Status</label>
+                      <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as QuoteStatus | 'all')}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="sent">Sent</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">Sort by Date</label>
-                    <Select value={dateSort} onValueChange={(value) => setDateSort(value as 'asc' | 'desc')}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="desc">Newest First</SelectItem>
-                        <SelectItem value="asc">Oldest First</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-muted-foreground">Sort by Date</label>
+                      <Select value={dateSort} onValueChange={(value) => setDateSort(value as 'asc' | 'desc')}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="desc">Newest First</SelectItem>
+                          <SelectItem value="asc">Oldest First</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
+          
+          {onSaveFilterPreset && onDeleteFilterPreset && onTogglePinPreset && (
+            <FilterPresetManager
+              context="quotes"
+              currentFilters={currentFilters}
+              presets={filterPresets}
+              onSavePreset={onSaveFilterPreset}
+              onLoadPreset={handleLoadPreset}
+              onDeletePreset={onDeleteFilterPreset}
+              onTogglePin={onTogglePinPreset}
+            />
+          )}
         </div>
         
         {hasSelection && (

@@ -338,3 +338,30 @@ export interface ScheduledEmail {
   relatedJobId?: string
   createdBy?: string
 }
+
+export type FilterPresetContext = 'quotes' | 'jobs' | 'customers'
+
+export interface FilterPreset {
+  id: string
+  name: string
+  context: FilterPresetContext
+  filters: {
+    statusFilter?: string
+    dateSort?: 'asc' | 'desc'
+    sortBy?: string
+    groupBy?: string
+    tierFilter?: string
+    customFilters?: Record<string, any>
+  }
+  createdAt: string
+  lastUsed?: string
+  isPinned?: boolean
+}
+
+export interface RecentSearch {
+  id: string
+  query: string
+  context: FilterPresetContext
+  timestamp: string
+  resultsCount?: number
+}

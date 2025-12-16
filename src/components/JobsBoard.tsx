@@ -13,14 +13,19 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { JobCard } from '@/components/JobCard'
 import { JobDetail } from '@/components/JobDetail'
 import { ProductionCalendar } from '@/components/ProductionCalendar'
-import type { Job, JobStatus, ArtworkFile, Customer, Expense } from '@/lib/types'
+import { FilterPresetManager } from '@/components/FilterPresetManager'
+import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
+import type { Job, JobStatus, ArtworkFile, Customer, Expense, FilterPreset, RecentSearch } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { useEffect } from 'react'
 
 interface JobsBoardProps {
   jobs: Job[]
   customers: Customer[]
+  filterPresets?: FilterPreset[]
+  recentSearches?: RecentSearch[]
   onUpdateJobStatus: (jobId: string, status: JobStatus) => void
   onUpdateJobArtwork: (jobId: string, itemId: string, artwork: ArtworkFile[]) => void
   onNavigateToCustomer: (customerId: string) => void
@@ -28,18 +33,32 @@ interface JobsBoardProps {
   onUpdateJobExpenses?: (jobId: string, expenses: Expense[]) => void
   onDeleteJobs?: (jobIds: string[]) => void
   onBulkStatusChange?: (jobIds: string[], status: JobStatus) => void
+  onSaveFilterPreset?: (preset: FilterPreset) => void
+  onDeleteFilterPreset?: (presetId: string) => void
+  onTogglePinPreset?: (presetId: string) => void
+  onAddRecentSearch?: (search: RecentSearch) => void
+  onRemoveRecentSearch?: (searchId: string) => void
+  onClearRecentSearches?: () => void
 }
 
 export function JobsBoard({ 
   jobs, 
   customers, 
+  filterPresets = [],
+  recentSearches = [],
   onUpdateJobStatus, 
   onUpdateJobArtwork, 
   onNavigateToCustomer,
   onUpdateJobNickname,
   onUpdateJobExpenses,
   onDeleteJobs,
-  onBulkStatusChange
+  onBulkStatusChange,
+  onSaveFilterPreset,
+  onDeleteFilterPreset,
+  onTogglePinPreset,
+  onAddRecentSearch,
+  onRemoveRecentSearch,
+  onClearRecentSearches,
 }: JobsBoardProps) {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -122,6 +141,31 @@ export function JobsBoard({
     setStatusFilter('all')
     setDateSort('desc')
   }
+
+  const handleLoadPreset = (preset: FilterPreset) => {
+    if (preset.filters.statusFilter) {
+      setStatusFilter(preset.filters.statusFilter as JobStatus | 'all')
+    }
+    if (preset.filters.dateSort) {
+      setDateSort(preset.filters.dateSort)
+    }
+  }
+
+  const currentFilters = {
+    statusFilter,
+    dateSort,
+  }
+
+  const { recordSearch } = useRecentSearches('jobs', recentSearches, onAddRecentSearch || (() => {}))
+  
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const timeoutId = setTimeout(() => {
+        recordSearch(searchTerm, filteredAndSortedJobs.length)
+      }, 1000)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [searchTerm])
   
   
   return (
@@ -139,38 +183,52 @@ export function JobsBoard({
           </Button>
         </div>
         
-        <div className="relative flex-1">
-          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-          <Input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search jobs..."
-            className="pl-10 pr-32"
-          />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searchTerm && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchTerm('')}
-                className="h-7 w-7 p-0"
-                title="Clear search"
-              >
-                <X size={14} />
-              </Button>
-            )}
-            <Popover>
-              <PopoverTrigger asChild>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <MagnifyingGlass className="text-muted-foreground" size={18} />
+              {onAddRecentSearch && onRemoveRecentSearch && onClearRecentSearches && (
+                <RecentSearchesDropdown
+                  context="jobs"
+                  searches={recentSearches}
+                  onSelectSearch={setSearchTerm}
+                  onClearSearches={onClearRecentSearches}
+                  onRemoveSearch={onRemoveRecentSearch}
+                  currentQuery={searchTerm}
+                  onQueryChange={setSearchTerm}
+                />
+              )}
+            </div>
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search jobs..."
+              className="pl-16 pr-32"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {searchTerm && (
                 <Button
-                  variant={hasActiveFilters ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-7 px-2 gap-1"
-                  title="Filter options"
+                  onClick={() => setSearchTerm('')}
+                  className="h-7 w-7 p-0"
+                  title="Clear search"
                 >
-                  <FunnelSimple size={14} />
-                  {hasActiveFilters && <span className="text-xs">•</span>}
+                  <X size={14} />
                 </Button>
-              </PopoverTrigger>
+              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={hasActiveFilters ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2 gap-1"
+                    title="Filter options"
+                  >
+                    <FunnelSimple size={14} />
+                    {hasActiveFilters && <span className="text-xs">•</span>}
+                  </Button>
+                </PopoverTrigger>
               <PopoverContent className="w-72" align="end">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -222,7 +280,20 @@ export function JobsBoard({
                 </div>
               </PopoverContent>
             </Popover>
+            </div>
           </div>
+          
+          {onSaveFilterPreset && onDeleteFilterPreset && onTogglePinPreset && (
+            <FilterPresetManager
+              context="jobs"
+              currentFilters={currentFilters}
+              presets={filterPresets}
+              onSavePreset={onSaveFilterPreset}
+              onLoadPreset={handleLoadPreset}
+              onDeletePreset={onDeleteFilterPreset}
+              onTogglePin={onTogglePinPreset}
+            />
+          )}
         </div>
         
         {hasSelection && (
