@@ -3,6 +3,7 @@ import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Login } from '@/components/Login'
+import { Home } from '@/components/Home'
 import { QuotesList } from '@/components/QuotesList'
 import { QuoteBuilder } from '@/components/QuoteBuilder'
 import { JobsBoard } from '@/components/JobsBoard'
@@ -12,6 +13,7 @@ import { Settings } from '@/components/Settings'
 import { Reports } from '@/components/Reports'
 import { GlobalSearch } from '@/components/GlobalSearch'
 import { 
+  House,
   FileText, 
   Briefcase, 
   Users, 
@@ -33,7 +35,7 @@ import {
 } from '@/lib/data'
 import { createQuoteApprovalEmail, createQuoteApprovedEmail, createInvoiceEmail } from '@/lib/email-notifications'
 
-type View = 'quotes' | 'jobs' | 'customers' | 'reports' | 'settings'
+type View = 'home' | 'quotes' | 'jobs' | 'customers' | 'reports' | 'settings'
 type Page = 
   | { type: 'list'; view: View }
   | { type: 'quote-builder'; quote: Quote; fromCustomerId?: string }
@@ -51,7 +53,7 @@ function App() {
   const [emailTemplates, setEmailTemplates] = useKV<import('@/lib/types').EmailTemplate[]>('email-templates', sampleEmailTemplates)
   const [filterPresets, setFilterPresets] = useKV<FilterPreset[]>('filter-presets', [])
   const [recentSearches, setRecentSearches] = useKV<RecentSearch[]>('recent-searches', [])
-  const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
+  const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'home' })
   
   useEffect(() => {
     const primaryColor = localStorage.getItem('theme-primary-color')
@@ -131,7 +133,7 @@ function App() {
   
   const handleLogout = () => {
     setIsLoggedIn(false)
-    setCurrentPage({ type: 'list', view: 'quotes' })
+    setCurrentPage({ type: 'list', view: 'home' })
     toast.success('Logged out')
   }
 
@@ -471,6 +473,7 @@ function App() {
   }
   
   const navItems = [
+    { id: 'home' as const, label: 'Home', icon: House },
     { id: 'quotes' as const, label: 'Quotes', icon: FileText },
     { id: 'jobs' as const, label: 'Jobs', icon: Briefcase },
     { id: 'customers' as const, label: 'Customers', icon: Users },
@@ -537,6 +540,26 @@ function App() {
         </aside>
         
         <main className="flex-1 min-w-0">
+          {currentPage.type === 'list' && currentPage.view === 'home' && (
+            <Home
+              quotes={quotes || []}
+              jobs={jobs || []}
+              customers={customers || []}
+              onNavigateToQuotes={() => setCurrentPage({ type: 'list', view: 'quotes' })}
+              onNavigateToJobs={() => setCurrentPage({ type: 'list', view: 'jobs' })}
+              onNavigateToCustomers={() => setCurrentPage({ type: 'list', view: 'customers' })}
+              onSelectQuote={handleSelectQuote}
+              onSelectJob={(job) => setCurrentPage({ type: 'list', view: 'jobs' })}
+              onUpdateQuoteStatus={(quoteId, status) => {
+                setQuotes((current) => {
+                  const existing = current || []
+                  return existing.map(q => q.id === quoteId ? { ...q, status } : q)
+                })
+              }}
+              onUpdateJobStatus={handleUpdateJobStatus}
+            />
+          )}
+          
           {currentPage.type === 'list' && currentPage.view === 'quotes' && (
             <QuotesList
               quotes={quotes || []}
