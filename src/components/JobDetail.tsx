@@ -3,9 +3,10 @@ import { Card } from '@/components/ui/card'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Progress } from '@/components/ui/progress'
 import { ProductMockup } from '@/components/ProductMockup'
+import { ArtworkUpload } from '@/components/ArtworkUpload'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, Check } from '@phosphor-icons/react'
-import type { Job, JobStatus } from '@/lib/types'
+import type { Job, JobStatus, ArtworkFile } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 
@@ -13,16 +14,40 @@ interface JobDetailProps {
   job: Job
   onBack: () => void
   onUpdateStatus: (status: JobStatus) => void
+  onUpdateArtwork?: (itemId: string, artwork: ArtworkFile[]) => void
 }
 
 const statusSteps: JobStatus[] = ['pending', 'art-approval', 'scheduled', 'printing', 'finishing', 'ready']
 
-export function JobDetail({ job, onBack, onUpdateStatus }: JobDetailProps) {
+export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork }: JobDetailProps) {
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const currentStepIndex = statusSteps.indexOf(job.status)
   const [mockupView, setMockupView] = useState<'front' | 'back'>('front')
   const primaryItem = job.line_items[0]
+
+  const handleArtworkApproval = (itemId: string, location: string, approved: boolean) => {
+    if (!onUpdateArtwork) return
+    
+    const item = job.line_items.find(i => i.id === itemId)
+    if (!item?.artwork) return
+
+    const updatedArtwork = item.artwork.map(a => 
+      a.location === location ? { ...a, approved } : a
+    )
+    
+    onUpdateArtwork(itemId, updatedArtwork)
+  }
+
+  const allArtworkApproved = job.line_items.every(item => {
+    const hasArtwork = (item.artwork || []).length > 0
+    return !hasArtwork || (item.artwork || []).every(a => a.approved)
+  })
+
+  const totalArtworkFiles = job.line_items.reduce((sum, item) => sum + (item.artwork || []).length, 0)
+  const approvedArtworkFiles = job.line_items.reduce((sum, item) => 
+    sum + (item.artwork || []).filter(a => a.approved).length, 0
+  )
   
   return (
     <div className="h-full overflow-auto">
@@ -147,6 +172,18 @@ export function JobDetail({ job, onBack, onUpdateStatus }: JobDetailProps) {
               </div>
             </div>
           </div>
+
+          {totalArtworkFiles > 0 && (
+            <div className="pt-4 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">Artwork Approval Status</div>
+                <div className={`text-sm font-semibold ${allArtworkApproved ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                  {approvedArtworkFiles}/{totalArtworkFiles} Approved
+                  {allArtworkApproved && <Check size={16} className="inline ml-1" weight="bold" />}
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
         
         {primaryItem && (
@@ -197,7 +234,7 @@ export function JobDetail({ job, onBack, onUpdateStatus }: JobDetailProps) {
           <div className="space-y-3">
             {job.line_items.map((item) => (
               <Card key={item.id} className="p-4">
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 mb-4">
                   <div className="flex-shrink-0 w-12 h-12">
                     <ProductMockup
                       productType={item.product_type}
@@ -232,6 +269,28 @@ export function JobDetail({ job, onBack, onUpdateStatus }: JobDetailProps) {
                     </div>
                   </div>
                 </div>
+
+                {item.print_locations.length > 0 && (
+                  <div className="pt-4 border-t border-border">
+                    <div className="text-sm font-semibold mb-3">Artwork Files</div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {item.print_locations.map(location => {
+                        const artwork = (item.artwork || []).find(a => a.location === location)
+                        return (
+                          <ArtworkUpload
+                            key={location}
+                            location={location}
+                            artwork={artwork}
+                            onUpload={() => {}}
+                            onRemove={() => {}}
+                            canApprove={true}
+                            onApprove={(approved) => handleArtworkApproval(item.id, location, approved)}
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </Card>
             ))}
           </div>

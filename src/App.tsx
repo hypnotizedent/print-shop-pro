@@ -13,7 +13,7 @@ import {
   ChartBar,
   Sparkle
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, ArtworkFile } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -72,6 +72,36 @@ function App() {
       return existing.map(j => j.id === jobId ? { ...j, status } : j)
     })
     toast.success('Job status updated')
+  }
+
+  const handleUpdateJobArtwork = (jobId: string, itemId: string, artwork: ArtworkFile[]) => {
+    setJobs((current) => {
+      const existing = current || []
+      const updatedJobs = existing.map(j => {
+        if (j.id === jobId) {
+          return {
+            ...j,
+            line_items: j.line_items.map(item => 
+              item.id === itemId ? { ...item, artwork } : item
+            )
+          }
+        }
+        return j
+      })
+
+      const job = updatedJobs.find(j => j.id === jobId)
+      const allApproved = artwork.every(a => a.approved)
+      if (allApproved && artwork.length > 0) {
+        const allItemsApproved = job?.line_items.every(item => 
+          (item.artwork || []).every(a => a.approved)
+        )
+        if (allItemsApproved) {
+          setTimeout(() => toast.success('All artwork approved!'), 100)
+        }
+      }
+
+      return updatedJobs
+    })
   }
   
   const handleConvertToJob = (quote: Quote) => {
@@ -201,6 +231,7 @@ function App() {
               job={currentPage.job}
               onBack={() => setCurrentPage({ type: 'list', view: 'jobs' })}
               onUpdateStatus={(status) => handleUpdateJobStatus(currentPage.job.id, status)}
+              onUpdateArtwork={(itemId, artwork) => handleUpdateJobArtwork(currentPage.job.id, itemId, artwork)}
             />
           )}
         </main>

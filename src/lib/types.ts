@@ -22,6 +22,14 @@ export interface Sizes {
   '3XL': number
 }
 
+export interface ArtworkFile {
+  location: string
+  dataUrl: string
+  fileName: string
+  approved?: boolean
+  uploadedAt: string
+}
+
 export interface LineItem {
   id: string
   product_type: ProductType
@@ -29,6 +37,7 @@ export interface LineItem {
   product_color?: string
   decoration: DecorationType
   print_locations: string[]
+  artwork?: ArtworkFile[]
   colors: number
   sizes: Sizes
   quantity: number

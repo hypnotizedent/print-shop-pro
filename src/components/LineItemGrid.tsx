@@ -3,9 +3,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { SizeInputRow } from './SizeInputRow'
 import { ProductMockup } from './ProductMockup'
-import { Trash } from '@phosphor-icons/react'
-import type { LineItem, ProductType, DecorationType, Sizes } from '@/lib/types'
+import { ArtworkUpload } from './ArtworkUpload'
+import { Trash, Images } from '@phosphor-icons/react'
+import type { LineItem, ProductType, DecorationType, Sizes, ArtworkFile } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
+import { useState } from 'react'
 
 interface LineItemGridProps {
   items: LineItem[]
@@ -13,6 +15,8 @@ interface LineItemGridProps {
 }
 
 export function LineItemGrid({ items, onChange }: LineItemGridProps) {
+  const [expandedArtwork, setExpandedArtwork] = useState<Set<string>>(new Set())
+
   const updateItem = (index: number, updates: Partial<LineItem>) => {
     const newItems = [...items]
     const item = { ...newItems[index], ...updates }
@@ -29,6 +33,40 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
   
   const removeItem = (index: number) => {
     onChange(items.filter((_, i) => i !== index))
+  }
+
+  const toggleArtworkSection = (itemId: string) => {
+    setExpandedArtwork(prev => {
+      const next = new Set(prev)
+      if (next.has(itemId)) {
+        next.delete(itemId)
+      } else {
+        next.add(itemId)
+      }
+      return next
+    })
+  }
+
+  const handleArtworkUpload = (index: number, artwork: ArtworkFile) => {
+    const item = items[index]
+    const existingArtwork = item.artwork || []
+    const artworkIndex = existingArtwork.findIndex(a => a.location === artwork.location)
+    
+    let updatedArtwork: ArtworkFile[]
+    if (artworkIndex >= 0) {
+      updatedArtwork = [...existingArtwork]
+      updatedArtwork[artworkIndex] = artwork
+    } else {
+      updatedArtwork = [...existingArtwork, artwork]
+    }
+    
+    updateItem(index, { artwork: updatedArtwork })
+  }
+
+  const handleArtworkRemove = (index: number, location: string) => {
+    const item = items[index]
+    const updatedArtwork = (item.artwork || []).filter(a => a.location !== location)
+    updateItem(index, { artwork: updatedArtwork })
   }
   
   return (
@@ -172,27 +210,63 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
             />
           </div>
           
-          <div className="flex justify-between items-center pt-2 border-t border-border">
-            <div className="text-sm">
-              <span className="text-muted-foreground">Quantity: </span>
-              <span className="font-semibold tabular-nums">{item.quantity}</span>
-              <span className="text-muted-foreground mx-2">•</span>
-              <span className="text-muted-foreground">Locations: </span>
-              <Input
-                value={item.print_locations.join(', ')}
-                onChange={(e) => updateItem(index, { 
-                  print_locations: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
-                })}
-                placeholder="e.g., front, back"
-                className="inline-flex w-48 h-7 text-sm"
-              />
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-muted-foreground">Line Total</div>
-              <div className="text-lg font-bold text-emerald-400 tabular-nums">
-                ${item.line_total.toFixed(2)}
+          <div className="pt-2 border-t border-border space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Quantity: </span>
+                <span className="font-semibold tabular-nums">{item.quantity}</span>
+                <span className="text-muted-foreground mx-2">•</span>
+                <span className="text-muted-foreground">Locations: </span>
+                <Input
+                  value={item.print_locations.join(', ')}
+                  onChange={(e) => updateItem(index, { 
+                    print_locations: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
+                  })}
+                  placeholder="e.g., front, back"
+                  className="inline-flex w-48 h-7 text-sm"
+                />
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-muted-foreground">Line Total</div>
+                <div className="text-lg font-bold text-emerald-400 tabular-nums">
+                  ${item.line_total.toFixed(2)}
+                </div>
               </div>
             </div>
+
+            {item.print_locations.length > 0 && (
+              <div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => toggleArtworkSection(item.id)}
+                  className="w-full justify-start"
+                >
+                  <Images size={16} className="mr-2" />
+                  Artwork ({(item.artwork || []).length}/{item.print_locations.length})
+                  <span className="ml-auto">
+                    {expandedArtwork.has(item.id) ? '−' : '+'}
+                  </span>
+                </Button>
+
+                {expandedArtwork.has(item.id) && (
+                  <div className="grid grid-cols-4 gap-3 mt-3">
+                    {item.print_locations.map(location => {
+                      const artwork = (item.artwork || []).find(a => a.location === location)
+                      return (
+                        <ArtworkUpload
+                          key={location}
+                          location={location}
+                          artwork={artwork}
+                          onUpload={(artwork) => handleArtworkUpload(index, artwork)}
+                          onRemove={() => handleArtworkRemove(index, location)}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ))}
