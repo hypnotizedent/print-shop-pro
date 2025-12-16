@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Warning, CurrencyDollar, Envelope, CalendarBlank, Bell } from '@phosphor-icons/react'
+import { Warning, CurrencyDollar, Envelope, CalendarBlank, Bell, DeviceMobile, Star } from '@phosphor-icons/react'
 import type { Quote, PaymentReminder } from '@/lib/types'
 
 interface UnpaidBalancesReportProps {
@@ -42,6 +42,8 @@ export function UnpaidBalancesReport({ quotes, reminders, onSelectQuote }: Unpai
     .filter(item => item.daysOverdue > 0)
     .reduce((sum, item) => sum + item.balance, 0)
   const overdueCount = quotesWithBalance.filter(item => item.daysOverdue > 0).length
+  const highPriorityCount = quotesWithBalance.filter(item => item.reminder?.highPriority && item.daysOverdue > 0).length
+  const smsEnabledCount = reminders.filter(r => r.smsEnabled && r.enabled).length
 
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return 'N/A'
@@ -54,7 +56,7 @@ export function UnpaidBalancesReport({ quotes, reminders, onSelectQuote }: Unpai
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-destructive/20 rounded-lg">
@@ -97,6 +99,24 @@ export function UnpaidBalancesReport({ quotes, reminders, onSelectQuote }: Unpai
             {reminders.reduce((sum, r) => sum + r.emailsSent, 0)} emails sent
           </div>
         </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-yellow-500/20 rounded-lg">
+              <Star size={24} weight="fill" className="text-yellow-500" />
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">High Priority</div>
+              <div className="text-2xl font-bold text-foreground">
+                {highPriorityCount}
+              </div>
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <DeviceMobile size={14} />
+            {smsEnabledCount} with SMS enabled
+          </div>
+        </Card>
       </div>
 
       <Card className="p-6">
@@ -112,13 +132,20 @@ export function UnpaidBalancesReport({ quotes, reminders, onSelectQuote }: Unpai
               <Card 
                 key={quote.id} 
                 className={`p-4 cursor-pointer hover:bg-accent/50 transition-colors ${
-                  daysOverdue > 0 ? 'border-destructive/50 bg-destructive/5' : ''
+                  daysOverdue > 0 && reminder?.highPriority 
+                    ? 'border-yellow-500/50 bg-yellow-500/5' 
+                    : daysOverdue > 0 
+                    ? 'border-destructive/50 bg-destructive/5' 
+                    : ''
                 }`}
                 onClick={() => onSelectQuote(quote)}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
+                      {reminder?.highPriority && daysOverdue > 0 && (
+                        <Star size={16} weight="fill" className="text-yellow-500" />
+                      )}
                       <span className="font-semibold text-foreground">
                         {quote.nickname || quote.quote_number}
                       </span>
@@ -128,10 +155,21 @@ export function UnpaidBalancesReport({ quotes, reminders, onSelectQuote }: Unpai
                           {daysOverdue} days overdue
                         </Badge>
                       )}
+                      {reminder?.highPriority && (
+                        <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-500">
+                          HIGH PRIORITY
+                        </Badge>
+                      )}
                       {reminder?.enabled && (
                         <Badge variant="secondary" className="text-xs">
                           <Bell size={12} className="mr-1" />
                           Reminders On
+                        </Badge>
+                      )}
+                      {reminder?.smsEnabled && (
+                        <Badge variant="secondary" className="text-xs">
+                          <DeviceMobile size={12} className="mr-1" />
+                          SMS
                         </Badge>
                       )}
                     </div>
@@ -162,15 +200,27 @@ export function UnpaidBalancesReport({ quotes, reminders, onSelectQuote }: Unpai
                     </div>
 
                     {reminder && (
-                      <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground flex items-center gap-4">
+                      <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground flex items-center gap-4 flex-wrap">
                         {reminder.lastSentDate && (
-                          <span>Last reminder: {formatDate(reminder.lastSentDate)}</span>
+                          <span className="flex items-center gap-1">
+                            <Envelope size={12} />
+                            Last email: {formatDate(reminder.lastSentDate)}
+                          </span>
+                        )}
+                        {reminder.lastSmsSentDate && reminder.smsEnabled && (
+                          <span className="flex items-center gap-1">
+                            <DeviceMobile size={12} />
+                            Last SMS: {formatDate(reminder.lastSmsSentDate)}
+                          </span>
                         )}
                         {reminder.nextReminderDate && reminder.enabled && (
                           <span>Next: {formatDate(reminder.nextReminderDate)}</span>
                         )}
                         {reminder.emailsSent > 0 && (
-                          <span>{reminder.emailsSent} reminder{reminder.emailsSent !== 1 ? 's' : ''} sent</span>
+                          <span>{reminder.emailsSent} email{reminder.emailsSent !== 1 ? 's' : ''}</span>
+                        )}
+                        {reminder.smsSent && reminder.smsSent > 0 && (
+                          <span>{reminder.smsSent} SMS</span>
                         )}
                       </div>
                     )}

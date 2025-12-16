@@ -5,10 +5,12 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
-import { Download, Palette } from '@phosphor-icons/react'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning } from '@phosphor-icons/react'
 import type { Quote, Job, Customer } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
+import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
 
 interface SettingsProps {
   quotes: Quote[]
@@ -19,9 +21,19 @@ interface SettingsProps {
 export function Settings({ quotes, jobs, customers }: SettingsProps) {
   const [primaryColor, setPrimaryColor] = useKV<string>('theme-primary-color', 'oklch(0.7 0.17 166)')
   const [accentColor, setAccentColor] = useKV<string>('theme-accent-color', 'oklch(0.78 0.15 166)')
+  const [twilioConfig, setTwilioConfig] = useKV<TwilioConfig>('twilio-config', {
+    accountSid: '',
+    authToken: '',
+    fromNumber: ''
+  })
   
   const [primaryInput, setPrimaryInput] = useState(primaryColor || 'oklch(0.7 0.17 166)')
   const [accentInput, setAccentInput] = useState(accentColor || 'oklch(0.78 0.15 166)')
+  const [accountSidInput, setAccountSidInput] = useState(twilioConfig?.accountSid || '')
+  const [authTokenInput, setAuthTokenInput] = useState(twilioConfig?.authToken || '')
+  const [fromNumberInput, setFromNumberInput] = useState(twilioConfig?.fromNumber || '')
+
+  const isTwilioConfigured = validateTwilioConfig(twilioConfig || {})
 
   const handleSaveTheme = () => {
     setPrimaryColor(primaryInput)
@@ -61,6 +73,22 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
   const handleExportCustomers = () => {
     exportCustomersToCSV(customers)
     toast.success('Customers exported to CSV')
+  }
+
+  const handleSaveTwilioConfig = () => {
+    const config: TwilioConfig = {
+      accountSid: accountSidInput,
+      authToken: authTokenInput,
+      fromNumber: fromNumberInput
+    }
+
+    if (!validateTwilioConfig(config)) {
+      toast.error('Invalid Twilio configuration. Please check all fields.')
+      return
+    }
+
+    setTwilioConfig(config)
+    toast.success('Twilio configuration saved!')
   }
 
   return (
@@ -126,6 +154,98 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
                 <Button variant="outline" onClick={handleResetTheme}>
                   Reset to Default
                 </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <DeviceMobile size={24} className={isTwilioConfigured ? 'text-primary' : 'text-muted-foreground'} />
+              <div>
+                <h2 className="text-lg font-semibold">Twilio SMS Configuration</h2>
+                <p className="text-sm text-muted-foreground">Enable SMS reminders for overdue payments</p>
+              </div>
+            </div>
+
+            {isTwilioConfigured ? (
+              <Alert className="mb-4 border-primary/30 bg-primary/5">
+                <CheckCircle size={18} className="text-primary" />
+                <AlertDescription className="text-sm ml-2">
+                  Twilio is configured and ready to send SMS reminders
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="mb-4 border-yellow-500/30 bg-yellow-500/5">
+                <Warning size={18} className="text-yellow-500" />
+                <AlertDescription className="text-sm ml-2">
+                  SMS reminders are disabled. Configure Twilio to enable high-priority payment reminders.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="twilio-account-sid">Account SID</Label>
+                <Input
+                  id="twilio-account-sid"
+                  type="password"
+                  value={accountSidInput}
+                  onChange={(e) => setAccountSidInput(e.target.value)}
+                  placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  className="font-mono text-sm mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Find this in your Twilio Console dashboard
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="twilio-auth-token">Auth Token</Label>
+                <Input
+                  id="twilio-auth-token"
+                  type="password"
+                  value={authTokenInput}
+                  onChange={(e) => setAuthTokenInput(e.target.value)}
+                  placeholder="••••••••••••••••••••••••••••••••"
+                  className="font-mono text-sm mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Keep this secret and never share it
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="twilio-from-number">From Phone Number</Label>
+                <Input
+                  id="twilio-from-number"
+                  type="tel"
+                  value={fromNumberInput}
+                  onChange={(e) => setFromNumberInput(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="font-mono text-sm mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your Twilio phone number (must include country code)
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <Button onClick={handleSaveTwilioConfig}>
+                  Save Twilio Configuration
+                </Button>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold">How SMS Reminders Work</h3>
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>SMS reminders are only sent for high-priority overdue payments</li>
+                  <li>Enable SMS in the Payment Reminders section of each quote</li>
+                  <li>Mark quotes as "High Priority" to enable SMS capability</li>
+                  <li>SMS is sent only when payment is past due date</li>
+                  <li>Standard SMS rates apply based on your Twilio plan</li>
+                </ul>
               </div>
             </div>
           </Card>

@@ -164,4 +164,9 @@ export interface PaymentReminder {
   lastSentDate?: string
   nextReminderDate?: string
   emailsSent: number
+  smsEnabled?: boolean
+  smsPhone?: string
+  lastSmsSentDate?: string
+  smsSent?: number
+  highPriority?: boolean
 }
