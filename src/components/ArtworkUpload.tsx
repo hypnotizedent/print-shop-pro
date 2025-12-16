@@ -5,6 +5,12 @@ import { UploadSimple, X, Check, Clock, Images } from '@phosphor-icons/react'
 import type { ArtworkFile } from '@/lib/types'
 import { toast } from 'sonner'
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 interface ArtworkUploadProps {
   location: string
   artwork?: ArtworkFile
@@ -42,6 +48,7 @@ export function ArtworkUpload({
         location,
         dataUrl,
         fileName: file.name,
+        fileSize: file.size,
         uploadedAt: new Date().toISOString(),
         approved: false
       })
@@ -70,6 +77,7 @@ export function ArtworkUpload({
             location,
             dataUrl,
             fileName: file.name,
+            fileSize: file.size,
             uploadedAt: new Date().toISOString(),
             approved: false
           })
@@ -159,8 +167,11 @@ export function ArtworkUpload({
           <div className="text-xs font-medium truncate" title={artwork.fileName}>
             {artwork.fileName}
           </div>
-          <div className="text-xs text-muted-foreground capitalize">
-            {location.replace('-', ' ')}
+          <div className="text-xs text-muted-foreground capitalize flex items-center justify-between">
+            <span>{location.replace('-', ' ')}</span>
+            {artwork.fileSize && (
+              <span className="text-[10px]">{formatFileSize(artwork.fileSize)}</span>
+            )}
           </div>
         </div>
       </Card>

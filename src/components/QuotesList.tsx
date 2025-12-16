@@ -10,11 +10,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { QuoteCard } from '@/components/QuoteCard'
-import { Plus, MagnifyingGlass, FunnelSimple, CheckSquare, FileText, Trash } from '@phosphor-icons/react'
+import { Plus, MagnifyingGlass, FunnelSimple, CheckSquare, FileText, Trash, EnvelopeSimple, FilePlus } from '@phosphor-icons/react'
 import type { Quote, Customer, QuoteStatus } from '@/lib/types'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { exportInvoiceAsPDF } from '@/lib/invoice-generator'
+import { sendInvoiceEmail } from '@/lib/invoice-email'
+import { exportInvoicesAsZip } from '@/lib/batch-invoice-export'
 
 interface QuotesListProps {
   quotes: Quote[]
@@ -108,48 +110,69 @@ export function QuotesList({
     }
   }
   
-  const handleBulkInvoiceExport = () => {
+  const handleBulkInvoiceExport = async () => {
     if (selectedQuotes.length === 0) return
     
-    selectedQuotes.forEach(quote => {
-      if (quote.status === 'approved') {
-        exportInvoiceAsPDF(quote)
-      }
-    })
+    const approvedQuotes = selectedQuotes.filter(q => q.status === 'approved')
     
-    const approvedCount = selectedQuotes.filter(q => q.status === 'approved').length
-    if (approvedCount > 0) {
-      toast.success(`Exporting ${approvedCount} invoice${approvedCount > 1 ? 's' : ''}`)
-    } else {
+    if (approvedQuotes.length === 0) {
       toast.error('No approved quotes selected')
+      return
     }
+    
+    try {
+      await exportInvoicesAsZip(approvedQuotes)
+      toast.success(`Exported ${approvedQuotes.length} invoice${approvedQuotes.length > 1 ? 's' : ''} as ZIP`)
+      setSelectedQuoteIds(new Set())
+    } catch (error) {
+      toast.error('Failed to export invoices')
+      console.error(error)
+    }
+  }
+  
+  const handleBulkSendInvoices = async () => {
+    if (selectedQuotes.length === 0) return
+    
+    const approvedQuotes = selectedQuotes.filter(q => q.status === 'approved')
+    
+    if (approvedQuotes.length === 0) {
+      toast.error('No approved quotes selected')
+      return
+    }
+    
+    for (const quote of approvedQuotes) {
+      await sendInvoiceEmail(quote)
+    }
+    
+    toast.success(`Email draft${approvedQuotes.length > 1 ? 's' : ''} opened for ${approvedQuotes.length} invoice${approvedQuotes.length > 1 ? 's' : ''}`)
+    setSelectedQuoteIds(new Set())
   }
   
   
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Quotes</h1>
-          <Button onClick={onNewQuote}>
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="border-b border-border p-4 md:p-6 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <h1 className="text-xl md:text-2xl font-bold">Quotes</h1>
+          <Button onClick={onNewQuote} className="w-full sm:w-auto">
             <Plus size={18} className="mr-2" />
             New Quote
           </Button>
         </div>
         
-        <div className="flex gap-3 mb-4">
+        <div className="flex flex-col md:flex-row gap-3 mb-4">
           <div className="relative flex-1">
             <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search quotes by number, nickname, customer, or company..."
+              placeholder="Search quotes..."
               className="pl-10"
             />
           </div>
           
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as QuoteStatus | 'all')}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full md:w-48">
               <div className="flex items-center gap-2">
                 <FunnelSimple size={16} />
                 <SelectValue placeholder="Filter by status" />
@@ -166,7 +189,7 @@ export function QuotesList({
           </Select>
 
           <Select value={dateSort} onValueChange={(value) => setDateSort(value as 'asc' | 'desc')}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Sort by date" />
             </SelectTrigger>
             <SelectContent>
@@ -177,12 +200,14 @@ export function QuotesList({
         </div>
         
         {hasSelection && (
-          <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
-            <CheckSquare size={18} className="text-primary" weight="fill" />
-            <span className="text-sm font-medium">
-              {selectedQuoteIds.size} quote{selectedQuoteIds.size > 1 ? 's' : ''} selected
-            </span>
-            <div className="flex gap-2 ml-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className="flex items-center gap-2">
+              <CheckSquare size={18} className="text-primary" weight="fill" />
+              <span className="text-sm font-medium">
+                {selectedQuoteIds.size} quote{selectedQuoteIds.size > 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2 sm:ml-auto w-full sm:w-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline">
@@ -211,10 +236,23 @@ export function QuotesList({
               <Button 
                 size="sm" 
                 variant="outline"
-                onClick={handleBulkInvoiceExport}
+                onClick={handleBulkSendInvoices}
+                className="flex-1 sm:flex-none"
               >
-                <FileText size={16} className="mr-2" />
-                Export Invoices
+                <EnvelopeSimple size={16} className="sm:mr-2" />
+                <span className="hidden sm:inline">Send Invoices</span>
+                <span className="sm:hidden">Send</span>
+              </Button>
+              
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleBulkInvoiceExport}
+                className="flex-1 sm:flex-none"
+              >
+                <FilePlus size={16} className="sm:mr-2" />
+                <span className="hidden sm:inline">Export as ZIP</span>
+                <span className="sm:hidden">Export</span>
               </Button>
               
               {onDeleteQuotes && (
@@ -222,9 +260,11 @@ export function QuotesList({
                   size="sm" 
                   variant="destructive"
                   onClick={handleBulkDelete}
+                  className="flex-1 sm:flex-none"
                 >
-                  <Trash size={16} className="mr-2" />
-                  Delete
+                  <Trash size={16} className="sm:mr-2" />
+                  <span className="hidden sm:inline">Delete</span>
+                  <span className="sm:hidden">Del</span>
                 </Button>
               )}
               
@@ -232,6 +272,7 @@ export function QuotesList({
                 size="sm" 
                 variant="ghost"
                 onClick={() => setSelectedQuoteIds(new Set())}
+                className="flex-1 sm:flex-none"
               >
                 Cancel
               </Button>
@@ -240,8 +281,8 @@ export function QuotesList({
         )}
       </div>
       
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex-1 overflow-auto p-4 md:p-6">
+        <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
           <div className="flex items-center gap-3 mb-4">
             <Checkbox 
               checked={hasSelection && selectedQuoteIds.size === filteredAndSortedQuotes.length}

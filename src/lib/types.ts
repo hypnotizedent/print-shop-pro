@@ -36,6 +36,7 @@ export interface ArtworkFile {
   location: string
   dataUrl: string
   fileName: string
+  fileSize?: number
   approved?: boolean
   uploadedAt: string
 }

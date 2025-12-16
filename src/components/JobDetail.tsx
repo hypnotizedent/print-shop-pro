@@ -24,16 +24,19 @@ interface JobDetailProps {
   onUpdateStatus: (status: JobStatus) => void
   onUpdateArtwork?: (itemId: string, artwork: ArtworkFile[]) => void
   onNavigateToCustomer?: () => void
+  onUpdateNickname?: (nickname: string) => void
   isInline?: boolean
 }
 
 const statusSteps: JobStatus[] = ['pending', 'art-approval', 'scheduled', 'printing', 'finishing', 'ready']
 
-export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavigateToCustomer, isInline = false }: JobDetailProps) {
+export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavigateToCustomer, onUpdateNickname, isInline = false }: JobDetailProps) {
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const currentStepIndex = statusSteps.indexOf(job.status)
   const [mockupView, setMockupView] = useState<'front' | 'back'>('front')
+  const [isEditingNickname, setIsEditingNickname] = useState(false)
+  const [nicknameValue, setNicknameValue] = useState(job.nickname || '')
   const primaryItem = job.line_items[0]
   const bulkUploadRef = useRef<HTMLInputElement>(null)
 
@@ -124,8 +127,66 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold">Job {job.job_number}</h1>
-                {job.nickname && (
-                  <span className="text-lg text-muted-foreground">({job.nickname})</span>
+                {!isEditingNickname && job.nickname && (
+                  <span 
+                    className="text-lg text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                    onClick={() => onUpdateNickname && setIsEditingNickname(true)}
+                    title="Click to edit"
+                  >
+                    ({job.nickname})
+                  </span>
+                )}
+                {!isEditingNickname && !job.nickname && onUpdateNickname && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setIsEditingNickname(true)}
+                    className="text-xs"
+                  >
+                    + Add nickname
+                  </Button>
+                )}
+                {isEditingNickname && onUpdateNickname && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={nicknameValue}
+                      onChange={(e) => setNicknameValue(e.target.value)}
+                      placeholder="Enter nickname..."
+                      className="px-2 py-1 border border-border rounded bg-background text-sm"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          onUpdateNickname(nicknameValue)
+                          setIsEditingNickname(false)
+                          toast.success('Nickname updated')
+                        } else if (e.key === 'Escape') {
+                          setNicknameValue(job.nickname || '')
+                          setIsEditingNickname(false)
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        onUpdateNickname(nicknameValue)
+                        setIsEditingNickname(false)
+                        toast.success('Nickname updated')
+                      }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setNicknameValue(job.nickname || '')
+                        setIsEditingNickname(false)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 )}
               </div>
               <div className="text-sm text-muted-foreground mt-1">

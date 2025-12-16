@@ -116,6 +116,13 @@ function App() {
     toast.success('Job status updated')
   }
 
+  const handleUpdateJobNickname = (jobId: string, nickname: string) => {
+    setJobs((current) => {
+      const existing = current || []
+      return existing.map(j => j.id === jobId ? { ...j, nickname } : j)
+    })
+  }
+
   const handleUpdateJobArtwork = (jobId: string, itemId: string, artwork: ArtworkFile[]) => {
     setJobs((current) => {
       const existing = current || []
@@ -232,12 +239,13 @@ function App() {
     <div className="h-screen flex flex-col bg-background text-foreground">
       <Toaster position="top-right" />
       
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Sparkle size={28} weight="fill" className="text-primary" />
-            <h1 className="text-xl font-bold tracking-tight">MINT PRINTS</h1>
-          </div>
+      <header className="border-b border-border px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-4 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Sparkle size={28} weight="fill" className="text-primary" />
+          <h1 className="text-lg md:text-xl font-bold tracking-tight hidden sm:block">MINT PRINTS</h1>
+          <h1 className="text-lg font-bold tracking-tight sm:hidden">MINT</h1>
+        </div>
+        <div className="flex-1 max-w-md mx-auto">
           <GlobalSearch
             quotes={quotes || []}
             jobs={jobs || []}
@@ -247,14 +255,14 @@ function App() {
             onSelectCustomer={handleSearchSelectCustomer}
           />
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout}>
-          <SignOut size={18} className="mr-2" />
-          Logout
+        <Button variant="ghost" size="sm" onClick={handleLogout} className="flex-shrink-0">
+          <SignOut size={18} className="md:mr-2" />
+          <span className="hidden md:inline">Logout</span>
         </Button>
       </header>
       
-      <div className="flex-1 flex min-h-0">
-        <aside className="w-56 border-r border-border flex-shrink-0 p-4">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
+        <aside className="w-14 md:w-56 border-r border-border flex-shrink-0 p-2 md:p-4 overflow-y-auto">
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon
@@ -264,14 +272,15 @@ function App() {
                 <button
                   key={item.id}
                   onClick={() => setCurrentPage({ type: 'list', view: item.id })}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive 
                       ? 'bg-primary/20 text-primary' 
                       : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                   }`}
+                  title={item.label}
                 >
                   <Icon size={20} />
-                  {item.label}
+                  <span className="hidden md:inline">{item.label}</span>
                 </button>
               )
             })}
@@ -299,6 +308,7 @@ function App() {
               customers={customers || []}
               onUpdateJobStatus={handleUpdateJobStatus}
               onUpdateJobArtwork={handleUpdateJobArtwork}
+              onUpdateJobNickname={handleUpdateJobNickname}
               onNavigateToCustomer={(customerId) => {
                 const customer = customers?.find(c => c.id === customerId)
                 if (customer) {

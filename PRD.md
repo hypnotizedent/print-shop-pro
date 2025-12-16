@@ -34,18 +34,32 @@ This is a multi-view production management system with complex state management,
 - **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace; filter by status; sort by date; nickname field helps identify quotes; approved quotes can export as formatted PDF invoices
 
 ### Bulk Actions for Quotes
-- **Functionality**: Select multiple quotes and perform batch operations (status changes, delete, export invoices)
-- **Purpose**: Increase efficiency when managing large numbers of quotes
+- **Functionality**: Select multiple quotes and perform batch operations (status changes, send invoices, export invoices as ZIP, delete)
+- **Purpose**: Increase efficiency when managing large numbers of quotes and sending invoices to customers
 - **Trigger**: Click checkboxes on quote cards or "Select All"
-- **Progression**: Select quotes via checkbox → Bulk action bar appears → Choose action (change status/export invoices/delete) → Confirm → Action applied to all selected
-- **Success criteria**: Can select/deselect individual quotes; select all works; bulk status change updates all selected quotes; bulk invoice export generates invoice for each approved quote; bulk delete removes selected quotes after confirmation
+- **Progression**: Select quotes via checkbox → Bulk action bar appears → Choose action (change status/send invoices/export as ZIP/delete) → Confirm → Action applied to all selected
+- **Success criteria**: Can select/deselect individual quotes; select all works; bulk status change updates all selected quotes; bulk send opens email drafts for each approved quote; bulk export creates ZIP file with all invoices; bulk delete removes selected quotes after confirmation
 
-### Job Management (List View with Inline Expansion)
-- **Functionality**: View jobs with optional nicknames in searchable/filterable list, click to expand details inline without leaving the list view
-- **Purpose**: Quick job details review while maintaining context of overall job list; easier scanning than kanban; nicknames help identify jobs quickly
+### Job Management (List View with Inline Expansion & Nickname Editing)
+- **Functionality**: View jobs with editable nicknames in searchable/filterable list, click to expand details inline without leaving the list view; edit nicknames directly in job detail
+- **Purpose**: Quick job details review while maintaining context of overall job list; easier scanning than kanban; editable nicknames help identify and organize jobs quickly
 - **Trigger**: Navigate to Jobs page
-- **Progression**: View job list → Filter by status/search by nickname → Sort by due date → Click job card → Details expand inline below card → Review/update → Click to collapse or click another job
-- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt list layout; can switch between jobs quickly; filter by status works; search by job number/nickname/customer works; date sorting works; nickname displays prominently
+- **Progression**: View job list → Filter by status/search by nickname → Sort by due date → Click job card → Details expand inline below card → Edit nickname inline → Review/update → Click to collapse or click another job
+- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt list layout; can switch between jobs quickly; filter by status works; search by job number/nickname/customer works; date sorting works; nickname displays prominently; clicking nickname or "+ Add nickname" enables inline editing; Enter saves, Escape cancels
+
+### Invoice Generation & Multi-channel Distribution
+- **Functionality**: Generate professional invoices from approved quotes with PDF export and email sending capability; batch export multiple invoices as ZIP file
+- **Purpose**: Provide customers with professional billing documentation through multiple delivery methods
+- **Trigger**: Click "Invoice" dropdown on approved quote, or select multiple approved quotes and bulk export/send
+- **Progression**: Approved quote selected → Click invoice dropdown → Choose "Send to Customer" or "Download PDF" → Email draft opens with invoice details OR PDF preview opens → For bulk: select multiple quotes → Click "Send Invoices" or "Export as ZIP" → Multiple email drafts open OR ZIP file downloads
+- **Success criteria**: Invoice includes all quote details (line items, pricing, customer info, nickname); formatting is professional and print-ready; email draft pre-fills customer email and invoice details; bulk send opens individual email drafts; bulk export creates ZIP with all invoices named by quote number and nickname; ZIP downloads correctly
+
+### Artwork Upload with File Size Recognition
+- **Functionality**: Upload artwork files for each print location with automatic file size detection and display
+- **Purpose**: Track artwork files for production with visibility into file sizes for quality and storage management
+- **Trigger**: Click upload area in line item decoration section or job detail
+- **Progression**: Click upload area → Select image file(s) → File uploads → File size automatically detected and displayed → Thumbnail shows with file info → Approve/reject artwork
+- **Success criteria**: File size displays in human-readable format (KB/MB); supports drag and drop; shows file size on artwork thumbnail; bulk upload supports multiple files; file size stored with artwork metadata
 
 ### Bulk Actions for Jobs
 - **Functionality**: Select multiple jobs and perform batch operations (status changes, delete)
@@ -54,12 +68,12 @@ This is a multi-view production management system with complex state management,
 - **Progression**: Select jobs via checkbox → Bulk action bar appears → Choose action (change status/delete) → Confirm → Action applied to all selected
 - **Success criteria**: Can select/deselect individual jobs; select all works; bulk status change updates all selected jobs; bulk delete removes selected jobs after confirmation
 
-### Invoice Generation & PDF Export
-- **Functionality**: Generate professional invoices from approved quotes with formatted HTML/PDF output
-- **Purpose**: Provide customers with professional billing documentation
-- **Trigger**: Click "Invoice" button on approved quote or select multiple approved quotes and bulk export
-- **Progression**: Approved quote selected → Click invoice button → PDF preview opens in new window → Print or save as PDF
-- **Success criteria**: Invoice includes all quote details (line items, pricing, customer info, nickname); formatting is professional and print-ready; bulk export works for multiple quotes; PDF opens in new browser window for printing/saving
+### Invoice Generation & Multi-channel Distribution
+- **Functionality**: Generate professional invoices from approved quotes with PDF export and email sending capability; batch export multiple invoices as ZIP file
+- **Purpose**: Provide customers with professional billing documentation through multiple delivery methods
+- **Trigger**: Click "Invoice" dropdown on approved quote, or select multiple approved quotes and bulk export/send
+- **Progression**: Approved quote selected → Click invoice dropdown → Choose "Send to Customer" or "Download PDF" → Email draft opens with invoice details OR PDF preview opens → For bulk: select multiple quotes → Click "Send Invoices" or "Export as ZIP" → Multiple email drafts open OR ZIP file downloads
+- **Success criteria**: Invoice includes all quote details (line items, pricing, customer info, nickname); formatting is professional and print-ready; email draft pre-fills customer email and invoice details; bulk send opens individual email drafts; bulk export creates ZIP with all invoices named by quote number and nickname; ZIP downloads correctly
 
 ### Customer Management with Addresses
 - **Functionality**: Browse customer list, view individual customer details with contact info, address, quote history, and job history
@@ -219,10 +233,14 @@ Animations should be minimal and functional - emphasizing state changes and prov
   - Table cell padding: px-3 py-2
   - Page margins: p-8
   
-- **Mobile**:
-  - Sidebar collapses to hamburger menu
-  - Line item grid switches to stacked cards (one item per card)
-  - Size inputs wrap to multiple rows
-  - Kanban columns scroll horizontally
-  - Reduce font sizes by 1-2px
-  - Padding reduces to p-4 for cards, p-4 for pages
+- **Mobile & Responsive Design**:
+  - **Header**: Logo condenses to "MINT" on mobile; search bar becomes full-width; logout shows icon only
+  - **Sidebar**: Width reduces to 56px on mobile showing only icons; full labels appear on hover/tablet+
+  - **Navigation**: Icons always visible; labels hidden on mobile (<768px)
+  - **Search & Filters**: Stack vertically on mobile; full width on small screens; horizontal on desktop
+  - **Bulk Actions**: Button labels condense ("Send Invoices" → "Send") on mobile; wrap to multiple rows
+  - **Cards & Tables**: Maintain full functionality; adjust padding (p-6 → p-4 on mobile)
+  - **Forms**: Single column layout on mobile; multi-column on tablet+
+  - **Breakpoints**: Mobile (<768px), Tablet (768-1024px), Desktop (1024px+)
+  - **Touch Targets**: Minimum 44x44px for all interactive elements
+  - **Overflow**: Horizontal scroll where necessary (job details, size grids) with scroll indicators

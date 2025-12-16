@@ -1,11 +1,18 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { StatusBadge } from './StatusBadge'
 import type { Quote } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
-import { Briefcase, FileText } from '@phosphor-icons/react'
+import { Briefcase, FileText, EnvelopeSimple, DotsThree } from '@phosphor-icons/react'
 import { exportInvoiceAsPDF } from '@/lib/invoice-generator'
+import { sendInvoiceEmail } from '@/lib/invoice-email'
 import { toast } from 'sonner'
 
 interface QuoteCardProps {
@@ -31,6 +38,16 @@ export function QuoteCard({ quote, onClick, onConvertToJob, isExpanded, isSelect
       toast.success('Exporting invoice...')
     } else {
       toast.error('Only approved quotes can be exported as invoices')
+    }
+  }
+  
+  const handleSendInvoice = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (quote.status === 'approved') {
+      await sendInvoiceEmail(quote)
+      toast.success('Email draft opened')
+    } else {
+      toast.error('Only approved quotes can be sent as invoices')
     }
   }
   
@@ -89,14 +106,28 @@ export function QuoteCard({ quote, onClick, onConvertToJob, isExpanded, isSelect
             <div className="flex items-center gap-3">
               {quote.status === 'approved' && (
                 <>
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={handleExportInvoice}
-                  >
-                    <FileText size={16} className="mr-1" />
-                    Invoice
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FileText size={16} className="mr-1" />
+                        Invoice
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleSendInvoice}>
+                        <EnvelopeSimple size={16} className="mr-2" />
+                        Send to Customer
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportInvoice}>
+                        <FileText size={16} className="mr-2" />
+                        Download PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   {onConvertToJob && (
                     <Button 
                       size="sm"

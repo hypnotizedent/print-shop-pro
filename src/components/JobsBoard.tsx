@@ -22,6 +22,7 @@ interface JobsBoardProps {
   onUpdateJobStatus: (jobId: string, status: JobStatus) => void
   onUpdateJobArtwork: (jobId: string, itemId: string, artwork: ArtworkFile[]) => void
   onNavigateToCustomer: (customerId: string) => void
+  onUpdateJobNickname?: (jobId: string, nickname: string) => void
   onDeleteJobs?: (jobIds: string[]) => void
   onBulkStatusChange?: (jobIds: string[], status: JobStatus) => void
 }
@@ -32,6 +33,7 @@ export function JobsBoard({
   onUpdateJobStatus, 
   onUpdateJobArtwork, 
   onNavigateToCustomer,
+  onUpdateJobNickname,
   onDeleteJobs,
   onBulkStatusChange
 }: JobsBoardProps) {
@@ -106,13 +108,13 @@ export function JobsBoard({
   
   
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b border-border p-6">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="border-b border-border p-4 md:p-6 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Jobs</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Jobs</h1>
         </div>
         
-        <div className="flex gap-3 mb-4">
+        <div className="flex flex-col md:flex-row gap-3 mb-4">
           <div className="relative flex-1">
             <MagnifyingGlass 
               size={18} 
@@ -120,7 +122,7 @@ export function JobsBoard({
             />
             <Input
               type="text"
-              placeholder="Search by job number, nickname, or customer..."
+              placeholder="Search jobs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -128,7 +130,7 @@ export function JobsBoard({
           </div>
           
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as JobStatus | 'all')}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full md:w-48">
               <div className="flex items-center gap-2">
                 <FunnelSimple size={16} />
                 <SelectValue placeholder="Filter by status" />
@@ -148,7 +150,7 @@ export function JobsBoard({
           </Select>
 
           <Select value={dateSort} onValueChange={(value) => setDateSort(value as 'asc' | 'desc')}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full md:w-48">
               <SelectValue placeholder="Sort by date" />
             </SelectTrigger>
             <SelectContent>
@@ -159,12 +161,14 @@ export function JobsBoard({
         </div>
         
         {hasSelection && (
-          <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
-            <CheckSquare size={18} className="text-primary" weight="fill" />
-            <span className="text-sm font-medium">
-              {selectedJobIds.size} job{selectedJobIds.size > 1 ? 's' : ''} selected
-            </span>
-            <div className="flex gap-2 ml-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className="flex items-center gap-2">
+              <CheckSquare size={18} className="text-primary" weight="fill" />
+              <span className="text-sm font-medium">
+                {selectedJobIds.size} job{selectedJobIds.size > 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2 sm:ml-auto w-full sm:w-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline">
@@ -204,9 +208,11 @@ export function JobsBoard({
                   size="sm" 
                   variant="destructive"
                   onClick={handleBulkDelete}
+                  className="flex-1 sm:flex-none"
                 >
-                  <Trash size={16} className="mr-2" />
-                  Delete
+                  <Trash size={16} className="sm:mr-2" />
+                  <span className="hidden sm:inline">Delete</span>
+                  <span className="sm:hidden">Del</span>
                 </Button>
               )}
               
@@ -214,6 +220,7 @@ export function JobsBoard({
                 size="sm" 
                 variant="ghost"
                 onClick={() => setSelectedJobIds(new Set())}
+                className="flex-1 sm:flex-none"
               >
                 Cancel
               </Button>
@@ -222,7 +229,7 @@ export function JobsBoard({
         )}
       </div>
       
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 md:p-6">
         <div className="max-w-6xl mx-auto space-y-3">
           <div className="flex items-center gap-3 mb-4">
             <Checkbox 
@@ -259,6 +266,7 @@ export function JobsBoard({
                         onUpdateStatus={(status) => onUpdateJobStatus(job.id, status)}
                         onUpdateArtwork={(itemId, artwork) => onUpdateJobArtwork(job.id, itemId, artwork)}
                         onNavigateToCustomer={() => onNavigateToCustomer(job.customer.id)}
+                        onUpdateNickname={onUpdateJobNickname ? (nickname) => onUpdateJobNickname(job.id, nickname) : undefined}
                         isInline
                       />
                     </div>
