@@ -18,9 +18,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Trash, DotsThree, Pencil, Copy, Image as ImageIcon, ClockCounterClockwise, Upload } from '@phosphor-icons/react'
+import { Plus, Trash, DotsThree, Pencil, Copy, Image as ImageIcon, ClockCounterClockwise, Upload, CheckCircle, Circle } from '@phosphor-icons/react'
 import type { CustomerArtworkFile, ArtworkVersion } from '@/lib/types'
 import { toast } from 'sonner'
+import { Switch } from '@/components/ui/switch'
 
 interface CustomerArtworkLibraryProps {
   customerId: string
@@ -40,6 +41,7 @@ export function CustomerArtworkLibrary({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingArtwork, setEditingArtwork] = useState<CustomerArtworkFile | null>(null)
   const [viewingVersionHistory, setViewingVersionHistory] = useState<CustomerArtworkFile | null>(null)
+  const [filterProductionReady, setFilterProductionReady] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -47,6 +49,7 @@ export function CustomerArtworkLibrary({
     imprintSize: '',
     notes: '',
     changeNotes: '',
+    productionReady: false,
   })
   const [selectedFile, setSelectedFile] = useState<{ dataUrl: string; fileName: string; fileSize: number } | null>(null)
 
@@ -92,6 +95,8 @@ export function CustomerArtworkLibrary({
         uploadedAt: editingArtwork.updatedAt,
         imprintSize: editingArtwork.imprintSize,
         changeNotes: undefined,
+        productionReady: editingArtwork.productionReady,
+        productionReadyDate: editingArtwork.productionReadyDate,
       }
 
       const artworkFile: CustomerArtworkFile = {
@@ -108,6 +113,8 @@ export function CustomerArtworkLibrary({
           ...(editingArtwork.versionHistory || []),
           previousVersion,
         ],
+        productionReady: formData.productionReady,
+        productionReadyDate: formData.productionReady ? now : undefined,
       }
 
       const newVersion: ArtworkVersion = {
@@ -116,6 +123,8 @@ export function CustomerArtworkLibrary({
         uploadedAt: now,
         imprintSize: formData.imprintSize,
         changeNotes: formData.changeNotes,
+        productionReady: formData.productionReady,
+        productionReadyDate: formData.productionReady ? now : undefined,
       }
       
       artworkFile.versionHistory = [...(artworkFile.versionHistory || []).slice(-9), newVersion]
@@ -131,6 +140,8 @@ export function CustomerArtworkLibrary({
         imprintSize: formData.imprintSize,
         notes: formData.notes,
         updatedAt: now,
+        productionReady: formData.productionReady,
+        productionReadyDate: formData.productionReady ? (editingArtwork.productionReadyDate || now) : undefined,
       }
 
       onUpdateArtworkFile(artworkFile)
@@ -149,6 +160,8 @@ export function CustomerArtworkLibrary({
         updatedAt: now,
         currentVersion: 1,
         versionHistory: [],
+        productionReady: formData.productionReady,
+        productionReadyDate: formData.productionReady ? now : undefined,
       }
 
       onSaveArtworkFile(artworkFile)
@@ -168,6 +181,7 @@ export function CustomerArtworkLibrary({
       imprintSize: '',
       notes: '',
       changeNotes: '',
+      productionReady: false,
     })
     setSelectedFile(null)
   }
@@ -181,6 +195,7 @@ export function CustomerArtworkLibrary({
       imprintSize: artwork.imprintSize || '',
       notes: artwork.notes || '',
       changeNotes: '',
+      productionReady: artwork.productionReady || false,
     })
     setSelectedFile(null)
     setIsAddDialogOpen(true)
@@ -197,6 +212,18 @@ export function CustomerArtworkLibrary({
     const info = `${artwork.name}\nCategory: ${getCategoryLabel(artwork.category)}\nSize: ${artwork.imprintSize || 'Not specified'}\n${artwork.description || ''}`
     navigator.clipboard.writeText(info)
     toast.success('Artwork info copied to clipboard')
+  }
+
+  const handleToggleProductionReady = (artwork: CustomerArtworkFile) => {
+    const now = new Date().toISOString()
+    const updatedArtwork: CustomerArtworkFile = {
+      ...artwork,
+      productionReady: !artwork.productionReady,
+      productionReadyDate: !artwork.productionReady ? now : undefined,
+      updatedAt: now,
+    }
+    onUpdateArtworkFile(updatedArtwork)
+    toast.success(updatedArtwork.productionReady ? 'Marked as production ready' : 'Production ready status removed')
   }
 
   const getCategoryLabel = (category: CustomerArtworkFile['category']) => {
@@ -235,33 +262,55 @@ export function CustomerArtworkLibrary({
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
 
+  const filteredArtworkFiles = filterProductionReady
+    ? artworkFiles.filter((artwork) => artwork.productionReady)
+    : artworkFiles
+
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
-          Artwork Library ({artworkFiles.length})
-        </h2>
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
+            Artwork Library ({filteredArtworkFiles.length})
+          </h2>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="filter-production-ready"
+              checked={filterProductionReady}
+              onCheckedChange={setFilterProductionReady}
+            />
+            <Label htmlFor="filter-production-ready" className="text-xs text-muted-foreground cursor-pointer">
+              Production Ready Only
+            </Label>
+          </div>
+        </div>
         <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
           <Plus size={18} className="mr-2" />
           Add Artwork
         </Button>
       </div>
 
-      {artworkFiles.length === 0 ? (
+      {filteredArtworkFiles.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
           <ImageIcon size={48} className="mx-auto mb-3 text-muted-foreground" />
-          <p className="text-muted-foreground mb-4">No artwork files saved yet</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            Save frequently used artwork like neck tags, private labels, or logos to quickly reuse them in quotes.
+          <p className="text-muted-foreground mb-4">
+            {filterProductionReady ? 'No production-ready artwork files' : 'No artwork files saved yet'}
           </p>
-          <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
-            <Plus size={18} className="mr-2" />
-            Add First Artwork
-          </Button>
+          <p className="text-sm text-muted-foreground mb-4">
+            {filterProductionReady
+              ? 'Mark artwork as production ready to see it here.'
+              : 'Save frequently used artwork like neck tags, private labels, or logos to quickly reuse them in quotes.'}
+          </p>
+          {!filterProductionReady && (
+            <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+              <Plus size={18} className="mr-2" />
+              Add First Artwork
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {artworkFiles.map((artwork) => (
+          {filteredArtworkFiles.map((artwork) => (
             <Card key={artwork.id} className="p-4 relative group">
               <div className="absolute top-3 right-3 z-10">
                 <DropdownMenu>
@@ -275,6 +324,19 @@ export function CustomerArtworkLibrary({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleToggleProductionReady(artwork)}>
+                      {artwork.productionReady ? (
+                        <>
+                          <Circle size={16} className="mr-2" />
+                          Remove Production Ready
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle size={16} className="mr-2" />
+                          Mark Production Ready
+                        </>
+                      )}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleEdit(artwork)}>
                       <Pencil size={16} className="mr-2" />
                       Edit
@@ -298,7 +360,15 @@ export function CustomerArtworkLibrary({
                 </DropdownMenu>
               </div>
 
-              <div className="aspect-square rounded-lg bg-muted mb-3 overflow-hidden flex items-center justify-center">
+              <div className="aspect-square rounded-lg bg-muted mb-3 overflow-hidden flex items-center justify-center relative">
+                {artwork.productionReady && (
+                  <div className="absolute top-2 left-2 z-10">
+                    <Badge className="bg-emerald-500 text-white border-emerald-600 shadow-lg">
+                      <CheckCircle size={14} className="mr-1" weight="fill" />
+                      Production Ready
+                    </Badge>
+                  </div>
+                )}
                 <img
                   src={artwork.file.dataUrl}
                   alt={artwork.name}
@@ -326,6 +396,12 @@ export function CustomerArtworkLibrary({
                   <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
                     v{artwork.currentVersion}
                   </Badge>
+                  {artwork.productionReady && (
+                    <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                      <CheckCircle size={12} className="mr-1" weight="fill" />
+                      Ready
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="text-xs text-muted-foreground">
@@ -405,6 +481,30 @@ export function CustomerArtworkLibrary({
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={2}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="production-ready" className="cursor-pointer font-semibold">
+                    Production Ready
+                  </Label>
+                  {formData.productionReady && (
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                      <CheckCircle size={12} className="mr-1" weight="fill" />
+                      Ready
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Mark this artwork as approved and ready for production use
+                </p>
+              </div>
+              <Switch
+                id="production-ready"
+                checked={formData.productionReady}
+                onCheckedChange={(checked) => setFormData({ ...formData, productionReady: checked })}
               />
             </div>
 
@@ -517,10 +617,16 @@ export function CustomerArtworkLibrary({
                     className="w-32 h-32 object-contain rounded border border-border bg-background"
                   />
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <Badge className="bg-primary text-primary-foreground">
                         Current - v{viewingVersionHistory.currentVersion}
                       </Badge>
+                      {viewingVersionHistory.productionReady && (
+                        <Badge className="bg-emerald-500 text-white border-emerald-600">
+                          <CheckCircle size={12} className="mr-1" weight="fill" />
+                          Production Ready
+                        </Badge>
+                      )}
                     </div>
                     <div className="text-sm space-y-1">
                       <div>
@@ -541,6 +647,12 @@ export function CustomerArtworkLibrary({
                         <span className="text-muted-foreground">Updated:</span>{' '}
                         {new Date(viewingVersionHistory.updatedAt).toLocaleString()}
                       </div>
+                      {viewingVersionHistory.productionReady && viewingVersionHistory.productionReadyDate && (
+                        <div>
+                          <span className="text-muted-foreground">Production Ready Since:</span>{' '}
+                          {new Date(viewingVersionHistory.productionReadyDate).toLocaleString()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -559,8 +671,14 @@ export function CustomerArtworkLibrary({
                             className="w-24 h-24 object-contain rounded border border-border bg-background"
                           />
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <Badge variant="outline">v{version.versionNumber}</Badge>
+                              {version.productionReady && (
+                                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                                  <CheckCircle size={12} className="mr-1" weight="fill" />
+                                  Production Ready
+                                </Badge>
+                              )}
                             </div>
                             <div className="text-sm space-y-1">
                               <div>
@@ -581,6 +699,12 @@ export function CustomerArtworkLibrary({
                                 <span className="text-muted-foreground">Date:</span>{' '}
                                 {new Date(version.uploadedAt).toLocaleString()}
                               </div>
+                              {version.productionReady && version.productionReadyDate && (
+                                <div>
+                                  <span className="text-muted-foreground">Production Ready Since:</span>{' '}
+                                  {new Date(version.productionReadyDate).toLocaleString()}
+                                </div>
+                              )}
                               {version.changeNotes && (
                                 <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
                                   <span className="text-muted-foreground">Notes:</span> {version.changeNotes}

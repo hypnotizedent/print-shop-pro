@@ -209,6 +209,9 @@ export interface ArtworkVersion {
   uploadedBy?: string
   changeNotes?: string
   imprintSize?: string
+  productionReady?: boolean
+  productionReadyDate?: string
+  productionReadyBy?: string
 }
 
 export interface CustomerArtworkFile {
@@ -228,4 +231,7 @@ export interface CustomerArtworkFile {
   updatedAt: string
   currentVersion: number
   versionHistory?: ArtworkVersion[]
+  productionReady?: boolean
+  productionReadyDate?: string
+  productionReadyBy?: string
 }
