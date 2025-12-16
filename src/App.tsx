@@ -20,7 +20,7 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -43,6 +43,7 @@ function App() {
   const [customers, setCustomers] = useKV<Customer[]>('customers', sampleCustomers)
   const [customerTemplates, setCustomerTemplates] = useKV<CustomerDecorationTemplate[]>('customer-decoration-templates', [])
   const [paymentReminders, setPaymentReminders] = useKV<PaymentReminder[]>('payment-reminders', [])
+  const [customerArtworkFiles, setCustomerArtworkFiles] = useKV<CustomerArtworkFile[]>('customer-artwork-files', [])
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
   
   useEffect(() => {
@@ -248,6 +249,24 @@ function App() {
       }
     })
   }
+
+  const handleSaveArtworkFile = (artwork: CustomerArtworkFile) => {
+    setCustomerArtworkFiles((current) => [...(current || []), artwork])
+  }
+
+  const handleDeleteArtworkFile = (artworkId: string) => {
+    setCustomerArtworkFiles((current) => {
+      const existing = current || []
+      return existing.filter(a => a.id !== artworkId)
+    })
+  }
+
+  const handleUpdateArtworkFile = (artwork: CustomerArtworkFile) => {
+    setCustomerArtworkFiles((current) => {
+      const existing = current || []
+      return existing.map(a => a.id === artwork.id ? artwork : a)
+    })
+  }
   
   const navItems = [
     { id: 'quotes' as const, label: 'Quotes', icon: FileText },
@@ -392,6 +411,7 @@ function App() {
               customers={customers || []}
               quotes={quotes || []}
               customerTemplates={customerTemplates || []}
+              customerArtworkFiles={customerArtworkFiles || []}
               paymentReminders={paymentReminders || []}
               onSave={handleSaveQuote}
               onBack={() => {
@@ -427,10 +447,14 @@ function App() {
               customer={currentPage.customer}
               quotes={quotes || []}
               jobs={jobs || []}
+              customerArtworkFiles={customerArtworkFiles || []}
               onBack={() => setCurrentPage({ type: 'list', view: 'customers' })}
               onUpdateCustomer={handleUpdateCustomer}
               onSelectQuote={(quote) => handleSelectQuoteFromCustomer(quote, currentPage.customer.id)}
               onSelectJob={(job) => setCurrentPage({ type: 'list', view: 'jobs' })}
+              onSaveArtworkFile={handleSaveArtworkFile}
+              onDeleteArtworkFile={handleDeleteArtworkFile}
+              onUpdateArtworkFile={handleUpdateArtworkFile}
             />
           )}
         </main>

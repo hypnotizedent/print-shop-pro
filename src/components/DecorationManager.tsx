@@ -9,12 +9,19 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle, Warning, BookmarkSimple, Info } from '@phosphor-icons/react'
-import type { Decoration, DecorationType, ProductType, CustomerDecorationTemplate } from '@/lib/types'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle, Warning, BookmarkSimple, Info, Image as ImageIcon } from '@phosphor-icons/react'
+import type { Decoration, DecorationType, ProductType, CustomerDecorationTemplate, CustomerArtworkFile } from '@/lib/types'
 import { generateId } from '@/lib/data'
 import { toast } from 'sonner'
 import { getProductTemplate, validateImprintSize, createCustomerTemplate } from '@/lib/decoration-templates'
 import { SaveDecorationTemplateDialog } from '@/components/SaveDecorationTemplateDialog'
+import { Badge } from '@/components/ui/badge'
 
 interface DecorationManagerProps {
   decorations: Decoration[]
@@ -23,6 +30,7 @@ interface DecorationManagerProps {
   customerId?: string
   customerName?: string
   customerTemplates?: CustomerDecorationTemplate[]
+  customerArtworkFiles?: CustomerArtworkFile[]
   onSaveTemplate?: (template: CustomerDecorationTemplate) => void
 }
 
@@ -327,6 +335,7 @@ export function DecorationManager({
   customerId,
   customerName,
   customerTemplates = [],
+  customerArtworkFiles = [],
   onSaveTemplate,
 }: DecorationManagerProps) {
   const [customInputs, setCustomInputs] = useState<Record<string, { location: boolean; method: boolean }>>({})
@@ -334,6 +343,8 @@ export function DecorationManager({
   const [editingDecoration, setEditingDecoration] = useState<string | null>(null)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false)
+  const [artworkLibraryOpen, setArtworkLibraryOpen] = useState(false)
+  const [selectingArtworkForDecoration, setSelectingArtworkForDecoration] = useState<string | null>(null)
 
   const productTemplate = productType ? getProductTemplate(productType) : null
   const STANDARD_LOCATIONS = productTemplate?.suggestedLocations || DEFAULT_LOCATIONS
@@ -551,6 +562,68 @@ export function DecorationManager({
     }))
   }
 
+  const handleSelectLibraryArtwork = (artwork: CustomerArtworkFile) => {
+    if (!selectingArtworkForDecoration) return
+    
+    updateDecoration(selectingArtworkForDecoration, {
+      artwork: {
+        dataUrl: artwork.file.dataUrl,
+        fileName: artwork.file.fileName,
+        fileSize: artwork.file.fileSize,
+        uploadedAt: new Date().toISOString(),
+      },
+      imprintSize: artwork.imprintSize || undefined,
+    })
+    
+    setArtworkLibraryOpen(false)
+    setSelectingArtworkForDecoration(null)
+    toast.success(`Applied "${artwork.name}" from artwork library`)
+  }
+
+  const openArtworkLibrary = (decorationId: string) => {
+    setSelectingArtworkForDecoration(decorationId)
+    setArtworkLibraryOpen(true)
+  }
+
+  const getCategoryLabel = (category: CustomerArtworkFile['category']) => {
+    switch (category) {
+      case 'neck-tag':
+        return 'Neck Tag'
+      case 'private-label':
+        return 'Private Label'
+      case 'logo':
+        return 'Logo'
+      case 'graphic':
+        return 'Graphic'
+      case 'other':
+        return 'Other'
+    }
+  }
+
+  const getCategoryColor = (category: CustomerArtworkFile['category']) => {
+    switch (category) {
+      case 'neck-tag':
+        return 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+      case 'private-label':
+        return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+      case 'logo':
+        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+      case 'graphic':
+        return 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+      case 'other':
+        return 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
+
+  const customerArtwork = customerArtworkFiles.filter(af => af.customerId === customerId)
+
+
   return (
     <div className="space-y-3">
       {decorations.length === 0 && (
@@ -763,18 +836,31 @@ export function DecorationManager({
                     Artwork {decoration.imprintSize && <span className="text-primary ml-1">({decoration.imprintSize})</span>}
                   </label>
                   {!decoration.artwork ? (
-                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg px-3 py-4 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
-                      <Upload size={16} className="text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        Drag & drop or click to upload
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileUpload(decoration.id, e)}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg px-3 py-4 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                        <Upload size={16} className="text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          Drag & drop or click to upload
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(decoration.id, e)}
+                          className="hidden"
+                        />
+                      </label>
+                      {customerId && customerArtwork.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openArtworkLibrary(decoration.id)}
+                          className="w-full h-8 text-xs"
+                        >
+                          <ImageIcon size={14} className="mr-1.5" />
+                          Use from Library ({customerArtwork.length})
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="border border-border rounded-lg p-2 bg-background">
                       <div className="flex items-start gap-2">
@@ -912,6 +998,67 @@ export function DecorationManager({
           onSave={handleSaveTemplate}
         />
       )}
+
+      <Dialog open={artworkLibraryOpen} onOpenChange={setArtworkLibraryOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Select Artwork from {customerName}'s Library</DialogTitle>
+          </DialogHeader>
+          
+          <div className="overflow-auto max-h-[60vh]">
+            {customerArtwork.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+                <ImageIcon size={48} className="mx-auto mb-3 text-muted-foreground" />
+                <p className="text-muted-foreground">No artwork files saved for this customer yet</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Add artwork to the customer's library from their profile page.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {customerArtwork.map((artwork) => (
+                  <button
+                    key={artwork.id}
+                    onClick={() => handleSelectLibraryArtwork(artwork)}
+                    className="border rounded-lg p-3 hover:border-primary hover:bg-primary/5 transition-colors text-left group"
+                  >
+                    <div className="aspect-square rounded bg-muted mb-2 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={artwork.file.dataUrl}
+                        alt={artwork.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-semibold text-sm truncate group-hover:text-primary">
+                        {artwork.name}
+                      </div>
+                      {artwork.description && (
+                        <div className="text-xs text-muted-foreground line-clamp-2">
+                          {artwork.description}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="outline" className={`text-xs ${getCategoryColor(artwork.category)}`}>
+                          {getCategoryLabel(artwork.category)}
+                        </Badge>
+                        {artwork.imprintSize && (
+                          <Badge variant="outline" className="text-xs">
+                            {artwork.imprintSize}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatFileSize(artwork.file.fileSize)}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

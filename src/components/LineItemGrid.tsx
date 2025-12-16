@@ -5,7 +5,7 @@ import { DecorationManager } from './DecorationManager'
 import { CopyDecorationsDialog } from './CopyDecorationsDialog'
 import { BulkCopyDecorationsDialog } from './BulkCopyDecorationsDialog'
 import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple } from '@phosphor-icons/react'
-import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate } from '@/lib/types'
+import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate, CustomerArtworkFile } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { generateId } from '@/lib/data'
 import { useState } from 'react'
@@ -25,6 +25,7 @@ interface LineItemGridProps {
   customerName?: string
   previousQuotes?: Quote[]
   customerTemplates?: CustomerDecorationTemplate[]
+  customerArtworkFiles?: CustomerArtworkFile[]
   onSaveTemplate?: (template: CustomerDecorationTemplate) => void
 }
 
@@ -35,6 +36,7 @@ export function LineItemGrid({
   customerName, 
   previousQuotes,
   customerTemplates = [],
+  customerArtworkFiles = [],
   onSaveTemplate,
 }: LineItemGridProps) {
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
@@ -375,6 +377,7 @@ export function LineItemGrid({
                             customerId={customerId}
                             customerName={customerName}
                             customerTemplates={customerTemplatesForCustomer}
+                            customerArtworkFiles={customerArtworkFiles}
                             onSaveTemplate={onSaveTemplate}
                           />
                         </div>

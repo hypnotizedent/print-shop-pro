@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/StatusBadge'
+import { CustomerArtworkLibrary } from '@/components/CustomerArtworkLibrary'
 import {
   Select,
   SelectContent,
@@ -12,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin } from '@phosphor-icons/react'
-import type { Customer, Quote, Job, CustomerTier } from '@/lib/types'
+import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -21,20 +22,28 @@ interface CustomerDetailProps {
   customer: Customer
   quotes: Quote[]
   jobs: Job[]
+  customerArtworkFiles: CustomerArtworkFile[]
   onBack: () => void
   onUpdateCustomer: (customer: Customer) => void
   onSelectQuote?: (quote: Quote) => void
   onSelectJob?: (job: Job) => void
+  onSaveArtworkFile: (artwork: CustomerArtworkFile) => void
+  onDeleteArtworkFile: (artworkId: string) => void
+  onUpdateArtworkFile: (artwork: CustomerArtworkFile) => void
 }
 
 export function CustomerDetail({ 
   customer, 
   quotes, 
   jobs, 
+  customerArtworkFiles,
   onBack, 
   onUpdateCustomer,
   onSelectQuote,
-  onSelectJob
+  onSelectJob,
+  onSaveArtworkFile,
+  onDeleteArtworkFile,
+  onUpdateArtworkFile,
 }: CustomerDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedCustomer, setEditedCustomer] = useState(customer)
@@ -313,6 +322,14 @@ export function CustomerDetail({
               <div className="text-3xl font-bold">${totalRevenue.toFixed(2)}</div>
             </Card>
           </div>
+          
+          <CustomerArtworkLibrary
+            customerId={customer.id}
+            artworkFiles={customerArtworkFiles.filter(af => af.customerId === customer.id)}
+            onSaveArtworkFile={onSaveArtworkFile}
+            onDeleteArtworkFile={onDeleteArtworkFile}
+            onUpdateArtworkFile={onUpdateArtworkFile}
+          />
           
           <Card className="p-6">
             <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">

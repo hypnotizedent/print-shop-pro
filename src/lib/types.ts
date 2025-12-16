@@ -195,3 +195,22 @@ export interface CustomerSmsPreferences {
   allowMarketingMessages: boolean
   lastUpdated: string
 }
+
+export type ArtworkCategory = 'neck-tag' | 'private-label' | 'logo' | 'graphic' | 'other'
+
+export interface CustomerArtworkFile {
+  id: string
+  customerId: string
+  name: string
+  description?: string
+  category: ArtworkCategory
+  imprintSize?: string
+  notes?: string
+  file: {
+    dataUrl: string
+    fileName: string
+    fileSize: number
+  }
+  uploadedAt: string
+  updatedAt: string
+}
