@@ -1,14 +1,14 @@
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { SizeInputRow } from './SizeInputRow'
 import { ProductMockup } from './ProductMockup'
 import { ArtworkUpload } from './ArtworkUpload'
-import { Trash, Images, UploadSimple } from '@phosphor-icons/react'
-import type { LineItem, ProductType, DecorationType, Sizes, ArtworkFile } from '@/lib/types'
+import { Trash, CaretDown, CaretRight } from '@phosphor-icons/react'
+import type { LineItem, Sizes, ArtworkFile } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { DecorationType } from '@/lib/types'
 
 interface LineItemGridProps {
   items: LineItem[]
@@ -16,7 +16,7 @@ interface LineItemGridProps {
 }
 
 export function LineItemGrid({ items, onChange }: LineItemGridProps) {
-  const [expandedArtwork, setExpandedArtwork] = useState<Set<string>>(new Set())
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
 
   const updateItem = (index: number, updates: Partial<LineItem>) => {
     const newItems = [...items]
@@ -36,8 +36,8 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
     onChange(items.filter((_, i) => i !== index))
   }
 
-  const toggleArtworkSection = (itemId: string) => {
-    setExpandedArtwork(prev => {
+  const toggleLocationsSection = (itemId: string) => {
+    setExpandedLocations(prev => {
       const next = new Set(prev)
       if (next.has(itemId)) {
         next.delete(itemId)
@@ -70,279 +70,226 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
     updateItem(index, { artwork: updatedArtwork })
   }
 
-  const handleBulkUpload = (index: number, files: FileList) => {
+  const handleSizeChange = (index: number, size: keyof Sizes, value: number) => {
     const item = items[index]
-    
-    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
-    
-    if (imageFiles.length === 0) {
-      toast.error('No valid image files found')
-      return
-    }
-
-    if (imageFiles.length !== files.length) {
-      toast.warning(`${files.length - imageFiles.length} non-image files were skipped`)
-    }
-
-    const artworkPromises = imageFiles.map((file, idx) => {
-      return new Promise<ArtworkFile>((resolve) => {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const dataUrl = e.target?.result as string
-          const location = item.print_locations[idx % item.print_locations.length] || 'front'
-          resolve({
-            location,
-            dataUrl,
-            fileName: file.name,
-            uploadedAt: new Date().toISOString(),
-            approved: false
-          })
-        }
-        reader.readAsDataURL(file)
-      })
-    })
-
-    Promise.all(artworkPromises).then(newArtworks => {
-      const existingArtwork = item.artwork || []
-      const updatedArtwork = [...existingArtwork]
-      
-      newArtworks.forEach(newArt => {
-        const existingIndex = updatedArtwork.findIndex(a => a.location === newArt.location)
-        if (existingIndex >= 0) {
-          updatedArtwork[existingIndex] = newArt
-        } else {
-          updatedArtwork.push(newArt)
-        }
-      })
-      
-      updateItem(index, { artwork: updatedArtwork })
-      toast.success(`${newArtworks.length} file${newArtworks.length > 1 ? 's' : ''} uploaded`)
-    })
+    const newSizes = { ...item.sizes, [size]: value }
+    updateItem(index, { sizes: newSizes })
   }
   
   return (
-    <div className="space-y-4">
-      {items.map((item, index) => (
-        <div key={item.id} className="border border-border rounded-lg p-4 space-y-3">
-          <div className="grid grid-cols-12 gap-3">
-            <div className="col-span-1 flex items-center justify-center pt-6">
-              <ProductMockup 
-                productType={item.product_type} 
-                color={item.product_color || '#94a3b8'}
-                size="small"
-              />
-            </div>
-            
-            <div className="col-span-2">
-              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                Product Type
-              </label>
-              <Select 
-                value={item.product_type} 
-                onValueChange={(value: ProductType) => updateItem(index, { product_type: value })}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tshirt">T-Shirt</SelectItem>
-                  <SelectItem value="hoodie">Hoodie</SelectItem>
-                  <SelectItem value="polo">Polo</SelectItem>
-                  <SelectItem value="hat">Hat</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="col-span-2">
-              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                Product Name/Style
-              </label>
-              <Input
-                value={item.product_name}
-                onChange={(e) => updateItem(index, { product_name: e.target.value })}
-                placeholder="e.g., Gildan G500"
-                className="h-9"
-              />
-            </div>
-            
-            <div className="col-span-1">
-              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                Color
-              </label>
-              <Input
-                type="color"
-                value={item.product_color || '#94a3b8'}
-                onChange={(e) => updateItem(index, { product_color: e.target.value })}
-                className="h-9 p-1 cursor-pointer"
-              />
-            </div>
-            
-            <div className="col-span-2">
-              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                Decoration
-              </label>
-              <Select 
-                value={item.decoration} 
-                onValueChange={(value: DecorationType) => updateItem(index, { decoration: value })}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="screen-print">Screen Print</SelectItem>
-                  <SelectItem value="dtg">DTG</SelectItem>
-                  <SelectItem value="embroidery">Embroidery</SelectItem>
-                  <SelectItem value="vinyl">Vinyl</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="col-span-1">
-              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                Colors
-              </label>
-              <Input
-                type="number"
-                min="1"
-                value={item.colors}
-                onChange={(e) => updateItem(index, { colors: Number(e.target.value) })}
-                className="h-9 tabular-nums"
-              />
-            </div>
-            
-            <div className="col-span-2">
-              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                Unit Price
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={item.unit_price}
-                onChange={(e) => updateItem(index, { unit_price: Number(e.target.value) })}
-                className="h-9 tabular-nums"
-              />
-            </div>
-            
-            <div className="col-span-1">
-              <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                Setup
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={item.setup_fee}
-                onChange={(e) => updateItem(index, { setup_fee: Number(e.target.value) })}
-                className="h-9 tabular-nums"
-              />
-            </div>
-            
-            <div className="col-span-1 flex flex-col justify-end">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => removeItem(index)}
-                className="h-9 w-9 text-muted-foreground hover:text-destructive"
-              >
-                <Trash size={18} />
-              </Button>
-            </div>
-          </div>
-          
-          <div>
-            <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-              Sizes
-            </label>
-            <SizeInputRow
-              sizes={item.sizes}
-              onChange={(sizes: Sizes) => updateItem(index, { sizes })}
-            />
-          </div>
-          
-          <div className="pt-2 border-t border-border space-y-3">
-            <div className="flex justify-between items-center">
-              <div className="text-sm">
-                <span className="text-muted-foreground">Quantity: </span>
-                <span className="font-semibold tabular-nums">{item.quantity}</span>
-                <span className="text-muted-foreground mx-2">•</span>
-                <span className="text-muted-foreground">Locations: </span>
-                <Input
-                  value={item.print_locations.join(', ')}
-                  onChange={(e) => updateItem(index, { 
-                    print_locations: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
-                  })}
-                  placeholder="e.g., front, back"
-                  className="inline-flex w-48 h-7 text-sm"
-                />
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-muted-foreground">Line Total</div>
-                <div className="text-lg font-bold text-emerald-400 tabular-nums">
-                  ${item.line_total.toFixed(2)}
-                </div>
-              </div>
-            </div>
-
-            {item.print_locations.length > 0 && (
-              <div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleArtworkSection(item.id)}
-                    className="flex-1 justify-start"
-                  >
-                    <Images size={16} className="mr-2" />
-                    Artwork ({(item.artwork || []).length}/{item.print_locations.length})
-                    <span className="ml-auto">
-                      {expandedArtwork.has(item.id) ? '−' : '+'}
-                    </span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const input = document.createElement('input')
-                      input.type = 'file'
-                      input.multiple = true
-                      input.accept = 'image/*'
-                      input.onchange = (e) => {
-                        const files = (e.target as HTMLInputElement).files
-                        if (files) {
-                          handleBulkUpload(index, files)
-                        }
-                      }
-                      input.click()
-                    }}
-                  >
-                    <UploadSimple size={16} className="mr-2" />
-                    Bulk Upload
-                  </Button>
-                </div>
-
-                {expandedArtwork.has(item.id) && (
-                  <div className="grid grid-cols-4 gap-3 mt-3">
-                    {item.print_locations.map(location => {
-                      const artwork = (item.artwork || []).find(a => a.location === location)
-                      return (
-                        <ArtworkUpload
-                          key={location}
-                          location={location}
-                          artwork={artwork}
-                          onUpload={(artwork) => handleArtworkUpload(index, artwork)}
-                          onRemove={() => handleArtworkRemove(index, location)}
+    <div className="border border-border rounded-lg overflow-hidden">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-muted/50 border-b border-border">
+            <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[30%]">
+              PRODUCT STYLE
+            </th>
+            <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[12%]">
+              COLOR
+            </th>
+            <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[35%]">
+              SIZES
+            </th>
+            <th className="text-right text-xs font-semibold text-muted-foreground px-3 py-2 w-[15%]">
+              PRICE
+            </th>
+            <th className="text-center text-xs font-semibold text-muted-foreground px-3 py-2 w-[8%]">
+              PREVIEW
+            </th>
+            <th className="w-10"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => (
+            <>
+              <tr key={item.id} className="border-b border-border hover:bg-muted/20 transition-colors">
+                <td className="px-3 py-2.5">
+                  <Input
+                    value={item.product_name}
+                    onChange={(e) => updateItem(index, { product_name: e.target.value })}
+                    placeholder="e.g., Gildan G500"
+                    className="h-8 border-0 bg-transparent hover:bg-background focus:bg-background px-2"
+                  />
+                </td>
+                <td className="px-3 py-2.5">
+                  <Input
+                    value={item.product_color || ''}
+                    onChange={(e) => updateItem(index, { product_color: e.target.value })}
+                    placeholder="e.g., Navy"
+                    className="h-8 border-0 bg-transparent hover:bg-background focus:bg-background px-2"
+                  />
+                </td>
+                <td className="px-3 py-2.5">
+                  <div className="flex gap-1.5 items-center">
+                    {(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] as const).map((size) => (
+                      <div key={size} className="flex flex-col items-center flex-1 min-w-0">
+                        <label className="text-[10px] text-muted-foreground mb-0.5 font-medium">
+                          {size}
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={item.sizes[size]}
+                          onChange={(e) => handleSizeChange(index, size, Number(e.target.value))}
+                          className="h-7 w-full text-center text-xs tabular-nums border-0 bg-transparent hover:bg-background focus:bg-background px-1"
                         />
-                      )
-                    })}
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                </td>
+                <td className="px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <span className="text-muted-foreground text-xs">$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.unit_price}
+                      onChange={(e) => updateItem(index, { unit_price: Number(e.target.value) })}
+                      className="h-8 w-20 text-right tabular-nums border-0 bg-transparent hover:bg-background focus:bg-background px-2"
+                    />
+                  </div>
+                </td>
+                <td className="px-3 py-2.5">
+                  <div className="flex justify-center">
+                    <ProductMockup 
+                      productType={item.product_type} 
+                      color={item.product_color || '#94a3b8'}
+                      size="small"
+                    />
+                  </div>
+                </td>
+                <td className="px-2 py-2.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeItem(index)}
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash size={14} />
+                  </Button>
+                </td>
+              </tr>
+              <tr className="border-b border-border bg-muted/10">
+                <td colSpan={6} className="px-3 py-0">
+                  <div className="py-2">
+                    <button
+                      onClick={() => toggleLocationsSection(item.id)}
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+                    >
+                      {expandedLocations.has(item.id) ? (
+                        <CaretDown size={14} weight="bold" />
+                      ) : (
+                        <CaretRight size={14} weight="bold" />
+                      )}
+                      <span className="font-medium">
+                        Locations & Decoration
+                      </span>
+                      <span className="text-xs">
+                        ({item.print_locations.length} location{item.print_locations.length !== 1 ? 's' : ''})
+                      </span>
+                      <div className="ml-auto text-xs font-bold text-emerald-400 tabular-nums">
+                        Total: ${item.line_total.toFixed(2)} ({item.quantity} pcs)
+                      </div>
+                    </button>
+                    
+                    {expandedLocations.has(item.id) && (
+                      <div className="mt-3 space-y-4 pb-2">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
+                              Print Locations
+                            </label>
+                            <Input
+                              value={item.print_locations.join(', ')}
+                              onChange={(e) => updateItem(index, { 
+                                print_locations: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
+                              })}
+                              placeholder="e.g., front, back, left sleeve"
+                              className="h-8"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
+                              Decoration Method
+                            </label>
+                            <Select 
+                              value={item.decoration} 
+                              onValueChange={(value: DecorationType) => updateItem(index, { decoration: value })}
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="screen-print">Screen Print</SelectItem>
+                                <SelectItem value="dtg">DTG</SelectItem>
+                                <SelectItem value="embroidery">Embroidery</SelectItem>
+                                <SelectItem value="vinyl">Vinyl</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
+                              Ink Colors / Setup Fee
+                            </label>
+                            <div className="flex gap-2">
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.colors}
+                                onChange={(e) => updateItem(index, { colors: Number(e.target.value) })}
+                                className="h-8 tabular-nums"
+                                placeholder="Colors"
+                              />
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={item.setup_fee}
+                                onChange={(e) => updateItem(index, { setup_fee: Number(e.target.value) })}
+                                className="h-8 tabular-nums"
+                                placeholder="Setup $"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {item.print_locations.length > 0 && (
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-2 block font-medium">
+                              Artwork ({(item.artwork || []).length}/{item.print_locations.length})
+                            </label>
+                            <div className="grid grid-cols-6 gap-3">
+                              {item.print_locations.map(location => {
+                                const artwork = (item.artwork || []).find(a => a.location === location)
+                                return (
+                                  <ArtworkUpload
+                                    key={location}
+                                    location={location}
+                                    artwork={artwork}
+                                    onUpload={(artwork) => handleArtworkUpload(index, artwork)}
+                                    onRemove={() => handleArtworkRemove(index, location)}
+                                  />
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            </>
+          ))}
+        </tbody>
+      </table>
+      
+      {items.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground text-sm">
+          No line items yet. Click "Add Line Item" to get started.
         </div>
-      ))}
+      )}
     </div>
   )
 }
