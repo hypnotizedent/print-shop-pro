@@ -8,13 +8,17 @@ import { QuoteBuilder } from '@/components/QuoteBuilder'
 import { JobsBoard } from '@/components/JobsBoard'
 import { CustomersList } from '@/components/CustomersList'
 import { CustomerDetail } from '@/components/CustomerDetail'
+import { Settings } from '@/components/Settings'
+import { Reports } from '@/components/Reports'
+import { GlobalSearch } from '@/components/GlobalSearch'
 import { 
   FileText, 
   Briefcase, 
   Users, 
   ChartBar,
   Sparkle,
-  SignOut
+  SignOut,
+  Gear,
 } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, JobStatus, ArtworkFile } from '@/lib/types'
 import { 
@@ -26,7 +30,7 @@ import {
   generateId
 } from '@/lib/data'
 
-type View = 'dashboard' | 'quotes' | 'jobs' | 'customers' | 'reports'
+type View = 'quotes' | 'jobs' | 'customers' | 'reports' | 'settings'
 type Page = 
   | { type: 'list'; view: View }
   | { type: 'quote-builder'; quote: Quote; fromCustomerId?: string }
@@ -38,6 +42,18 @@ function App() {
   const [jobs, setJobs] = useKV<Job[]>('jobs', sampleJobs)
   const [customers, setCustomers] = useKV<Customer[]>('customers', sampleCustomers)
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
+  
+  useEffect(() => {
+    const primaryColor = localStorage.getItem('theme-primary-color')
+    const accentColor = localStorage.getItem('theme-accent-color')
+    
+    if (primaryColor) {
+      document.documentElement.style.setProperty('--primary', primaryColor)
+    }
+    if (accentColor) {
+      document.documentElement.style.setProperty('--accent', accentColor)
+    }
+  }, [])
   
   const handleLogin = (email: string, password: string) => {
     setIsLoggedIn(true)
@@ -157,11 +173,24 @@ function App() {
     setCurrentPage({ type: 'list', view: 'jobs' })
   }
   
+  const handleSearchSelectQuote = (quote: Quote) => {
+    setCurrentPage({ type: 'quote-builder', quote })
+  }
+  
+  const handleSearchSelectJob = (job: Job) => {
+    setCurrentPage({ type: 'list', view: 'jobs' })
+  }
+  
+  const handleSearchSelectCustomer = (customer: Customer) => {
+    setCurrentPage({ type: 'customer-detail', customer })
+  }
+  
   const navItems = [
     { id: 'quotes' as const, label: 'Quotes', icon: FileText },
     { id: 'jobs' as const, label: 'Jobs', icon: Briefcase },
     { id: 'customers' as const, label: 'Customers', icon: Users },
     { id: 'reports' as const, label: 'Reports', icon: ChartBar },
+    { id: 'settings' as const, label: 'Settings', icon: Gear },
   ]
   
   const currentView = currentPage.type === 'list' ? currentPage.view : null
@@ -175,9 +204,19 @@ function App() {
       <Toaster position="top-right" />
       
       <header className="border-b border-border px-6 py-4 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <Sparkle size={28} weight="fill" className="text-primary" />
-          <h1 className="text-xl font-bold tracking-tight">MINT PRINTS</h1>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Sparkle size={28} weight="fill" className="text-primary" />
+            <h1 className="text-xl font-bold tracking-tight">MINT PRINTS</h1>
+          </div>
+          <GlobalSearch
+            quotes={quotes || []}
+            jobs={jobs || []}
+            customers={customers || []}
+            onSelectQuote={handleSearchSelectQuote}
+            onSelectJob={handleSearchSelectJob}
+            onSelectCustomer={handleSearchSelectCustomer}
+          />
         </div>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
           <SignOut size={18} className="mr-2" />
@@ -256,13 +295,19 @@ function App() {
           )}
           
           {currentPage.type === 'list' && currentPage.view === 'reports' && (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center">
-                <ChartBar size={64} className="mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Reports & Analytics</h2>
-                <p className="text-muted-foreground">Coming soon</p>
-              </div>
-            </div>
+            <Reports
+              quotes={quotes || []}
+              jobs={jobs || []}
+              customers={customers || []}
+            />
+          )}
+          
+          {currentPage.type === 'list' && currentPage.view === 'settings' && (
+            <Settings
+              quotes={quotes || []}
+              jobs={jobs || []}
+              customers={customers || []}
+            />
           )}
           
           {currentPage.type === 'quote-builder' && (

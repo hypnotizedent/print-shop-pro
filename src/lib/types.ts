@@ -13,6 +13,13 @@ export interface Customer {
   phone?: string
   company?: string
   tier?: CustomerTier
+  address?: {
+    street: string
+    city: string
+    state: string
+    zip: string
+    country?: string
+  }
 }
 
 export interface Sizes {
@@ -81,4 +88,5 @@ export interface Job {
   artwork_approved: boolean
   assigned_to: string[]
   progress: number
+  nickname?: string
 }

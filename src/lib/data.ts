@@ -8,6 +8,13 @@ export const sampleCustomers: Customer[] = [
     phone: '(555) 123-4567',
     company: 'ACME Corporation',
     tier: 'platinum',
+    address: {
+      street: '123 Business Park Dr',
+      city: 'San Francisco',
+      state: 'CA',
+      zip: '94102',
+      country: 'USA',
+    },
   },
   {
     id: 'c2',
@@ -15,6 +22,12 @@ export const sampleCustomers: Customer[] = [
     email: 'sarah@gmail.com',
     company: 'Smith Family Reunion',
     tier: 'bronze',
+    address: {
+      street: '456 Oak Avenue',
+      city: 'Austin',
+      state: 'TX',
+      zip: '78701',
+    },
   },
   {
     id: 'c3',
@@ -23,6 +36,12 @@ export const sampleCustomers: Customer[] = [
     phone: '(555) 234-5678',
     company: 'Tech Startup Inc',
     tier: 'gold',
+    address: {
+      street: '789 Innovation Blvd',
+      city: 'Seattle',
+      state: 'WA',
+      zip: '98101',
+    },
   },
   {
     id: 'c4',
@@ -31,6 +50,12 @@ export const sampleCustomers: Customer[] = [
     phone: '(555) 345-6789',
     company: 'Local Church',
     tier: 'silver',
+    address: {
+      street: '321 Faith Street',
+      city: 'Denver',
+      state: 'CO',
+      zip: '80201',
+    },
   },
   {
     id: 'c5',
@@ -39,6 +64,12 @@ export const sampleCustomers: Customer[] = [
     phone: '(555) 456-7890',
     company: 'High School Athletics',
     tier: 'gold',
+    address: {
+      street: '555 School Road',
+      city: 'Portland',
+      state: 'OR',
+      zip: '97201',
+    },
   },
 ]
 
@@ -238,6 +269,7 @@ export const sampleJobs: Job[] = [
     artwork_approved: false,
     assigned_to: ['Lisa', 'Marco'],
     progress: 15,
+    nickname: 'ACME Holiday Hoodies',
   },
   {
     id: 'j2',
@@ -252,6 +284,7 @@ export const sampleJobs: Job[] = [
     artwork_approved: true,
     assigned_to: ['Sarah'],
     progress: 35,
+    nickname: 'Tech Startup Polos',
   },
   {
     id: 'j3',
@@ -281,6 +314,7 @@ export const sampleJobs: Job[] = [
     artwork_approved: true,
     assigned_to: ['Marco', 'Jake'],
     progress: 80,
+    nickname: 'Church Christmas Event',
   },
   {
     id: 'j4',
@@ -295,5 +329,6 @@ export const sampleJobs: Job[] = [
     artwork_approved: true,
     assigned_to: [],
     progress: 100,
+    nickname: 'Smith Reunion Tees',
   },
 ]

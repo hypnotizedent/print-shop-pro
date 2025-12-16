@@ -19,26 +19,47 @@ This is a multi-view production management system with complex state management,
 - **Progression**: View login page → Enter email/password → Submit credentials → Access granted → Redirect to quotes page
 - **Success criteria**: Login form is styled consistently with app theme; credentials are validated; successful login persists session; logout option available in header
 
+### Global Search
+- **Functionality**: Search across customers, quotes, and jobs from header search bar
+- **Purpose**: Quick navigation to any entity without browsing through lists
+- **Trigger**: Type in global search input in header
+- **Progression**: Type search term → See filtered results (customers/quotes/jobs) → Click result → Navigate to detail view
+- **Success criteria**: Search responds within 200ms; searches customer name, company, quote number, job number, and job nickname; results limited to 10; clicking result navigates correctly
+
 ### Quote Builder (Full Screen Mode)
-- **Functionality**: Create and edit quotes with line items, customer info, pricing, and terms in dedicated full-screen view
+- **Functionality**: Create and edit quotes with line items, customer info, pricing, and terms in dedicated full-screen view with filtering and sorting
 - **Purpose**: Primary revenue generation tool - converts customer requests into billable orders
 - **Trigger**: Click "+ New Quote" button or click existing quote card from list
 - **Progression**: Select customer → Add line items (product/decoration/sizes/quantity) → Set pricing/discount → Add notes/due date → Save/Send
-- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace
+- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace; filter by status; sort by date
 
-### Job Management (Inline Expansion)
-- **Functionality**: View jobs in kanban board, click to expand details inline without leaving the board view
-- **Purpose**: Quick job details review while maintaining context of overall production pipeline
-- **Trigger**: Click job card in kanban column
-- **Progression**: View kanban board → Click job card → Details expand inline below card → Review/update → Click to collapse or click another job
-- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt kanban layout; can switch between jobs quickly
+### Job Management (List View with Inline Expansion)
+- **Functionality**: View jobs in searchable/filterable list, click to expand details inline without leaving the list view
+- **Purpose**: Quick job details review while maintaining context of overall job list; easier scanning than kanban
+- **Trigger**: Navigate to Jobs page
+- **Progression**: View job list → Filter by status/search → Sort by due date → Click job card → Details expand inline below card → Review/update → Click to collapse or click another job
+- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt list layout; can switch between jobs quickly; filter by status works; search by job number/nickname/customer works; date sorting works
 
-### Customer Management
-- **Functionality**: Browse customer list, view individual customer details with contact info, quote history, and job history
-- **Purpose**: Centralized customer relationship management and order history tracking
+### Customer Management with Addresses
+- **Functionality**: Browse customer list, view individual customer details with contact info, address, quote history, and job history
+- **Purpose**: Centralized customer relationship management and order history tracking with shipping addresses
 - **Trigger**: Navigate to Customers view from sidebar
-- **Progression**: View customer list → Search/filter customers → Click customer → View profile with stats/history → Edit contact info → View related quotes/jobs
-- **Success criteria**: Customer list searchable; customer detail shows all related quotes and jobs; contact info editable; revenue stats calculated correctly
+- **Progression**: View customer list → Search/filter customers → Click customer → View profile with stats/history → Edit contact info and address → View related quotes/jobs
+- **Success criteria**: Customer list searchable; customer detail shows all related quotes and jobs; contact info and full address editable; revenue stats calculated correctly; address displays properly when viewing
+
+### Settings Page
+- **Functionality**: Centralized settings for theme customization and data export
+- **Purpose**: Allow users to customize app appearance and export data for backup or analysis
+- **Trigger**: Navigate to Settings from sidebar
+- **Progression**: View settings → Adjust theme colors → Save theme changes → Export data to CSV (quotes/jobs/customers)
+- **Success criteria**: Theme colors update in real-time; color changes persist; CSV exports download correctly; export includes all relevant data fields
+
+### Reports & Analytics
+- **Functionality**: Dashboard showing business metrics, revenue stats, customer rankings, and status breakdowns
+- **Purpose**: Provide insights into business performance and customer value
+- **Trigger**: Navigate to Reports from sidebar
+- **Progression**: View reports page → See revenue totals → Review quote/job status breakdowns → See top customers by revenue
+- **Success criteria**: All metrics calculate correctly; top customers ranked by total approved quote value; status breakdowns show percentages; data updates when underlying data changes
 
 ### Inline Spreadsheet Editing
 - **Functionality**: Click-to-edit cells for line items with keyboard navigation (Tab, Enter, Arrow keys, Escape)

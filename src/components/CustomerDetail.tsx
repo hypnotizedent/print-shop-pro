@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X } from '@phosphor-icons/react'
+import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin } from '@phosphor-icons/react'
 import type { Customer, Quote, Job, CustomerTier } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
@@ -131,6 +131,18 @@ export function CustomerDetail({
                     <span>{customer.phone}</span>
                   </div>
                 )}
+                {customer.address && (
+                  <div className="flex items-start gap-2 text-muted-foreground">
+                    <MapPin size={18} className="mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div>{customer.address.street}</div>
+                      <div>
+                        {customer.address.city}, {customer.address.state} {customer.address.zip}
+                      </div>
+                      {customer.address.country && <div>{customer.address.country}</div>}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -184,6 +196,104 @@ export function CustomerDetail({
                       <SelectItem value="platinum">Platinum</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                
+                <div className="pt-4 border-t border-border">
+                  <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">
+                    Address
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="street">Street Address</Label>
+                      <Input
+                        id="street"
+                        value={editedCustomer.address?.street || ''}
+                        onChange={(e) => setEditedCustomer({ 
+                          ...editedCustomer, 
+                          address: { 
+                            ...editedCustomer.address,
+                            street: e.target.value,
+                            city: editedCustomer.address?.city || '',
+                            state: editedCustomer.address?.state || '',
+                            zip: editedCustomer.address?.zip || '',
+                          }
+                        })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city">City</Label>
+                        <Input
+                          id="city"
+                          value={editedCustomer.address?.city || ''}
+                          onChange={(e) => setEditedCustomer({ 
+                            ...editedCustomer, 
+                            address: { 
+                              ...editedCustomer.address,
+                              street: editedCustomer.address?.street || '',
+                              city: e.target.value,
+                              state: editedCustomer.address?.state || '',
+                              zip: editedCustomer.address?.zip || '',
+                            }
+                          })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="state">State</Label>
+                        <Input
+                          id="state"
+                          value={editedCustomer.address?.state || ''}
+                          onChange={(e) => setEditedCustomer({ 
+                            ...editedCustomer, 
+                            address: { 
+                              ...editedCustomer.address,
+                              street: editedCustomer.address?.street || '',
+                              city: editedCustomer.address?.city || '',
+                              state: e.target.value,
+                              zip: editedCustomer.address?.zip || '',
+                            }
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="zip">ZIP Code</Label>
+                        <Input
+                          id="zip"
+                          value={editedCustomer.address?.zip || ''}
+                          onChange={(e) => setEditedCustomer({ 
+                            ...editedCustomer, 
+                            address: { 
+                              ...editedCustomer.address,
+                              street: editedCustomer.address?.street || '',
+                              city: editedCustomer.address?.city || '',
+                              state: editedCustomer.address?.state || '',
+                              zip: e.target.value,
+                            }
+                          })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="country">Country (Optional)</Label>
+                        <Input
+                          id="country"
+                          value={editedCustomer.address?.country || ''}
+                          onChange={(e) => setEditedCustomer({ 
+                            ...editedCustomer, 
+                            address: { 
+                              ...editedCustomer.address,
+                              street: editedCustomer.address?.street || '',
+                              city: editedCustomer.address?.city || '',
+                              state: editedCustomer.address?.state || '',
+                              zip: editedCustomer.address?.zip || '',
+                              country: e.target.value,
+                            }
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
