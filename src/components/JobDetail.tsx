@@ -13,12 +13,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck, Bell } from '@phosphor-icons/react'
+import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck, Bell, EnvelopeSimple } from '@phosphor-icons/react'
 import type { Job, JobStatus, LegacyArtworkFile, Expense } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { ExpenseTracker } from '@/components/ExpenseTracker'
+import { sendArtworkNotificationEmail, sendBulkArtworkApprovalEmail } from '@/lib/artwork-email'
 
 interface JobDetailProps {
   job: Job
@@ -50,11 +51,47 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
     const item = job.line_items.find(i => i.id === itemId)
     if (!item?.artwork) return
 
+    const artwork = item.artwork.find(a => a.location === location)
+    if (!artwork) return
+
     const updatedArtwork = item.artwork.map(a => 
       a.location === location ? { ...a, approved } : a
     )
     
     onUpdateArtwork(itemId, updatedArtwork)
+    
+    const emailSent = sendArtworkNotificationEmail({
+      job,
+      itemId,
+      artwork: { ...artwork, approved },
+      approved
+    })
+    
+    if (emailSent) {
+      toast.success(
+        `Email notification sent to ${job.customer.name}`,
+        {
+          description: `Artwork ${approved ? 'approved' : 'rejected'} for ${location}`,
+          duration: 4000,
+        }
+      )
+    }
+    
+    const allApprovedAfterUpdate = updatedArtwork.every(a => a.approved)
+    if (allApprovedAfterUpdate && updatedArtwork.length > 0) {
+      setTimeout(() => {
+        const bulkEmailSent = sendBulkArtworkApprovalEmail(job, itemId, updatedArtwork)
+        if (bulkEmailSent) {
+          toast.success(
+            `All artwork approved! Confirmation email sent`,
+            {
+              description: `${job.customer.name} notified - Job ready for production`,
+              duration: 5000,
+            }
+          )
+        }
+      }, 500)
+    }
   }
 
   const handleBulkUpload = (itemId: string, files: FileList) => {
@@ -219,6 +256,23 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
                   <Bell size={18} className="mr-2" />
                   Notify Departments
                 </DropdownMenuItem>
+                {totalArtworkFiles > 0 && (
+                  <DropdownMenuItem onClick={() => {
+                    const item = job.line_items[0]
+                    if (item?.artwork && item.artwork.length > 0) {
+                      const allApproved = item.artwork.every(a => a.approved)
+                      if (allApproved) {
+                        sendBulkArtworkApprovalEmail(job, item.id, item.artwork)
+                        toast.success('Artwork approval email sent to customer')
+                      } else {
+                        toast.info('Not all artwork is approved yet')
+                      }
+                    }
+                  }}>
+                    <EnvelopeSimple size={18} className="mr-2" />
+                    Send Artwork Status Email
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => toast.info('Label printing coming soon')}>
                   <Tag size={18} className="mr-2" />
