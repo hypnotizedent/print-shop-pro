@@ -1,15 +1,19 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { ChartBar, TrendUp, Users, CurrencyDollar, Package } from '@phosphor-icons/react'
-import type { Quote, Job, Customer } from '@/lib/types'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ChartBar, TrendUp, Users, CurrencyDollar, Package, Warning } from '@phosphor-icons/react'
+import type { Quote, Job, Customer, PaymentReminder } from '@/lib/types'
+import { UnpaidBalancesReport } from '@/components/UnpaidBalancesReport'
 
 interface ReportsProps {
   quotes: Quote[]
   jobs: Job[]
   customers: Customer[]
+  paymentReminders?: PaymentReminder[]
+  onSelectQuote?: (quote: Quote) => void
 }
 
-export function Reports({ quotes, jobs, customers }: ReportsProps) {
+export function Reports({ quotes, jobs, customers, paymentReminders = [], onSelectQuote }: ReportsProps) {
   const stats = useMemo(() => {
     const totalRevenue = quotes
       .filter(q => q.status === 'approved')
@@ -79,15 +83,22 @@ export function Reports({ quotes, jobs, customers }: ReportsProps) {
           <h1 className="text-2xl font-bold">Reports & Analytics</h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <CurrencyDollar size={24} className="text-primary" />
-              <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-            </div>
-            <p className="text-3xl font-bold">${stats.totalRevenue.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground mt-1">From approved quotes</p>
-          </Card>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="payments">Payment Tracking</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <CurrencyDollar size={24} className="text-primary" />
+                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                </div>
+                <p className="text-3xl font-bold">${stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground mt-1">From approved quotes</p>
+              </Card>
 
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-2">
@@ -183,6 +194,20 @@ export function Reports({ quotes, jobs, customers }: ReportsProps) {
             ))}
           </div>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <UnpaidBalancesReport
+              quotes={quotes}
+              reminders={paymentReminders}
+              onSelectQuote={(quote) => {
+                if (onSelectQuote) {
+                  onSelectQuote(quote)
+                }
+              }}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

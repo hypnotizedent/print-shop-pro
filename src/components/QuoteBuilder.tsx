@@ -15,22 +15,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy } from '@phosphor-icons/react'
-import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment } from '@/lib/types'
+import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
 import { PaymentTracker } from '@/components/PaymentTracker'
+import { PaymentReminders } from '@/components/PaymentReminders'
 
 interface QuoteBuilderProps {
   quote: Quote
   customers: Customer[]
   quotes: Quote[]
   customerTemplates?: CustomerDecorationTemplate[]
+  paymentReminders?: PaymentReminder[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
   onSaveDecorationTemplate?: (template: CustomerDecorationTemplate) => void
   onNavigateToCustomer?: () => void
   onDuplicateQuote?: (quote: Quote) => void
+  onUpdateReminder?: (reminder: PaymentReminder) => void
   isInline?: boolean
 }
 
@@ -39,12 +42,14 @@ export function QuoteBuilder({
   customers,
   quotes,
   customerTemplates = [],
+  paymentReminders = [],
   onSave, 
   onBack, 
   onCreateCustomer,
   onSaveDecorationTemplate,
   onNavigateToCustomer,
   onDuplicateQuote,
+  onUpdateReminder,
   isInline = false
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
@@ -377,6 +382,27 @@ export function QuoteBuilder({
                   ...quote,
                   payments: (quote.payments || []).filter(p => p.id !== paymentId)
                 })
+              }}
+            />
+          </div>
+
+          <Separator />
+
+          <div>
+            <PaymentReminders
+              quote={quote}
+              reminder={paymentReminders.find(r => r.quoteId === quote.id)}
+              onUpdateReminder={(reminder) => {
+                if (onUpdateReminder) {
+                  onUpdateReminder(reminder)
+                }
+              }}
+              onSendManualReminder={() => {
+                const totalPaid = (quote.payments || []).reduce((sum, p) => sum + p.amount, 0)
+                const balance = quote.total - totalPaid
+                console.log(`Sending payment reminder for quote ${quote.quote_number}`)
+                console.log(`Customer: ${quote.customer.email}`)
+                console.log(`Balance: $${balance.toFixed(2)}`)
               }}
             />
           </div>

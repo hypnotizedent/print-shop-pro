@@ -20,7 +20,7 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -42,6 +42,7 @@ function App() {
   const [jobs, setJobs] = useKV<Job[]>('jobs', sampleJobs)
   const [customers, setCustomers] = useKV<Customer[]>('customers', sampleCustomers)
   const [customerTemplates, setCustomerTemplates] = useKV<CustomerDecorationTemplate[]>('customer-decoration-templates', [])
+  const [paymentReminders, setPaymentReminders] = useKV<PaymentReminder[]>('payment-reminders', [])
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
   
   useEffect(() => {
@@ -233,6 +234,20 @@ function App() {
     setCustomerTemplates((current) => [...(current || []), template])
     toast.success(`Template "${template.name}" saved`)
   }
+
+  const handleUpdatePaymentReminder = (reminder: PaymentReminder) => {
+    setPaymentReminders((current) => {
+      const existing = current || []
+      const index = existing.findIndex(r => r.quoteId === reminder.quoteId)
+      if (index >= 0) {
+        const updated = [...existing]
+        updated[index] = reminder
+        return updated
+      } else {
+        return [...existing, reminder]
+      }
+    })
+  }
   
   const navItems = [
     { id: 'quotes' as const, label: 'Quotes', icon: FileText },
@@ -356,6 +371,10 @@ function App() {
               quotes={quotes || []}
               jobs={jobs || []}
               customers={customers || []}
+              paymentReminders={paymentReminders || []}
+              onSelectQuote={(quote) => {
+                setCurrentPage({ type: 'quote-builder', quote })
+              }}
             />
           )}
           
@@ -373,6 +392,7 @@ function App() {
               customers={customers || []}
               quotes={quotes || []}
               customerTemplates={customerTemplates || []}
+              paymentReminders={paymentReminders || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {
@@ -388,6 +408,7 @@ function App() {
               }}
               onCreateCustomer={handleCreateCustomer}
               onSaveDecorationTemplate={handleSaveDecorationTemplate}
+              onUpdateReminder={handleUpdatePaymentReminder}
               onNavigateToCustomer={currentPage.quote.customer.id ? () => {
                 const customer = customers?.find(c => c.id === currentPage.quote.customer.id)
                 if (customer) {

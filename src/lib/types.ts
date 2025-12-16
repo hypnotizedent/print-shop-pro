@@ -155,3 +155,13 @@ export interface Expense {
   notes?: string
   createdAt: string
 }
+
+export interface PaymentReminder {
+  id: string
+  quoteId: string
+  enabled: boolean
+  intervals: number[]
+  lastSentDate?: string
+  nextReminderDate?: string
+  emailsSent: number
+}

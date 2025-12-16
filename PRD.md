@@ -82,6 +82,13 @@ This is a multi-view production management system with complex state management,
 - **Progression**: View payment tracker on quote → Click "Add Payment" → Enter amount and date → Select payment method (or specify custom) → Add reference number/transaction ID → Add notes → Submit → Payment added to history → Balance updates automatically
 - **Success criteria**: Payment form validates amount is positive number; supports all major payment methods plus custom option; displays payment history with method badges; shows real-time totals (quote total, total paid, balance due); can delete payment records with confirmation; payment data persists with quote; quote total, total paid, and balance cards update immediately; payment history shows method, date, reference, and notes
 
+### Payment Reminders & Automated Follow-up
+- **Functionality**: Automated payment reminder system with configurable schedules; manual reminder sending; unpaid balances tracking and reporting; overdue payment alerts
+- **Purpose**: Improve cash flow by automating payment follow-up; reduce manual effort tracking unpaid balances; ensure timely payment collection; provide visibility into accounts receivable
+- **Trigger**: Enable reminders in quote detail; view unpaid balances in Reports > Payment Tracking tab
+- **Progression**: Open quote with balance → Enable payment reminders toggle → Select reminder intervals (1, 3, 7, 14, 30, 60 days) → System calculates next reminder date → Automatic emails sent on schedule → View reminder history → Send manual reminder anytime → View all unpaid balances in Reports → Click quote to manage
+- **Success criteria**: Reminder toggle enables/disables automated emails; can select multiple interval options; displays last sent date and next scheduled date; tracks total emails sent per quote; shows days overdue for past-due quotes; manual "Send Reminder Now" button works; email template shows balance, amount paid, and due date; Reports page shows total unpaid balance, overdue balance, and active reminder count; unpaid quotes list sortable by balance amount and overdue status; clicking quote navigates to quote builder; overdue quotes highlighted in red; fully paid quotes show success state with no reminder options
+
 ### Job Expense & COGS Tracking
 - **Functionality**: Record all job-related expenses (materials, labor, shipping, outsourcing, supplies) with automatic profit margin calculation
 - **Purpose**: Track cost of goods sold (COGS) for accurate job profitability; identify high-cost jobs; calculate profit margins in real-time
