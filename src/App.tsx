@@ -20,7 +20,7 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -41,6 +41,7 @@ function App() {
   const [quotes, setQuotes] = useKV<Quote[]>('quotes', sampleQuotes)
   const [jobs, setJobs] = useKV<Job[]>('jobs', sampleJobs)
   const [customers, setCustomers] = useKV<Customer[]>('customers', sampleCustomers)
+  const [customerTemplates, setCustomerTemplates] = useKV<CustomerDecorationTemplate[]>('customer-decoration-templates', [])
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
   
   useEffect(() => {
@@ -221,6 +222,11 @@ function App() {
     setCurrentPage({ type: 'customer-detail', customer })
   }
   
+  const handleSaveDecorationTemplate = (template: CustomerDecorationTemplate) => {
+    setCustomerTemplates((current) => [...(current || []), template])
+    toast.success(`Template "${template.name}" saved`)
+  }
+  
   const navItems = [
     { id: 'quotes' as const, label: 'Quotes', icon: FileText },
     { id: 'jobs' as const, label: 'Jobs', icon: Briefcase },
@@ -358,6 +364,7 @@ function App() {
               quote={currentPage.quote}
               customers={customers || []}
               quotes={quotes || []}
+              customerTemplates={customerTemplates || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {
@@ -372,6 +379,7 @@ function App() {
                 }
               }}
               onCreateCustomer={handleCreateCustomer}
+              onSaveDecorationTemplate={handleSaveDecorationTemplate}
               onNavigateToCustomer={currentPage.quote.customer.id ? () => {
                 const customer = customers?.find(c => c.id === currentPage.quote.customer.id)
                 if (customer) {

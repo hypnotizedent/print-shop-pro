@@ -7,18 +7,26 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle } from '@phosphor-icons/react'
-import type { Decoration, DecorationType } from '@/lib/types'
+import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle, Warning, BookmarkSimple, Info } from '@phosphor-icons/react'
+import type { Decoration, DecorationType, ProductType, CustomerDecorationTemplate } from '@/lib/types'
 import { generateId } from '@/lib/data'
 import { toast } from 'sonner'
+import { getProductTemplate, validateImprintSize, createCustomerTemplate } from '@/lib/decoration-templates'
+import { SaveDecorationTemplateDialog } from '@/components/SaveDecorationTemplateDialog'
 
 interface DecorationManagerProps {
   decorations: Decoration[]
   onChange: (decorations: Decoration[]) => void
+  productType?: ProductType
+  customerId?: string
+  customerName?: string
+  customerTemplates?: CustomerDecorationTemplate[]
+  onSaveTemplate?: (template: CustomerDecorationTemplate) => void
 }
 
-const STANDARD_LOCATIONS = ['Front', 'Back', 'Left Sleeve', 'Right Sleeve', 'Hood']
+const DEFAULT_LOCATIONS = ['Front', 'Back', 'Left Sleeve', 'Right Sleeve', 'Hood']
 const DECORATION_METHODS: { value: DecorationType; label: string }[] = [
   { value: 'screen-print', label: 'Screen Printing' },
   { value: 'embroidery', label: 'Embroidery' },
@@ -312,22 +320,52 @@ const DECORATION_PRESETS: { name: string; description: string; decorations: Omit
   },
 ]
 
-export function DecorationManager({ decorations, onChange }: DecorationManagerProps) {
+export function DecorationManager({ 
+  decorations, 
+  onChange, 
+  productType,
+  customerId,
+  customerName,
+  customerTemplates = [],
+  onSaveTemplate,
+}: DecorationManagerProps) {
   const [customInputs, setCustomInputs] = useState<Record<string, { location: boolean; method: boolean }>>({})
   const [collapsedDecorations, setCollapsedDecorations] = useState<Set<string>>(new Set())
   const [editingDecoration, setEditingDecoration] = useState<string | null>(null)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false)
+
+  const productTemplate = productType ? getProductTemplate(productType) : null
+  const STANDARD_LOCATIONS = productTemplate?.suggestedLocations || DEFAULT_LOCATIONS
 
   const addDecoration = () => {
+    const defaultLocation = STANDARD_LOCATIONS[0] || 'Front'
     const newDecoration: Decoration = {
       id: generateId('dec'),
       method: 'screen-print',
-      location: 'Front',
+      location: defaultLocation,
       inkThreadColors: '',
       setupFee: 0,
     }
     onChange([...decorations, newDecoration])
     setEditingDecoration(newDecoration.id)
+  }
+
+  const applyCustomerTemplate = (template: CustomerDecorationTemplate) => {
+    const newDecorations = template.decorations.map(d => ({
+      ...d,
+      id: generateId('dec'),
+    }))
+    onChange([...decorations, ...newDecorations])
+    toast.success(`Applied "${template.name}" template`)
+  }
+
+  const handleSaveTemplate = (name: string, description: string) => {
+    if (!customerId || !customerName || !onSaveTemplate) return
+    
+    const template = createCustomerTemplate(customerId, name, decorations, description)
+    onSaveTemplate(template)
+    toast.success(`Template "${name}" saved`)
   }
 
   const duplicateDecoration = (decoration: Decoration) => {
@@ -387,8 +425,18 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
   const updateDecoration = (id: string, updates: Partial<Decoration>) => {
     onChange(decorations.map(d => d.id === id ? { ...d, ...updates } : d))
     
-    if (updates.artwork && updates.imprintSize) {
-      return
+    if (updates.artwork && updates.imprintSize && productType) {
+      const decoration = decorations.find(d => d.id === id)
+      if (decoration) {
+        const validation = validateImprintSize(
+          productType,
+          decoration.location,
+          updates.imprintSize
+        )
+        if (!validation.valid && validation.warning) {
+          toast.warning(validation.warning, { duration: 5000 })
+        }
+      }
     }
     
     const hasSignificantUpdate = 
@@ -588,6 +636,17 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
 
             {!isCollapsed && (
               <div className="px-3 pb-3 space-y-3 border-t border-border/50 pt-3">
+                {productType && productTemplate?.sizeRestrictions[decoration.location] && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-2 flex items-start gap-2">
+                    <Info size={14} className="text-primary mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-primary">
+                      <strong>Size Limit:</strong> Max {productTemplate.sizeRestrictions[decoration.location].maxWidth} × {productTemplate.sizeRestrictions[decoration.location].maxHeight}
+                      {productTemplate.sizeRestrictions[decoration.location].notes && (
+                        <span className="text-primary/80"> — {productTemplate.sizeRestrictions[decoration.location].notes}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
@@ -790,12 +849,32 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="h-8 text-xs px-3">
               <Sparkle size={14} className="mr-1.5" />
-              Presets
+              Templates
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
+            {customerId && customerTemplates.length > 0 && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  {customerName}'s Templates
+                </div>
+                {customerTemplates.map((template) => (
+                  <DropdownMenuItem 
+                    key={template.id} 
+                    onClick={() => applyCustomerTemplate(template)}
+                    className="flex flex-col items-start gap-0.5 py-2"
+                  >
+                    <div className="font-medium text-xs">{template.name}</div>
+                    {template.description && (
+                      <div className="text-xs text-muted-foreground">{template.description}</div>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+              </>
+            )}
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-              Quick Templates
+              Standard Templates
             </div>
             {DECORATION_PRESETS.map((preset) => (
               <DropdownMenuItem 
@@ -809,7 +888,30 @@ export function DecorationManager({ decorations, onChange }: DecorationManagerPr
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {customerId && onSaveTemplate && decorations.length > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => setShowSaveTemplateDialog(true)}
+            className="h-8 text-xs px-3"
+            title="Save current decorations as a custom template"
+          >
+            <BookmarkSimple size={14} className="mr-1.5" weight="fill" />
+            Save
+          </Button>
+        )}
       </div>
+
+      {customerId && customerName && onSaveTemplate && (
+        <SaveDecorationTemplateDialog
+          open={showSaveTemplateDialog}
+          onOpenChange={setShowSaveTemplateDialog}
+          decorations={decorations}
+          customerId={customerId}
+          customerName={customerName}
+          onSave={handleSaveTemplate}
+        />
+      )}
     </div>
   )
 }

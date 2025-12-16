@@ -110,3 +110,12 @@ export interface Job {
   progress: number
   nickname?: string
 }
+
+export interface CustomerDecorationTemplate {
+  id: string
+  customerId: string
+  name: string
+  description?: string
+  decorations: Omit<Decoration, 'id'>[]
+  createdAt: string
+}

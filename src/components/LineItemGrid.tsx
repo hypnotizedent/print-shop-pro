@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button'
 import { ProductMockupWithSize } from './ProductMockupWithSize'
 import { DecorationManager } from './DecorationManager'
 import { CopyDecorationsDialog } from './CopyDecorationsDialog'
-import { Trash, CaretDown, CaretRight, Copy, Clock } from '@phosphor-icons/react'
-import type { LineItem, Sizes, Decoration, Quote } from '@/lib/types'
+import { BulkCopyDecorationsDialog } from './BulkCopyDecorationsDialog'
+import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple } from '@phosphor-icons/react'
+import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { generateId } from '@/lib/data'
 import { useState } from 'react'
@@ -23,11 +24,22 @@ interface LineItemGridProps {
   customerId?: string
   customerName?: string
   previousQuotes?: Quote[]
+  customerTemplates?: CustomerDecorationTemplate[]
+  onSaveTemplate?: (template: CustomerDecorationTemplate) => void
 }
 
-export function LineItemGrid({ items, onChange, customerId, customerName, previousQuotes }: LineItemGridProps) {
+export function LineItemGrid({ 
+  items, 
+  onChange, 
+  customerId, 
+  customerName, 
+  previousQuotes,
+  customerTemplates = [],
+  onSaveTemplate,
+}: LineItemGridProps) {
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
   const [copyDialogOpen, setCopyDialogOpen] = useState(false)
+  const [bulkCopyDialogOpen, setBulkCopyDialogOpen] = useState(false)
   const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null)
 
   const updateItem = (index: number, updates: Partial<LineItem>) => {
@@ -119,7 +131,27 @@ export function LineItemGrid({ items, onChange, customerId, customerName, previo
     updateItem(currentItemIndex, { decorations: mergedDecorations })
   }
 
+  const handleBulkCopyToAllItems = (itemIndex: number) => {
+    setCurrentItemIndex(itemIndex)
+    setBulkCopyDialogOpen(true)
+  }
+
+  const handleBulkCopyDecorations = (targetLineItemIds: string[], decorations: Decoration[]) => {
+    const newItems = items.map(item => {
+      if (targetLineItemIds.includes(item.id)) {
+        return {
+          ...item,
+          decorations,
+        }
+      }
+      return item
+    })
+    onChange(newItems)
+  }
+
   const customerQuotes = previousQuotes?.filter(q => q.customer.id === customerId && q.id !== items[0]?.id) || []
+  
+  const customerTemplatesForCustomer = customerTemplates.filter(t => t.customerId === customerId)
   
   return (
     <>
@@ -131,6 +163,16 @@ export function LineItemGrid({ items, onChange, customerId, customerName, previo
         previousQuotes={customerQuotes}
         onCopyDecorations={handleCopyDecorationsFromDialog}
       />
+
+      {currentItemIndex !== null && (
+        <BulkCopyDecorationsDialog
+          open={bulkCopyDialogOpen}
+          onOpenChange={setBulkCopyDialogOpen}
+          sourceLineItem={items[currentItemIndex]}
+          allLineItems={items}
+          onCopy={handleBulkCopyDecorations}
+        />
+      )}
       
       <div className="border border-border rounded-lg overflow-hidden">
         <table className="w-full">
@@ -311,12 +353,29 @@ export function LineItemGrid({ items, onChange, customerId, customerName, previo
                           Copy from Previous Quotes ({customerQuotes.length})
                         </Button>
                       )}
+
+                      {items.length > 1 && (item.decorations || []).length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleBulkCopyToAllItems(index)}
+                          className="h-7 text-xs mt-2 ml-2 text-muted-foreground hover:text-primary"
+                        >
+                          <CopySimple size={14} className="mr-1.5" />
+                          Copy to All Line Items
+                        </Button>
+                      )}
                       
                       {expandedLocations.has(item.id) && (
                         <div className="mt-3 pb-3">
                           <DecorationManager
                             decorations={item.decorations || []}
                             onChange={(decorations) => handleDecorationsChange(index, decorations)}
+                            productType={item.product_type}
+                            customerId={customerId}
+                            customerName={customerName}
+                            customerTemplates={customerTemplatesForCustomer}
+                            onSaveTemplate={onSaveTemplate}
                           />
                         </div>
                       )}

@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy } from '@phosphor-icons/react'
-import type { Quote, Customer, DiscountType } from '@/lib/types'
+import type { Quote, Customer, DiscountType, CustomerDecorationTemplate } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
 
@@ -23,9 +23,11 @@ interface QuoteBuilderProps {
   quote: Quote
   customers: Customer[]
   quotes: Quote[]
+  customerTemplates?: CustomerDecorationTemplate[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
+  onSaveDecorationTemplate?: (template: CustomerDecorationTemplate) => void
   onNavigateToCustomer?: () => void
   onDuplicateQuote?: (quote: Quote) => void
   isInline?: boolean
@@ -35,9 +37,11 @@ export function QuoteBuilder({
   quote: initialQuote, 
   customers,
   quotes,
+  customerTemplates = [],
   onSave, 
   onBack, 
   onCreateCustomer,
+  onSaveDecorationTemplate,
   onNavigateToCustomer,
   onDuplicateQuote,
   isInline = false
@@ -286,6 +290,8 @@ export function QuoteBuilder({
                 customerId={quote.customer.id}
                 customerName={quote.customer.name}
                 previousQuotes={quotes}
+                customerTemplates={customerTemplates}
+                onSaveTemplate={onSaveDecorationTemplate}
               />
             )}
           </div>

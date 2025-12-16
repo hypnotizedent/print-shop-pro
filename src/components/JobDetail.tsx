@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { Progress } from '@/components/ui/progress'
 import { ProductMockup } from '@/components/ProductMockup'
 import { ArtworkUpload } from '@/components/ArtworkUpload'
+import { JobDepartmentNotification } from '@/components/JobDepartmentNotification'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DropdownMenu,
@@ -12,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck } from '@phosphor-icons/react'
+import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck, Bell } from '@phosphor-icons/react'
 import type { Job, JobStatus, LegacyArtworkFile } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useRef } from 'react'
@@ -37,6 +38,7 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
   const [mockupView, setMockupView] = useState<'front' | 'back'>('front')
   const [isEditingNickname, setIsEditingNickname] = useState(false)
   const [nicknameValue, setNicknameValue] = useState(job.nickname || '')
+  const [showDepartmentNotification, setShowDepartmentNotification] = useState(false)
   const primaryItem = job.line_items[0]
   const bulkUploadRef = useRef<HTMLInputElement>(null)
 
@@ -211,6 +213,11 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem onClick={() => setShowDepartmentNotification(true)}>
+                  <Bell size={18} className="mr-2" />
+                  Notify Departments
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => toast.info('Label printing coming soon')}>
                   <Tag size={18} className="mr-2" />
                   Print Job Labels
@@ -478,6 +485,12 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
           </div>
         )}
       </div>
+
+      <JobDepartmentNotification
+        open={showDepartmentNotification}
+        onOpenChange={setShowDepartmentNotification}
+        job={job}
+      />
     </div>
   )
 }
