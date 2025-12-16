@@ -6,11 +6,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { StatusBadge } from './StatusBadge'
-import type { Quote } from '@/lib/types'
+import type { Quote, QuoteStatus } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
-import { Briefcase, FileText, EnvelopeSimple, DotsThree } from '@phosphor-icons/react'
+import { Briefcase, FileText, EnvelopeSimple, DotsThree, CaretDown } from '@phosphor-icons/react'
 import { exportInvoiceAsPDF } from '@/lib/invoice-generator'
 import { sendInvoiceEmail } from '@/lib/invoice-email'
 import { toast } from 'sonner'
@@ -19,12 +20,13 @@ interface QuoteCardProps {
   quote: Quote
   onClick: () => void
   onConvertToJob?: (quote: Quote) => void
+  onStatusChange?: (quoteId: string, status: QuoteStatus) => void
   isExpanded?: boolean
   isSelected?: boolean
   onToggleSelect?: (quoteId: string) => void
 }
 
-export function QuoteCard({ quote, onClick, onConvertToJob, isExpanded, isSelected, onToggleSelect }: QuoteCardProps) {
+export function QuoteCard({ quote, onClick, onConvertToJob, onStatusChange, isExpanded, isSelected, onToggleSelect }: QuoteCardProps) {
   const itemCount = quote.line_items.reduce((sum, item) => sum + item.quantity, 0)
   const createdAgo = formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })
   
@@ -72,13 +74,43 @@ export function QuoteCard({ quote, onClick, onConvertToJob, isExpanded, isSelect
           <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-foreground">{quote.quote_number}</span>
-                {quote.nickname && (
-                  <span className="text-sm text-muted-foreground">({quote.nickname})</span>
-                )}
-                <StatusBadge status={quote.status} />
+                <span className="text-xs text-muted-foreground">{quote.quote_number}</span>
+                <div onClick={(e) => e.stopPropagation()}>
+                  {onStatusChange ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="inline-flex">
+                          <StatusBadge status={quote.status} />
+                          <CaretDown size={12} className="ml-1 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => onStatusChange(quote.id, 'draft')}>
+                          Draft
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusChange(quote.id, 'sent')}>
+                          Sent
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusChange(quote.id, 'approved')}>
+                          Approved
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusChange(quote.id, 'rejected')}>
+                          Rejected
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onStatusChange(quote.id, 'expired')}>
+                          Expired
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <StatusBadge status={quote.status} />
+                  )}
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground mb-2">
+              {quote.nickname && (
+                <div className="font-semibold text-foreground mb-1">{quote.nickname}</div>
+              )}
+              <div className="text-sm text-muted-foreground">
                 {quote.customer.company || quote.customer.name}
               </div>
               {artworkCount > 0 && (

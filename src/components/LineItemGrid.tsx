@@ -1,6 +1,6 @@
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { ProductMockup } from './ProductMockup'
+import { ProductMockupWithSize } from './ProductMockupWithSize'
 import { ArtworkUpload } from './ArtworkUpload'
 import { Trash, CaretDown, CaretRight } from '@phosphor-icons/react'
 import type { LineItem, Sizes, ArtworkFile } from '@/lib/types'
@@ -152,9 +152,10 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
                 </td>
                 <td className="px-3 py-2.5">
                   <div className="flex justify-center">
-                    <ProductMockup 
+                    <ProductMockupWithSize 
                       productType={item.product_type} 
                       color={item.product_color || '#94a3b8'}
+                      artwork={item.artwork}
                       size="small"
                     />
                   </div>

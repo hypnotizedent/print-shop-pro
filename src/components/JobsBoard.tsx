@@ -11,9 +11,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { JobCard } from '@/components/JobCard'
 import { JobDetail } from '@/components/JobDetail'
+import { ProductionCalendar } from '@/components/ProductionCalendar'
 import type { Job, JobStatus, ArtworkFile, Customer } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash } from '@phosphor-icons/react'
+import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface JobsBoardProps {
@@ -42,6 +43,7 @@ export function JobsBoard({
   const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all')
   const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc')
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set())
+  const [showCalendar, setShowCalendar] = useState(false)
   
   const handleJobClick = (job: Job) => {
     if (expandedJobId === job.id) {
@@ -106,12 +108,25 @@ export function JobsBoard({
     }
   }
   
+  const handleSingleStatusChange = (jobId: string, status: JobStatus) => {
+    onUpdateJobStatus(jobId, status)
+    toast.success(`Job status updated to ${status}`)
+  }
+  
   
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="border-b border-border p-4 md:p-6 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl md:text-2xl font-bold">Jobs</h1>
+          <Button
+            variant={showCalendar ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowCalendar(!showCalendar)}
+          >
+            <CalendarBlank size={16} className="mr-2" />
+            {showCalendar ? 'Hide' : 'Show'} Calendar
+          </Button>
         </div>
         
         <div className="flex flex-col md:flex-row gap-3 mb-4">
@@ -230,8 +245,18 @@ export function JobsBoard({
       </div>
       
       <div className="flex-1 overflow-auto p-4 md:p-6">
-        <div className="max-w-6xl mx-auto space-y-3">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="max-w-6xl mx-auto space-y-4">
+          {showCalendar && (
+            <ProductionCalendar 
+              jobs={jobs}
+              onSelectJob={(job) => {
+                setExpandedJobId(job.id)
+                setShowCalendar(false)
+              }}
+            />
+          )}
+          
+          <div className="flex items-center gap-3">
             <Checkbox 
               checked={hasSelection && selectedJobIds.size === filteredAndSortedJobs.length}
               onCheckedChange={toggleSelectAll}
@@ -246,6 +271,7 @@ export function JobsBoard({
               <JobCard
                 job={job}
                 onClick={() => handleJobClick(job)}
+                onStatusChange={handleSingleStatusChange}
                 isExpanded={expandedJobId === job.id}
                 isSelected={selectedJobIds.has(job.id)}
                 onToggleSelect={toggleJobSelection}

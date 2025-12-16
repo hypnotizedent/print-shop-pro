@@ -148,6 +148,14 @@ export function QuotesList({
     setSelectedQuoteIds(new Set())
   }
   
+  const handleSingleStatusChange = (quoteId: string, status: QuoteStatus) => {
+    const quote = quotes.find(q => q.id === quoteId)
+    if (quote) {
+      onSaveQuote({ ...quote, status })
+      toast.success(`Quote status updated to ${status}`)
+    }
+  }
+  
   
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -305,6 +313,7 @@ export function QuotesList({
                     quote={quote}
                     onClick={() => onSelectQuote(quote)}
                     onConvertToJob={onConvertToJob}
+                    onStatusChange={handleSingleStatusChange}
                     isSelected={selectedQuoteIds.has(quote.id)}
                     onToggleSelect={toggleQuoteSelection}
                   />
@@ -325,6 +334,7 @@ export function QuotesList({
                     quote={quote}
                     onClick={() => onSelectQuote(quote)}
                     onConvertToJob={onConvertToJob}
+                    onStatusChange={handleSingleStatusChange}
                     isSelected={selectedQuoteIds.has(quote.id)}
                     onToggleSelect={toggleQuoteSelection}
                   />
@@ -345,6 +355,7 @@ export function QuotesList({
                     quote={quote}
                     onClick={() => onSelectQuote(quote)}
                     onConvertToJob={onConvertToJob}
+                    onStatusChange={handleSingleStatusChange}
                     isSelected={selectedQuoteIds.has(quote.id)}
                     onToggleSelect={toggleQuoteSelection}
                   />

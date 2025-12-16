@@ -27,11 +27,11 @@ This is a multi-view production management system with complex state management,
 - **Success criteria**: Search responds within 200ms; searches customer name, company, quote number, job number, and job nickname; results limited to 10; clicking result navigates correctly
 
 ### Quote Builder (Full Screen Mode)
-- **Functionality**: Create and edit quotes with optional nickname, line items, customer info, pricing, and terms in dedicated full-screen view with filtering and sorting; export approved quotes as invoices
-- **Purpose**: Primary revenue generation tool - converts customer requests into billable orders with professional invoicing
+- **Functionality**: Create and edit quotes with optional nickname, line items, customer info, pricing, and terms in dedicated full-screen view with filtering and sorting; export approved quotes as invoices; quick status changes via dropdown on each quote card
+- **Purpose**: Primary revenue generation tool - converts customer requests into billable orders with professional invoicing and streamlined status management
 - **Trigger**: Click "+ New Quote" button or click existing quote card from list
-- **Progression**: Select customer → Add optional nickname → Add line items (product/decoration/sizes/quantity) → Set pricing/discount → Add notes/due date → Save/Send → Export as invoice if approved
-- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace; filter by status; sort by date; nickname field helps identify quotes; approved quotes can export as formatted PDF invoices
+- **Progression**: Select customer → Add optional nickname → Add line items (product/decoration/sizes/quantity) → Set pricing/discount → Add notes/due date → Save/Send → Click status badge to change status → Export as invoice if approved
+- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace; filter by status; sort by date; nickname field helps identify quotes; nickname displays prominently above customer name with quote number as small label; status can be changed with single click on dropdown badge; approved quotes can export as formatted PDF invoices
 
 ### Bulk Actions for Quotes
 - **Functionality**: Select multiple quotes and perform batch operations (status changes, send invoices, export invoices as ZIP, delete)
@@ -41,11 +41,11 @@ This is a multi-view production management system with complex state management,
 - **Success criteria**: Can select/deselect individual quotes; select all works; bulk status change updates all selected quotes; bulk send opens email drafts for each approved quote; bulk export creates ZIP file with all invoices; bulk delete removes selected quotes after confirmation
 
 ### Job Management (List View with Inline Expansion & Nickname Editing)
-- **Functionality**: View jobs with editable nicknames in searchable/filterable list, click to expand details inline without leaving the list view; edit nicknames directly in job detail
-- **Purpose**: Quick job details review while maintaining context of overall job list; easier scanning than kanban; editable nicknames help identify and organize jobs quickly
+- **Functionality**: View jobs with editable nicknames in searchable/filterable list, click to expand details inline without leaving the list view; edit nicknames directly in job detail; quick status changes via dropdown on each job card; production scheduling calendar for visualizing job timelines and capacity
+- **Purpose**: Quick job details review while maintaining context of overall job list; easier scanning than kanban; editable nicknames help identify and organize jobs quickly; calendar provides weekly production capacity overview
 - **Trigger**: Navigate to Jobs page
-- **Progression**: View job list → Filter by status/search by nickname → Sort by due date → Click job card → Details expand inline below card → Edit nickname inline → Review/update → Click to collapse or click another job
-- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt list layout; can switch between jobs quickly; filter by status works; search by job number/nickname/customer works; date sorting works; nickname displays prominently; clicking nickname or "+ Add nickname" enables inline editing; Enter saves, Escape cancels
+- **Progression**: View job list → Filter by status/search by nickname → Sort by due date → Click job card → Details expand inline below card → Edit nickname inline → Click status badge to change status → Toggle calendar view to see weekly schedule → Review/update → Click to collapse or click another job
+- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt list layout; can switch between jobs quickly; filter by status works; search by job number/nickname/customer works; date sorting works; nickname displays prominently above customer name with job number as small label; clicking nickname or "+ Add nickname" enables inline editing; Enter saves, Escape cancels; status can be changed with single click on dropdown badge; production calendar shows jobs organized by due date with capacity totals; calendar job cards are color-coded by status
 
 ### Invoice Generation & Multi-channel Distribution
 - **Functionality**: Generate professional invoices from approved quotes with PDF export and email sending capability; batch export multiple invoices as ZIP file
@@ -55,11 +55,25 @@ This is a multi-view production management system with complex state management,
 - **Success criteria**: Invoice includes all quote details (line items, pricing, customer info, nickname); formatting is professional and print-ready; email draft pre-fills customer email and invoice details; bulk send opens individual email drafts; bulk export creates ZIP with all invoices named by quote number and nickname; ZIP downloads correctly
 
 ### Artwork Upload with File Size Recognition
-- **Functionality**: Upload artwork files for each print location with automatic file size detection and display
-- **Purpose**: Track artwork files for production with visibility into file sizes for quality and storage management
-- **Trigger**: Click upload area in line item decoration section or job detail
-- **Progression**: Click upload area → Select image file(s) → File uploads → File size automatically detected and displayed → Thumbnail shows with file info → Approve/reject artwork
-- **Success criteria**: File size displays in human-readable format (KB/MB); supports drag and drop; shows file size on artwork thumbnail; bulk upload supports multiple files; file size stored with artwork metadata
+- **Functionality**: Upload artwork files for each print location with automatic file size detection and display; visual mockup preview with imprint size estimation based on file size
+- **Purpose**: Track artwork files for production with visibility into file sizes for quality and storage management; provide visual representation of print areas and estimated dimensions
+- **Trigger**: Click upload area in line item decoration section or job detail; hover over preview icon in line item grid
+- **Progression**: Click upload area → Select image file(s) → File uploads → File size automatically detected and displayed → Thumbnail shows with file info → Hover preview icon shows mockup with all artwork locations → Imprint dimensions estimated from file size → Approve/reject artwork
+- **Success criteria**: File size displays in human-readable format (KB/MB); supports drag and drop; shows file size on artwork thumbnail; bulk upload supports multiple files; file size stored with artwork metadata; hovering over preview icon shows large mockup with artwork details and estimated imprint sizes (width × height in inches); dimensions calculated based on file size ranges; preview shows all artwork locations with color-coded status
+
+### Production Scheduling Calendar
+- **Functionality**: Weekly calendar view showing jobs organized by due date with visual capacity indicators
+- **Purpose**: Visualize production workload and capacity across the week; identify bottlenecks and balance workload
+- **Trigger**: Click "Show Calendar" button on Jobs page
+- **Progression**: View calendar → See jobs grouped by due date → Color-coded by status → View daily piece count → Click job to see details → Navigate weeks with arrows → Click "Today" to return to current week
+- **Success criteria**: Calendar displays 7 days starting Monday; jobs appear on their due date; color coding matches status badges; shows up to 3 jobs per day with "+X more" indicator; displays total piece count per day; shows weekly totals (job count and piece count); clicking job opens inline job detail; today's date highlighted with primary color; week navigation smooth; clicking job auto-closes calendar and scrolls to job in list
+
+### Enhanced Job Detail Layout
+- **Functionality**: Compact, mockup-first job detail view with streamlined status progression and customer information
+- **Purpose**: Reduce vertical space consumption while maintaining all critical information; prioritize visual product representation
+- **Trigger**: Click job card or expand job inline
+- **Progression**: View mockup prominently on left → Customer + date on right in compact card → Compact status bar with dropdown → Line items with inline artwork → Production notes at bottom
+- **Success criteria**: Status bar is compact (single row with smaller step indicators); mockup appears first on left side at large size (300x400px); customer and date info in compact card on right; Front/Back toggle for mockup view; status steps condensed with 24px circles instead of 32px; artwork approval count displayed as simple ratio (3/5) instead of large section; job detail works both full-screen and inline modes; layout responsive on mobile (stacks vertically)
 
 ### Bulk Actions for Jobs
 - **Functionality**: Select multiple jobs and perform batch operations (status changes, delete)
