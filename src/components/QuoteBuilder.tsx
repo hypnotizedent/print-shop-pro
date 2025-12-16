@@ -20,6 +20,7 @@ import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNum
 import { toast } from 'sonner'
 import { PaymentTracker } from '@/components/PaymentTracker'
 import { PaymentReminders } from '@/components/PaymentReminders'
+import { QuoteReminderScheduler } from '@/components/QuoteReminderScheduler'
 
 interface QuoteBuilderProps {
   quote: Quote
@@ -28,6 +29,7 @@ interface QuoteBuilderProps {
   customerTemplates?: CustomerDecorationTemplate[]
   customerArtworkFiles?: CustomerArtworkFile[]
   paymentReminders?: PaymentReminder[]
+  emailTemplates?: import('@/lib/types').EmailTemplate[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
@@ -35,6 +37,7 @@ interface QuoteBuilderProps {
   onNavigateToCustomer?: () => void
   onDuplicateQuote?: (quote: Quote) => void
   onUpdateReminder?: (reminder: PaymentReminder) => void
+  onSendEmail?: (notification: import('@/lib/types').EmailNotification) => void
   isInline?: boolean
 }
 
@@ -45,6 +48,7 @@ export function QuoteBuilder({
   customerTemplates = [],
   customerArtworkFiles = [],
   paymentReminders = [],
+  emailTemplates = [],
   onSave, 
   onBack, 
   onCreateCustomer,
@@ -52,6 +56,7 @@ export function QuoteBuilder({
   onNavigateToCustomer,
   onDuplicateQuote,
   onUpdateReminder,
+  onSendEmail,
   isInline = false
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
@@ -409,6 +414,19 @@ export function QuoteBuilder({
               }}
             />
           </div>
+
+          {onSendEmail && (
+            <>
+              <Separator />
+              <div>
+                <QuoteReminderScheduler
+                  quote={quote}
+                  emailTemplates={emailTemplates}
+                  onSendEmail={onSendEmail}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

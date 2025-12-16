@@ -483,3 +483,86 @@ export const sampleEmailNotifications: EmailNotification[] = [
     sentBy: 'System',
   },
 ]
+
+export const sampleEmailTemplates: import('./types').EmailTemplate[] = [
+  {
+    id: 'tpl-quote-reminder-1',
+    name: 'Quote Reminder - Friendly Follow-up',
+    description: 'A friendly reminder for pending quotes',
+    type: 'quote-reminder',
+    subject: 'Following up on Quote {{quote_number}}',
+    body: `Hi {{customer_name}},
+
+I wanted to follow up on the quote we sent you for {{quote_nickname}}.
+
+Quote Details:
+• Quote Number: {{quote_number}}
+• Total Amount: {{total_amount}}
+• Valid Until: {{valid_until}}
+
+We'd love to help bring your project to life! If you have any questions or need any adjustments, please don't hesitate to reach out.
+
+Looking forward to working with you!
+
+Best regards,
+Mint Prints Team`,
+    variables: ['customer_name', 'customer_email', 'customer_company', 'quote_number', 'quote_nickname', 'total_amount', 'due_date', 'valid_until', 'days_since_sent'],
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tpl-quote-reminder-2',
+    name: 'Quote Reminder - Expiring Soon',
+    description: 'Urgent reminder for quotes about to expire',
+    type: 'quote-reminder',
+    subject: 'Reminder: Quote {{quote_number}} expires soon!',
+    body: `Hi {{customer_name}},
+
+This is a friendly reminder that your quote {{quote_number}} for {{quote_nickname}} will expire soon.
+
+Quote Details:
+• Total: {{total_amount}}
+• Valid Until: {{valid_until}}
+• Days Since Sent: {{days_since_sent}}
+
+To secure current pricing and ensure timely delivery, please approve the quote at your earliest convenience.
+
+Have questions? We're here to help!
+
+Thank you,
+Mint Prints Team`,
+    variables: ['customer_name', 'customer_email', 'customer_company', 'quote_number', 'quote_nickname', 'total_amount', 'due_date', 'valid_until', 'days_since_sent'],
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'tpl-quote-reminder-3',
+    name: 'Quote Reminder - With Logo',
+    description: 'Professional reminder with branding',
+    type: 'quote-reminder',
+    subject: '{{customer_name}}, your custom quote is ready!',
+    body: `Hello {{customer_name}},
+
+We're excited to work with you on {{quote_nickname}}!
+
+Here's a quick recap of your quote:
+📋 Quote #: {{quote_number}}
+💰 Total: {{total_amount}}
+📅 Valid Until: {{valid_until}}
+
+Ready to move forward? Simply reply to this email or give us a call!
+
+Questions? We're always happy to help adjust quantities, colors, or any other details.
+
+Cheers,
+The Mint Prints Team
+✨ Making your vision come to life`,
+    variables: ['customer_name', 'customer_email', 'customer_company', 'quote_number', 'quote_nickname', 'total_amount', 'due_date', 'valid_until', 'days_since_sent'],
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+]
+

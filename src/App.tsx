@@ -26,6 +26,7 @@ import {
   sampleQuotes, 
   sampleJobs,
   sampleEmailNotifications,
+  sampleEmailTemplates,
   createEmptyQuote,
   generateJobNumber,
   generateId
@@ -47,7 +48,7 @@ function App() {
   const [paymentReminders, setPaymentReminders] = useKV<PaymentReminder[]>('payment-reminders', [])
   const [customerArtworkFiles, setCustomerArtworkFiles] = useKV<CustomerArtworkFile[]>('customer-artwork-files', [])
   const [emailNotifications, setEmailNotifications] = useKV<EmailNotification[]>('email-notifications', sampleEmailNotifications)
-  const [emailTemplates, setEmailTemplates] = useKV<import('@/lib/types').EmailTemplate[]>('email-templates', [])
+  const [emailTemplates, setEmailTemplates] = useKV<import('@/lib/types').EmailTemplate[]>('email-templates', sampleEmailTemplates)
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
   
   useEffect(() => {
@@ -497,6 +498,7 @@ function App() {
             <QuotesList
               quotes={quotes || []}
               customers={customers || []}
+              emailTemplates={emailTemplates || []}
               onSelectQuote={handleSelectQuote}
               onNewQuote={handleNewQuote}
               onSaveQuote={handleSaveQuote}
@@ -504,6 +506,9 @@ function App() {
               onConvertToJob={handleConvertToJob}
               onDeleteQuotes={handleDeleteQuotes}
               onBulkStatusChange={handleBulkQuoteStatusChange}
+              onSendEmails={(notifications) => {
+                notifications.forEach(notification => addEmailNotification(notification))
+              }}
             />
           )}
           
@@ -572,6 +577,7 @@ function App() {
               customerTemplates={customerTemplates || []}
               customerArtworkFiles={customerArtworkFiles || []}
               paymentReminders={paymentReminders || []}
+              emailTemplates={emailTemplates || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {
@@ -588,6 +594,7 @@ function App() {
               onCreateCustomer={handleCreateCustomer}
               onSaveDecorationTemplate={handleSaveDecorationTemplate}
               onUpdateReminder={handleUpdatePaymentReminder}
+              onSendEmail={addEmailNotification}
               onNavigateToCustomer={currentPage.quote.customer.id ? () => {
                 const customer = customers?.find(c => c.id === currentPage.quote.customer.id)
                 if (customer) {

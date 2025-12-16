@@ -10,8 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { QuoteCard } from '@/components/QuoteCard'
+import { BulkQuoteReminders } from '@/components/BulkQuoteReminders'
 import { Plus, MagnifyingGlass, FunnelSimple, CheckSquare, FileText, Trash, EnvelopeSimple, FilePlus } from '@phosphor-icons/react'
-import type { Quote, Customer, QuoteStatus } from '@/lib/types'
+import type { Quote, Customer, QuoteStatus, EmailTemplate, EmailNotification } from '@/lib/types'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { exportInvoiceAsPDF } from '@/lib/invoice-generator'
@@ -21,6 +22,7 @@ import { exportInvoicesAsZip } from '@/lib/batch-invoice-export'
 interface QuotesListProps {
   quotes: Quote[]
   customers: Customer[]
+  emailTemplates: EmailTemplate[]
   onSelectQuote: (quote: Quote) => void
   onNewQuote: () => void
   onSaveQuote: (quote: Quote) => void
@@ -28,18 +30,21 @@ interface QuotesListProps {
   onConvertToJob: (quote: Quote) => void
   onDeleteQuotes?: (quoteIds: string[]) => void
   onBulkStatusChange?: (quoteIds: string[], status: QuoteStatus) => void
+  onSendEmails?: (notifications: EmailNotification[]) => void
 }
 
 export function QuotesList({ 
   quotes, 
   customers,
+  emailTemplates,
   onSelectQuote, 
   onNewQuote, 
   onSaveQuote,
   onCreateCustomer,
   onConvertToJob,
   onDeleteQuotes,
-  onBulkStatusChange
+  onBulkStatusChange,
+  onSendEmails
 }: QuotesListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
@@ -162,10 +167,19 @@ export function QuotesList({
       <div className="border-b border-border p-4 md:p-6 flex-shrink-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <h1 className="text-xl md:text-2xl font-bold">Quotes</h1>
-          <Button onClick={onNewQuote} className="w-full sm:w-auto">
-            <Plus size={18} className="mr-2" />
-            New Quote
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            {onSendEmails && (
+              <BulkQuoteReminders
+                quotes={quotes}
+                emailTemplates={emailTemplates}
+                onSendEmails={onSendEmails}
+              />
+            )}
+            <Button onClick={onNewQuote} className="flex-1 sm:flex-none">
+              <Plus size={18} className="mr-2" />
+              New Quote
+            </Button>
+          </div>
         </div>
         
         <div className="flex flex-col md:flex-row gap-3 mb-4">
