@@ -357,6 +357,7 @@ function App() {
             <QuoteBuilder
               quote={currentPage.quote}
               customers={customers || []}
+              quotes={quotes || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {

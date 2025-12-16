@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 interface QuoteBuilderProps {
   quote: Quote
   customers: Customer[]
+  quotes: Quote[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
@@ -32,7 +33,8 @@ interface QuoteBuilderProps {
 
 export function QuoteBuilder({ 
   quote: initialQuote, 
-  customers, 
+  customers,
+  quotes,
   onSave, 
   onBack, 
   onCreateCustomer,
@@ -281,6 +283,9 @@ export function QuoteBuilder({
                 onChange={(items) => {
                   setQuote({ ...quote, line_items: items })
                 }}
+                customerId={quote.customer.id}
+                customerName={quote.customer.name}
+                previousQuotes={quotes}
               />
             )}
           </div>
