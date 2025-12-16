@@ -9,12 +9,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { JobCard } from '@/components/JobCard'
 import { JobDetail } from '@/components/JobDetail'
 import { ProductionCalendar } from '@/components/ProductionCalendar'
 import type { Job, JobStatus, ArtworkFile, Customer, Expense } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank } from '@phosphor-icons/react'
+import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface JobsBoardProps {
@@ -114,6 +115,13 @@ export function JobsBoard({
     onUpdateJobStatus(jobId, status)
     toast.success(`Job status updated to ${status}`)
   }
+
+  const hasActiveFilters = statusFilter !== 'all' || dateSort !== 'desc'
+  
+  const clearAllFilters = () => {
+    setStatusFilter('all')
+    setDateSort('desc')
+  }
   
   
   return (
@@ -131,50 +139,90 @@ export function JobsBoard({
           </Button>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-3 mb-4">
-          <div className="relative flex-1">
-            <MagnifyingGlass 
-              size={18} 
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
-            />
-            <Input
-              type="text"
-              placeholder="Search jobs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as JobStatus | 'all')}>
-            <SelectTrigger className="w-full md:w-48">
-              <div className="flex items-center gap-2">
-                <FunnelSimple size={16} />
-                <SelectValue placeholder="Filter by status" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="art-approval">Art Approval</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="printing">Printing</SelectItem>
-              <SelectItem value="finishing">Finishing</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="shipped">Shipped</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="relative flex-1">
+          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search jobs..."
+            className="pl-10 pr-32"
+          />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchTerm('')}
+                className="h-7 w-7 p-0"
+                title="Clear search"
+              >
+                <X size={14} />
+              </Button>
+            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={hasActiveFilters ? "default" : "ghost"}
+                  size="sm"
+                  className="h-7 px-2 gap-1"
+                  title="Filter options"
+                >
+                  <FunnelSimple size={14} />
+                  {hasActiveFilters && <span className="text-xs">•</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">Filters</h4>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="h-7 text-xs"
+                      >
+                        Clear all
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">Status</label>
+                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as JobStatus | 'all')}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="art-approval">Art Approval</SelectItem>
+                        <SelectItem value="scheduled">Scheduled</SelectItem>
+                        <SelectItem value="printing">Printing</SelectItem>
+                        <SelectItem value="finishing">Finishing</SelectItem>
+                        <SelectItem value="ready">Ready</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-          <Select value={dateSort} onValueChange={(value) => setDateSort(value as 'asc' | 'desc')}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Sort by date" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="desc">Due Date: Newest First</SelectItem>
-              <SelectItem value="asc">Due Date: Oldest First</SelectItem>
-            </SelectContent>
-          </Select>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">Sort by Date</label>
+                    <Select value={dateSort} onValueChange={(value) => setDateSort(value as 'asc' | 'desc')}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="desc">Newest First</SelectItem>
+                        <SelectItem value="asc">Oldest First</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         
         {hasSelection && (

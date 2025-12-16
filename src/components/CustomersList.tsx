@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, MagnifyingGlass, EnvelopeSimple, Phone, Buildings, CurrencyDollar, Clock, Download, FunnelSimple } from '@phosphor-icons/react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Plus, MagnifyingGlass, EnvelopeSimple, Phone, Buildings, CurrencyDollar, Clock, Download, FunnelSimple, X } from '@phosphor-icons/react'
 import type { Customer, Quote, Job, CustomerTier } from '@/lib/types'
 import { exportCustomersToCSV } from '@/lib/csv-export'
 import { toast } from 'sonner'
@@ -117,6 +118,13 @@ export function CustomersList({ customers, quotes, jobs, onSelectCustomer, onNew
     exportCustomersToCSV(filteredAndSortedCustomers)
     toast.success('Customers exported to CSV')
   }
+
+  const hasActiveFilters = sortBy !== 'alphabetical' || groupBy !== 'none'
+  
+  const clearAllFilters = () => {
+    setSortBy('alphabetical')
+    setGroupBy('none')
+  }
   
   const groupedCustomers = useMemo(() => {
     if (groupBy === 'none') {
@@ -142,51 +150,98 @@ export function CustomersList({ customers, quotes, jobs, onSelectCustomer, onNew
       <div className="border-b border-border p-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Customers</h1>
-          <Button onClick={onNewCustomer}>
-            <Plus size={18} className="mr-2" />
-            New Customer
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download size={18} className="mr-2" />
+              Export CSV
+            </Button>
+            <Button onClick={onNewCustomer}>
+              <Plus size={18} className="mr-2" />
+              New Customer
+            </Button>
+          </div>
         </div>
         
-        <div className="flex gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search customers..."
-              className="pl-10"
-            />
+        <div className="relative flex-1 max-w-2xl">
+          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search customers..."
+            className="pl-10 pr-32"
+          />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery('')}
+                className="h-7 w-7 p-0"
+                title="Clear search"
+              >
+                <X size={14} />
+              </Button>
+            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={hasActiveFilters ? "default" : "ghost"}
+                  size="sm"
+                  className="h-7 px-2 gap-1"
+                  title="Filter options"
+                >
+                  <FunnelSimple size={14} />
+                  {hasActiveFilters && <span className="text-xs">•</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">Filters</h4>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="h-7 text-xs"
+                      >
+                        Clear all
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">Sort By</label>
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="alphabetical">Alphabetical (A-Z)</SelectItem>
+                        <SelectItem value="revenue-high">Revenue (High to Low)</SelectItem>
+                        <SelectItem value="revenue-low">Revenue (Low to High)</SelectItem>
+                        <SelectItem value="recent-orders">Recent Orders First</SelectItem>
+                        <SelectItem value="oldest-orders">Oldest Orders First</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">Group By</label>
+                    <Select value={groupBy} onValueChange={(value) => setGroupBy(value as GroupByOption)}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Grouping</SelectItem>
+                        <SelectItem value="tier">Group by Tier</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-          
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder="Sort by..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="alphabetical">Alphabetical (A-Z)</SelectItem>
-              <SelectItem value="revenue-high">Revenue (High to Low)</SelectItem>
-              <SelectItem value="revenue-low">Revenue (Low to High)</SelectItem>
-              <SelectItem value="recent-orders">Recent Orders First</SelectItem>
-              <SelectItem value="oldest-orders">Oldest Orders First</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={groupBy} onValueChange={(value) => setGroupBy(value as GroupByOption)}>
-            <SelectTrigger className="w-40">
-              <FunnelSimple size={16} className="mr-2" />
-              <SelectValue placeholder="Group by..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No Grouping</SelectItem>
-              <SelectItem value="tier">Group by Tier</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" onClick={handleExportCSV}>
-            <Download size={18} className="mr-2" />
-            Export CSV
-          </Button>
         </div>
       </div>
       
