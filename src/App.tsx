@@ -612,8 +612,6 @@ function App() {
               onClearRecentSearches={handleClearRecentSearches}
             />
           )}
-            />
-          )}
           
           {currentPage.type === 'list' && currentPage.view === 'reports' && (
             <Reports
