@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerArtworkLibrary } from '@/components/CustomerArtworkLibrary'
 import { CustomerEmailPreferences } from '@/components/CustomerEmailPreferences'
+import { EmailNotificationHistory } from '@/components/EmailNotificationHistory'
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin } from '@phosphor-icons/react'
-import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs } from '@/lib/types'
+import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs, EmailNotification } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -24,6 +25,7 @@ interface CustomerDetailProps {
   quotes: Quote[]
   jobs: Job[]
   customerArtworkFiles: CustomerArtworkFile[]
+  emailNotifications: EmailNotification[]
   onBack: () => void
   onUpdateCustomer: (customer: Customer) => void
   onSelectQuote?: (quote: Quote) => void
@@ -38,6 +40,7 @@ export function CustomerDetail({
   quotes, 
   jobs, 
   customerArtworkFiles,
+  emailNotifications,
   onBack, 
   onUpdateCustomer,
   onSelectQuote,
@@ -51,6 +54,7 @@ export function CustomerDetail({
   
   const customerQuotes = quotes.filter(q => q.customer.id === customer.id)
   const customerJobs = jobs.filter(j => j.customer.id === customer.id)
+  const customerEmails = emailNotifications.filter(e => e.customerId === customer.id)
   
   const totalRevenue = customerQuotes
     .filter(q => q.status === 'approved')
@@ -334,6 +338,12 @@ export function CustomerDetail({
             preferences={editedCustomer.emailPreferences}
             onSave={handleEmailPreferencesSave}
             isEditing={isEditing}
+          />
+
+          <EmailNotificationHistory
+            customerId={customer.id}
+            notifications={customerEmails}
+            title="Email History"
           />
           
           <CustomerArtworkLibrary

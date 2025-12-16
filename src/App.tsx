@@ -20,15 +20,17 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
   sampleJobs,
+  sampleEmailNotifications,
   createEmptyQuote,
   generateJobNumber,
   generateId
 } from '@/lib/data'
+import { createQuoteApprovalEmail, createQuoteApprovedEmail, createInvoiceEmail } from '@/lib/email-notifications'
 
 type View = 'quotes' | 'jobs' | 'customers' | 'reports' | 'settings'
 type Page = 
@@ -44,6 +46,7 @@ function App() {
   const [customerTemplates, setCustomerTemplates] = useKV<CustomerDecorationTemplate[]>('customer-decoration-templates', [])
   const [paymentReminders, setPaymentReminders] = useKV<PaymentReminder[]>('payment-reminders', [])
   const [customerArtworkFiles, setCustomerArtworkFiles] = useKV<CustomerArtworkFile[]>('customer-artwork-files', [])
+  const [emailNotifications, setEmailNotifications] = useKV<EmailNotification[]>('email-notifications', sampleEmailNotifications)
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
   
   useEffect(() => {
@@ -127,14 +130,33 @@ function App() {
     setCurrentPage({ type: 'list', view: 'quotes' })
     toast.success('Logged out')
   }
+
+  const addEmailNotification = (notification: EmailNotification) => {
+    setEmailNotifications((current) => [...(current || []), notification])
+  }
   
   const handleSaveQuote = (quote: Quote) => {
     setQuotes((current) => {
       const existing = current || []
       const index = existing.findIndex(q => q.id === quote.id)
+      const oldQuote = index >= 0 ? existing[index] : null
+      
       if (index >= 0) {
         const updated = [...existing]
         updated[index] = quote
+        
+        if (oldQuote && oldQuote.status !== quote.status && quote.customer.email) {
+          if (quote.status === 'sent' && quote.customer.emailPreferences?.quoteApprovalRequests !== false) {
+            const emailNotification = createQuoteApprovalEmail(quote, 'System')
+            addEmailNotification(emailNotification)
+            toast.success(`Quote approval email sent to ${quote.customer.email}`)
+          } else if (quote.status === 'approved' && quote.customer.emailPreferences?.quoteApprovedConfirmations !== false) {
+            const emailNotification = createQuoteApprovedEmail(quote, 'System')
+            addEmailNotification(emailNotification)
+            toast.success(`Quote approved email sent to ${quote.customer.email}`)
+          }
+        }
+        
         return updated
       } else {
         return [...existing, quote]
@@ -308,7 +330,35 @@ function App() {
   const handleBulkQuoteStatusChange = (quoteIds: string[], status: QuoteStatus) => {
     setQuotes((current) => {
       const existing = current || []
-      return existing.map(q => quoteIds.includes(q.id) ? { ...q, status } : q)
+      const updatedQuotes = existing.map(q => {
+        if (quoteIds.includes(q.id)) {
+          const updatedQuote = { ...q, status }
+          
+          if (q.status !== status && q.customer.email) {
+            if (status === 'sent' && q.customer.emailPreferences?.quoteApprovalRequests !== false) {
+              const emailNotification = createQuoteApprovalEmail(updatedQuote, 'System')
+              addEmailNotification(emailNotification)
+            } else if (status === 'approved' && q.customer.emailPreferences?.quoteApprovedConfirmations !== false) {
+              const emailNotification = createQuoteApprovedEmail(updatedQuote, 'System')
+              addEmailNotification(emailNotification)
+            }
+          }
+          
+          return updatedQuote
+        }
+        return q
+      })
+      
+      const emailCount = quoteIds.filter(id => {
+        const quote = existing.find(q => q.id === id)
+        return quote && quote.customer.email
+      }).length
+      
+      if (emailCount > 0) {
+        toast.success(`${emailCount} email notification${emailCount > 1 ? 's' : ''} sent`)
+      }
+      
+      return updatedQuotes
     })
   }
   
@@ -498,6 +548,7 @@ function App() {
               jobs={jobs || []}
               customers={customers || []}
               paymentReminders={paymentReminders || []}
+              emailNotifications={emailNotifications || []}
               onSelectQuote={(quote) => {
                 setCurrentPage({ type: 'quote-builder', quote })
               }}
@@ -555,6 +606,7 @@ function App() {
               quotes={quotes || []}
               jobs={jobs || []}
               customerArtworkFiles={customerArtworkFiles || []}
+              emailNotifications={emailNotifications || []}
               onBack={() => setCurrentPage({ type: 'list', view: 'customers' })}
               onUpdateCustomer={handleUpdateCustomer}
               onSelectQuote={(quote) => handleSelectQuoteFromCustomer(quote, currentPage.customer.id)}

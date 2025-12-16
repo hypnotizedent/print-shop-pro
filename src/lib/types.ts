@@ -252,3 +252,46 @@ export interface CustomerArtworkFile {
   productionReadyDate?: string
   productionReadyBy?: string
 }
+
+export type EmailNotificationType = 
+  | 'quote-approval-request'
+  | 'quote-approved'
+  | 'quote-reminder'
+  | 'order-status-update'
+  | 'artwork-approval-request'
+  | 'artwork-status-update'
+  | 'payment-reminder'
+  | 'payment-confirmation'
+  | 'shipping-notification'
+  | 'pickup-notification'
+  | 'invoice-reminder'
+  | 'invoice-sent'
+  | 'marketing-message'
+  | 'production-update'
+  | 'custom'
+
+export type EmailStatus = 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed'
+
+export interface EmailNotification {
+  id: string
+  customerId: string
+  customerEmail: string
+  type: EmailNotificationType
+  subject: string
+  body?: string
+  status: EmailStatus
+  sentAt: string
+  deliveredAt?: string
+  openedAt?: string
+  clickedAt?: string
+  errorMessage?: string
+  relatedQuoteId?: string
+  relatedJobId?: string
+  metadata?: {
+    quoteNumber?: string
+    jobNumber?: string
+    amount?: number
+    [key: string]: any
+  }
+  sentBy?: string
+}

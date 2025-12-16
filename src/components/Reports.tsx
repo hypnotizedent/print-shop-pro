@@ -1,19 +1,22 @@
 import { useMemo, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChartBar, TrendUp, Users, CurrencyDollar, Package, Warning } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, PaymentReminder } from '@/lib/types'
+import { ChartBar, TrendUp, Users, CurrencyDollar, Package, Warning, Envelope } from '@phosphor-icons/react'
+import type { Quote, Job, Customer, PaymentReminder, EmailNotification } from '@/lib/types'
 import { UnpaidBalancesReport } from '@/components/UnpaidBalancesReport'
+import { EmailStats } from '@/components/EmailStats'
+import { EmailNotificationHistory } from '@/components/EmailNotificationHistory'
 
 interface ReportsProps {
   quotes: Quote[]
   jobs: Job[]
   customers: Customer[]
   paymentReminders?: PaymentReminder[]
+  emailNotifications?: EmailNotification[]
   onSelectQuote?: (quote: Quote) => void
 }
 
-export function Reports({ quotes, jobs, customers, paymentReminders = [], onSelectQuote }: ReportsProps) {
+export function Reports({ quotes, jobs, customers, paymentReminders = [], emailNotifications = [], onSelectQuote }: ReportsProps) {
   const stats = useMemo(() => {
     const totalRevenue = quotes
       .filter(q => q.status === 'approved')
@@ -87,6 +90,7 @@ export function Reports({ quotes, jobs, customers, paymentReminders = [], onSele
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="payments">Payment Tracking</TabsTrigger>
+            <TabsTrigger value="emails">Email Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -205,6 +209,15 @@ export function Reports({ quotes, jobs, customers, paymentReminders = [], onSele
                   onSelectQuote(quote)
                 }
               }}
+            />
+          </TabsContent>
+
+          <TabsContent value="emails" className="space-y-6">
+            <EmailStats notifications={emailNotifications} />
+            <EmailNotificationHistory
+              notifications={emailNotifications}
+              title="All Email Notifications"
+              showCustomerColumn={true}
             />
           </TabsContent>
         </Tabs>
