@@ -1,6 +1,6 @@
 # Print Shop Dashboard - Quote to Job Flow
 
-A modern print shop management dashboard for screen printing and custom apparel businesses, streamlining the Quote → Job → Production → Delivery workflow.
+A modern print shop management dashboard for screen printing and custom apparel businesses, streamlining the Quote → Job → Production → Delivery workflow with customer management and authentication.
 
 **Experience Qualities**:
 1. **Efficient** - Keyboard-first navigation and inline editing eliminate unnecessary clicks and modal interruptions
@@ -8,16 +8,37 @@ A modern print shop management dashboard for screen printing and custom apparel 
 3. **Dense** - High information density with minimal whitespace maximizes workspace for production staff
 
 **Complexity Level**: Complex Application (advanced functionality, likely with multiple views)
-This is a multi-view production management system with complex state management, real-time calculations, inline editing, keyboard navigation, and interconnected data models (quotes converting to jobs).
+This is a multi-view production management system with complex state management, real-time calculations, inline editing, keyboard navigation, interconnected data models (quotes converting to jobs), customer relationship management, and user authentication.
 
 ## Essential Features
 
-### Quote Builder
-- **Functionality**: Create and edit quotes with line items, customer info, pricing, and terms
+### Login Authentication
+- **Functionality**: Secure login page with email and password authentication
+- **Purpose**: Control access to the print shop dashboard with user credentials
+- **Trigger**: App loads without authenticated session
+- **Progression**: View login page → Enter email/password → Submit credentials → Access granted → Redirect to quotes page
+- **Success criteria**: Login form is styled consistently with app theme; credentials are validated; successful login persists session; logout option available in header
+
+### Quote Builder (Full Screen Mode)
+- **Functionality**: Create and edit quotes with line items, customer info, pricing, and terms in dedicated full-screen view
 - **Purpose**: Primary revenue generation tool - converts customer requests into billable orders
-- **Trigger**: Click "+ New Quote" button or edit existing quote
+- **Trigger**: Click "+ New Quote" button or click existing quote card from list
 - **Progression**: Select customer → Add line items (product/decoration/sizes/quantity) → Set pricing/discount → Add notes/due date → Save/Send
-- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout
+- **Success criteria**: Can create complete quote in under 60 seconds; totals update in real-time; Tab/Enter navigation works throughout; full screen provides maximum workspace
+
+### Job Management (Inline Expansion)
+- **Functionality**: View jobs in kanban board, click to expand details inline without leaving the board view
+- **Purpose**: Quick job details review while maintaining context of overall production pipeline
+- **Trigger**: Click job card in kanban column
+- **Progression**: View kanban board → Click job card → Details expand inline below card → Review/update → Click to collapse or click another job
+- **Success criteria**: Inline expansion is smooth (200ms animation); doesn't disrupt kanban layout; can switch between jobs quickly
+
+### Customer Management
+- **Functionality**: Browse customer list, view individual customer details with contact info, quote history, and job history
+- **Purpose**: Centralized customer relationship management and order history tracking
+- **Trigger**: Navigate to Customers view from sidebar
+- **Progression**: View customer list → Search/filter customers → Click customer → View profile with stats/history → Edit contact info → View related quotes/jobs
+- **Success criteria**: Customer list searchable; customer detail shows all related quotes and jobs; contact info editable; revenue stats calculated correctly
 
 ### Inline Spreadsheet Editing
 - **Functionality**: Click-to-edit cells for line items with keyboard navigation (Tab, Enter, Arrow keys, Escape)
@@ -41,11 +62,11 @@ This is a multi-view production management system with complex state management,
 - **Success criteria**: Conversion happens instantly; all quote data transfers correctly; job appears in jobs board
 
 ### Production Status Kanban Board
-- **Functionality**: Visual board showing jobs organized by production stage with drag-to-update
+- **Functionality**: Visual board showing jobs organized by production stage with inline detail expansion
 - **Purpose**: Production team sees all active jobs and their current status at a glance
 - **Trigger**: Navigate to Jobs page
-- **Progression**: View board → See jobs grouped by status → Click job for details → Update status → Job moves columns
-- **Success criteria**: All jobs visible; status changes reflect immediately; clear visual hierarchy
+- **Progression**: View board → See jobs grouped by status → Click job for inline details → Update status → Details collapse/job moves columns
+- **Success criteria**: All jobs visible; inline details don't disrupt board layout; status changes reflect immediately; clear visual hierarchy
 
 ### Customer Search & Management
 - **Functionality**: Typeahead search to find existing customers or quickly add new ones inline
@@ -56,7 +77,8 @@ This is a multi-view production management system with complex state management,
 
 ## Edge Case Handling
 
-- **Empty States**: Show helpful prompts when no quotes/jobs exist with "Create your first quote" CTA
+- **Empty States**: Show helpful prompts when no quotes/jobs/customers exist with "Create your first..." CTA
+- **Unauthenticated Access**: Redirect to login page; session persists after successful login
 - **Zero Quantity Line Items**: Automatically exclude from total calculations; show warning indicator
 - **Missing Customer**: Prevent saving quote without customer; show inline validation error
 - **Duplicate Quote Numbers**: Auto-generate sequential numbers to prevent conflicts
@@ -64,6 +86,7 @@ This is a multi-view production management system with complex state management,
 - **Division by Zero**: Handle zero quantity gracefully in unit price calculations
 - **Negative Discounts**: Allow negative (upcharge) but show clear indicator
 - **Keyboard Navigation Boundaries**: Tab wraps from last field to first; arrow keys stop at grid edges
+- **Customer Without History**: Show "No quotes yet" and "No jobs yet" states on customer detail page
 
 ## Design Direction
 

@@ -2,16 +2,19 @@ import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Login } from '@/components/Login'
 import { QuotesList } from '@/components/QuotesList'
 import { QuoteBuilder } from '@/components/QuoteBuilder'
 import { JobsBoard } from '@/components/JobsBoard'
-import { JobDetail } from '@/components/JobDetail'
+import { CustomersList } from '@/components/CustomersList'
+import { CustomerDetail } from '@/components/CustomerDetail'
 import { 
   FileText, 
   Briefcase, 
   Users, 
   ChartBar,
-  Sparkle
+  Sparkle,
+  SignOut
 } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, JobStatus, ArtworkFile } from '@/lib/types'
 import { 
@@ -27,13 +30,25 @@ type View = 'dashboard' | 'quotes' | 'jobs' | 'customers' | 'reports'
 type Page = 
   | { type: 'list'; view: View }
   | { type: 'quote-builder'; quote: Quote }
-  | { type: 'job-detail'; job: Job }
+  | { type: 'customer-detail'; customer: Customer }
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useKV<boolean>('is-logged-in', false)
   const [quotes, setQuotes] = useKV<Quote[]>('quotes', sampleQuotes)
   const [jobs, setJobs] = useKV<Job[]>('jobs', sampleJobs)
   const [customers, setCustomers] = useKV<Customer[]>('customers', sampleCustomers)
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'quotes' })
+  
+  const handleLogin = (email: string, password: string) => {
+    setIsLoggedIn(true)
+    toast.success('Welcome back!')
+  }
+  
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+    setCurrentPage({ type: 'list', view: 'quotes' })
+    toast.success('Logged out')
+  }
   
   const handleSaveQuote = (quote: Quote) => {
     setQuotes((current) => {
@@ -53,6 +68,13 @@ function App() {
     setCustomers((current) => [...(current || []), customer])
   }
   
+  const handleUpdateCustomer = (customer: Customer) => {
+    setCustomers((current) => {
+      const existing = current || []
+      return existing.map(c => c.id === customer.id ? customer : c)
+    })
+  }
+  
   const handleNewQuote = () => {
     const newQuote = createEmptyQuote()
     setCurrentPage({ type: 'quote-builder', quote: newQuote })
@@ -62,8 +84,8 @@ function App() {
     setCurrentPage({ type: 'quote-builder', quote })
   }
   
-  const handleSelectJob = (job: Job) => {
-    setCurrentPage({ type: 'job-detail', job })
+  const handleSelectCustomer = (customer: Customer) => {
+    setCurrentPage({ type: 'customer-detail', customer })
   }
   
   const handleUpdateJobStatus = (jobId: string, status: JobStatus) => {
@@ -128,7 +150,7 @@ function App() {
     })
     
     toast.success('Quote converted to job!')
-    setCurrentPage({ type: 'job-detail', job: newJob })
+    setCurrentPage({ type: 'list', view: 'jobs' })
   }
   
   const navItems = [
@@ -140,15 +162,23 @@ function App() {
   
   const currentView = currentPage.type === 'list' ? currentPage.view : null
   
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />
+  }
+  
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
       <Toaster position="top-right" />
       
       <header className="border-b border-border px-6 py-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
-          <Sparkle size={28} weight="fill" className="text-emerald-500" />
+          <Sparkle size={28} weight="fill" className="text-primary" />
           <h1 className="text-xl font-bold tracking-tight">MINT PRINTS</h1>
         </div>
+        <Button variant="ghost" size="sm" onClick={handleLogout}>
+          <SignOut size={18} className="mr-2" />
+          Logout
+        </Button>
       </header>
       
       <div className="flex-1 flex min-h-0">
@@ -164,7 +194,7 @@ function App() {
                   onClick={() => setCurrentPage({ type: 'list', view: item.id })}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive 
-                      ? 'bg-emerald-500/20 text-emerald-400' 
+                      ? 'bg-primary/20 text-primary' 
                       : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                   }`}
                 >
@@ -192,18 +222,24 @@ function App() {
           {currentPage.type === 'list' && currentPage.view === 'jobs' && (
             <JobsBoard
               jobs={jobs || []}
-              onSelectJob={handleSelectJob}
+              onUpdateJobStatus={handleUpdateJobStatus}
+              onUpdateJobArtwork={handleUpdateJobArtwork}
             />
           )}
           
           {currentPage.type === 'list' && currentPage.view === 'customers' && (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center">
-                <Users size={64} className="mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Customer Management</h2>
-                <p className="text-muted-foreground">Coming soon</p>
-              </div>
-            </div>
+            <CustomersList
+              customers={customers || []}
+              onSelectCustomer={handleSelectCustomer}
+              onNewCustomer={() => {
+                const newCustomer: Customer = {
+                  id: generateId('c'),
+                  name: '',
+                  email: '',
+                }
+                setCurrentPage({ type: 'customer-detail', customer: newCustomer })
+              }}
+            />
           )}
           
           {currentPage.type === 'list' && currentPage.view === 'reports' && (
@@ -226,12 +262,15 @@ function App() {
             />
           )}
           
-          {currentPage.type === 'job-detail' && (
-            <JobDetail
-              job={currentPage.job}
-              onBack={() => setCurrentPage({ type: 'list', view: 'jobs' })}
-              onUpdateStatus={(status) => handleUpdateJobStatus(currentPage.job.id, status)}
-              onUpdateArtwork={(itemId, artwork) => handleUpdateJobArtwork(currentPage.job.id, itemId, artwork)}
+          {currentPage.type === 'customer-detail' && (
+            <CustomerDetail
+              customer={currentPage.customer}
+              quotes={quotes || []}
+              jobs={jobs || []}
+              onBack={() => setCurrentPage({ type: 'list', view: 'customers' })}
+              onUpdateCustomer={handleUpdateCustomer}
+              onSelectQuote={handleSelectQuote}
+              onSelectJob={(job) => setCurrentPage({ type: 'list', view: 'jobs' })}
             />
           )}
         </main>

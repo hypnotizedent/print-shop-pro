@@ -9,9 +9,10 @@ import { Check } from '@phosphor-icons/react'
 interface JobCardProps {
   job: Job
   onClick: () => void
+  isExpanded?: boolean
 }
 
-export function JobCard({ job, onClick }: JobCardProps) {
+export function JobCard({ job, onClick, isExpanded = false }: JobCardProps) {
   const itemCount = job.line_items.reduce((sum, item) => sum + item.quantity, 0)
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -23,7 +24,9 @@ export function JobCard({ job, onClick }: JobCardProps) {
   
   return (
     <Card 
-      className="p-4 cursor-pointer hover:border-slate-600 transition-colors w-64 flex-shrink-0"
+      className={`p-4 cursor-pointer hover:border-slate-600 transition-colors w-64 flex-shrink-0 ${
+        isExpanded ? 'border-primary' : ''
+      }`}
       onClick={onClick}
     >
       <div className="flex gap-3 mb-3">

@@ -1,11 +1,9 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { QuoteCard } from '@/components/QuoteCard'
-import { QuoteBuilder } from '@/components/QuoteBuilder'
 import { Plus, MagnifyingGlass } from '@phosphor-icons/react'
 import type { Quote, Customer } from '@/lib/types'
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 interface QuotesListProps {
   quotes: Quote[]
@@ -27,7 +25,6 @@ export function QuotesList({
   onConvertToJob
 }: QuotesListProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [expandedQuoteId, setExpandedQuoteId] = useState<string | null>(null)
   
   const filteredQuotes = quotes.filter(q =>
     q.quote_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -42,14 +39,6 @@ export function QuotesList({
   const recentlySent = filteredQuotes.filter(q => 
     q.status === 'sent'
   ).slice(0, 12)
-  
-  const handleQuoteClick = (quote: Quote) => {
-    if (expandedQuoteId === quote.id) {
-      setExpandedQuoteId(null)
-    } else {
-      setExpandedQuoteId(quote.id)
-    }
-  }
   
   return (
     <div className="h-full flex flex-col">
@@ -83,38 +72,12 @@ export function QuotesList({
               </div>
               <div className="grid gap-3">
                 {needsAction.map((quote) => (
-                  <div key={quote.id}>
-                    <QuoteCard
-                      quote={quote}
-                      onClick={() => handleQuoteClick(quote)}
-                      onConvertToJob={onConvertToJob}
-                      isExpanded={expandedQuoteId === quote.id}
-                    />
-                    <AnimatePresence>
-                      {expandedQuoteId === quote.id && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-l-2 border-r-2 border-b-2 border-emerald-500 rounded-b-lg bg-card/50">
-                            <QuoteBuilder
-                              quote={quote}
-                              customers={customers}
-                              onSave={(updatedQuote) => {
-                                onSaveQuote(updatedQuote)
-                              }}
-                              onBack={() => setExpandedQuoteId(null)}
-                              onCreateCustomer={onCreateCustomer}
-                              isInline
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                  <QuoteCard
+                    key={quote.id}
+                    quote={quote}
+                    onClick={() => onSelectQuote(quote)}
+                    onConvertToJob={onConvertToJob}
+                  />
                 ))}
               </div>
             </div>
@@ -127,38 +90,12 @@ export function QuotesList({
               </div>
               <div className="grid gap-3">
                 {recentlySent.map((quote) => (
-                  <div key={quote.id}>
-                    <QuoteCard
-                      quote={quote}
-                      onClick={() => handleQuoteClick(quote)}
-                      onConvertToJob={onConvertToJob}
-                      isExpanded={expandedQuoteId === quote.id}
-                    />
-                    <AnimatePresence>
-                      {expandedQuoteId === quote.id && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="border-l-2 border-r-2 border-b-2 border-emerald-500 rounded-b-lg bg-card/50">
-                            <QuoteBuilder
-                              quote={quote}
-                              customers={customers}
-                              onSave={(updatedQuote) => {
-                                onSaveQuote(updatedQuote)
-                              }}
-                              onBack={() => setExpandedQuoteId(null)}
-                              onCreateCustomer={onCreateCustomer}
-                              isInline
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                  <QuoteCard
+                    key={quote.id}
+                    quote={quote}
+                    onClick={() => onSelectQuote(quote)}
+                    onConvertToJob={onConvertToJob}
+                  />
                 ))}
               </div>
             </div>

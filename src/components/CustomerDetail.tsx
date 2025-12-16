@@ -1,0 +1,242 @@
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { StatusBadge } from '@/components/StatusBadge'
+import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X } from '@phosphor-icons/react'
+import type { Customer, Quote, Job } from '@/lib/types'
+import { formatDistanceToNow } from 'date-fns'
+import { useState } from 'react'
+import { toast } from 'sonner'
+
+interface CustomerDetailProps {
+  customer: Customer
+  quotes: Quote[]
+  jobs: Job[]
+  onBack: () => void
+  onUpdateCustomer: (customer: Customer) => void
+  onSelectQuote?: (quote: Quote) => void
+  onSelectJob?: (job: Job) => void
+}
+
+export function CustomerDetail({ 
+  customer, 
+  quotes, 
+  jobs, 
+  onBack, 
+  onUpdateCustomer,
+  onSelectQuote,
+  onSelectJob
+}: CustomerDetailProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedCustomer, setEditedCustomer] = useState(customer)
+  
+  const customerQuotes = quotes.filter(q => q.customer.id === customer.id)
+  const customerJobs = jobs.filter(j => j.customer.id === customer.id)
+  
+  const totalRevenue = customerQuotes
+    .filter(q => q.status === 'approved')
+    .reduce((sum, q) => sum + q.total, 0)
+  
+  const handleSave = () => {
+    onUpdateCustomer(editedCustomer)
+    setIsEditing(false)
+    toast.success('Customer updated')
+  }
+  
+  const handleCancel = () => {
+    setEditedCustomer(customer)
+    setIsEditing(false)
+  }
+  
+  return (
+    <div className="h-full flex flex-col">
+      <div className="border-b border-border p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowLeft size={20} />
+            </Button>
+            <h1 className="text-2xl font-bold">Customer Details</h1>
+          </div>
+          {!isEditing && (
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
+              <Pencil size={18} className="mr-2" />
+              Edit
+            </Button>
+          )}
+          {isEditing && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancel}>
+                <X size={18} className="mr-2" />
+                Cancel
+              </Button>
+              <Button onClick={handleSave}>
+                <Check size={18} className="mr-2" />
+                Save
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <Card className="p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">
+              Contact Information
+            </h2>
+            
+            {!isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-2xl font-bold">{customer.name}</div>
+                </div>
+                {customer.company && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Buildings size={18} />
+                    <span>{customer.company}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <EnvelopeSimple size={18} />
+                  <span>{customer.email}</span>
+                </div>
+                {customer.phone && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone size={18} />
+                    <span>{customer.phone}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={editedCustomer.name}
+                    onChange={(e) => setEditedCustomer({ ...editedCustomer, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company">Company</Label>
+                  <Input
+                    id="company"
+                    value={editedCustomer.company || ''}
+                    onChange={(e) => setEditedCustomer({ ...editedCustomer, company: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={editedCustomer.email}
+                    onChange={(e) => setEditedCustomer({ ...editedCustomer, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={editedCustomer.phone || ''}
+                    onChange={(e) => setEditedCustomer({ ...editedCustomer, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
+          </Card>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="p-4">
+              <div className="text-sm text-muted-foreground mb-1">Total Quotes</div>
+              <div className="text-3xl font-bold">{customerQuotes.length}</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-sm text-muted-foreground mb-1">Total Jobs</div>
+              <div className="text-3xl font-bold">{customerJobs.length}</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-sm text-muted-foreground mb-1">Total Revenue</div>
+              <div className="text-3xl font-bold">${totalRevenue.toFixed(2)}</div>
+            </Card>
+          </div>
+          
+          <Card className="p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">
+              Quote History ({customerQuotes.length})
+            </h2>
+            {customerQuotes.length > 0 ? (
+              <div className="space-y-2">
+                {customerQuotes.map((quote) => (
+                  <div
+                    key={quote.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
+                    onClick={() => onSelectQuote?.(quote)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <div className="font-semibold">{quote.quote_number}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="font-semibold">${quote.total.toFixed(2)}</div>
+                        <div className="text-sm text-muted-foreground">{quote.line_items.length} items</div>
+                      </div>
+                      <StatusBadge status={quote.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No quotes yet
+              </div>
+            )}
+          </Card>
+          
+          <Card className="p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">
+              Job History ({customerJobs.length})
+            </h2>
+            {customerJobs.length > 0 ? (
+              <div className="space-y-2">
+                {customerJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
+                    onClick={() => onSelectJob?.(job)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <div className="font-semibold">{job.job_number}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Due: {new Date(job.due_date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-sm text-muted-foreground">{job.line_items.length} items</div>
+                      </div>
+                      <StatusBadge status={job.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No jobs yet
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}

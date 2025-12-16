@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { JobCard } from '@/components/JobCard'
-import type { Job, JobStatus } from '@/lib/types'
+import { JobDetail } from '@/components/JobDetail'
+import type { Job, JobStatus, ArtworkFile } from '@/lib/types'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface JobsBoardProps {
   jobs: Job[]
-  onSelectJob: (job: Job) => void
+  onUpdateJobStatus: (jobId: string, status: JobStatus) => void
+  onUpdateJobArtwork: (jobId: string, itemId: string, artwork: ArtworkFile[]) => void
 }
 
 const statusColumns: { status: JobStatus; label: string }[] = [
@@ -14,7 +18,17 @@ const statusColumns: { status: JobStatus; label: string }[] = [
   { status: 'ready', label: 'Ready' },
 ]
 
-export function JobsBoard({ jobs, onSelectJob }: JobsBoardProps) {
+export function JobsBoard({ jobs, onUpdateJobStatus, onUpdateJobArtwork }: JobsBoardProps) {
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
+  
+  const handleJobClick = (job: Job) => {
+    if (expandedJobId === job.id) {
+      setExpandedJobId(null)
+    } else {
+      setExpandedJobId(job.id)
+    }
+  }
+  
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
@@ -40,11 +54,34 @@ export function JobsBoard({ jobs, onSelectJob }: JobsBoardProps) {
                 <ScrollArea className="flex-1 -mx-2 px-2">
                   <div className="space-y-3 pb-4">
                     {columnJobs.map((job) => (
-                      <JobCard
-                        key={job.id}
-                        job={job}
-                        onClick={() => onSelectJob(job)}
-                      />
+                      <div key={job.id}>
+                        <JobCard
+                          job={job}
+                          onClick={() => handleJobClick(job)}
+                          isExpanded={expandedJobId === job.id}
+                        />
+                        <AnimatePresence>
+                          {expandedJobId === job.id && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="border-l-2 border-r-2 border-b-2 border-primary rounded-b-lg bg-card/50 mt-1">
+                                <JobDetail
+                                  job={job}
+                                  onBack={() => setExpandedJobId(null)}
+                                  onUpdateStatus={(status) => onUpdateJobStatus(job.id, status)}
+                                  onUpdateArtwork={(itemId, artwork) => onUpdateJobArtwork(job.id, itemId, artwork)}
+                                  isInline
+                                />
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     ))}
                     {columnJobs.length === 0 && (
                       <div className="border border-dashed border-border rounded-lg p-8 text-center text-sm text-muted-foreground">

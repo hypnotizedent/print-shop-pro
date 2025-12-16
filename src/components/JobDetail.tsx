@@ -16,11 +16,12 @@ interface JobDetailProps {
   onBack: () => void
   onUpdateStatus: (status: JobStatus) => void
   onUpdateArtwork?: (itemId: string, artwork: ArtworkFile[]) => void
+  isInline?: boolean
 }
 
 const statusSteps: JobStatus[] = ['pending', 'art-approval', 'scheduled', 'printing', 'finishing', 'ready']
 
-export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork }: JobDetailProps) {
+export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, isInline = false }: JobDetailProps) {
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const currentStepIndex = statusSteps.indexOf(job.status)
