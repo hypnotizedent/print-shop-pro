@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { UploadSimple, X, Check, Clock } from '@phosphor-icons/react'
+import { UploadSimple, X, Check, Clock, Images } from '@phosphor-icons/react'
 import type { ArtworkFile } from '@/lib/types'
+import { toast } from 'sonner'
 
 interface ArtworkUploadProps {
   location: string
@@ -11,6 +12,8 @@ interface ArtworkUploadProps {
   onRemove: () => void
   canApprove?: boolean
   onApprove?: (approved: boolean) => void
+  allowMultiple?: boolean
+  onBulkUpload?: (artworks: ArtworkFile[]) => void
 }
 
 export function ArtworkUpload({ 
@@ -19,13 +22,16 @@ export function ArtworkUpload({
   onUpload, 
   onRemove,
   canApprove = false,
-  onApprove
+  onApprove,
+  allowMultiple = false,
+  onBulkUpload
 }: ArtworkUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file')
       return
     }
 
@@ -43,13 +49,54 @@ export function ArtworkUpload({
     reader.readAsDataURL(file)
   }
 
+  const handleMultipleFiles = (files: FileList) => {
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+    
+    if (imageFiles.length === 0) {
+      toast.error('No valid image files found')
+      return
+    }
+
+    if (imageFiles.length !== files.length) {
+      toast.warning(`${files.length - imageFiles.length} non-image files were skipped`)
+    }
+
+    const artworkPromises = imageFiles.map(file => {
+      return new Promise<ArtworkFile>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string
+          resolve({
+            location,
+            dataUrl,
+            fileName: file.name,
+            uploadedAt: new Date().toISOString(),
+            approved: false
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    })
+
+    Promise.all(artworkPromises).then(artworks => {
+      if (onBulkUpload) {
+        onBulkUpload(artworks)
+        toast.success(`${artworks.length} file${artworks.length > 1 ? 's' : ''} uploaded`)
+      }
+    })
+  }
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
     
-    const file = e.dataTransfer.files[0]
-    if (file) {
-      handleFileSelect(file)
+    if (allowMultiple && e.dataTransfer.files.length > 1) {
+      handleMultipleFiles(e.dataTransfer.files)
+    } else {
+      const file = e.dataTransfer.files[0]
+      if (file) {
+        handleFileSelect(file)
+      }
     }
   }
 
@@ -133,24 +180,35 @@ export function ArtworkUpload({
       onClick={() => fileInputRef.current?.click()}
     >
       <div className="aspect-square flex flex-col items-center justify-center p-4 text-center">
-        <UploadSimple size={32} className="text-muted-foreground mb-2" />
-        <div className="text-sm font-medium mb-1">Upload Artwork</div>
+        {allowMultiple ? (
+          <Images size={32} className="text-muted-foreground mb-2" />
+        ) : (
+          <UploadSimple size={32} className="text-muted-foreground mb-2" />
+        )}
+        <div className="text-sm font-medium mb-1">
+          {allowMultiple ? 'Upload Multiple Files' : 'Upload Artwork'}
+        </div>
         <div className="text-xs text-muted-foreground capitalize mb-2">
           {location.replace('-', ' ')}
         </div>
         <div className="text-xs text-muted-foreground">
-          Drag & drop or click
+          {allowMultiple ? 'Drag & drop files or click' : 'Drag & drop or click'}
         </div>
       </div>
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        multiple={allowMultiple}
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) {
-            handleFileSelect(file)
+          if (allowMultiple && e.target.files && e.target.files.length > 1) {
+            handleMultipleFiles(e.target.files)
+          } else {
+            const file = e.target.files?.[0]
+            if (file) {
+              handleFileSelect(file)
+            }
           }
         }}
       />

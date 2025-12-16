@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button'
 import { SizeInputRow } from './SizeInputRow'
 import { ProductMockup } from './ProductMockup'
 import { ArtworkUpload } from './ArtworkUpload'
-import { Trash, Images } from '@phosphor-icons/react'
+import { Trash, Images, UploadSimple } from '@phosphor-icons/react'
 import type { LineItem, ProductType, DecorationType, Sizes, ArtworkFile } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface LineItemGridProps {
   items: LineItem[]
@@ -67,6 +68,56 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
     const item = items[index]
     const updatedArtwork = (item.artwork || []).filter(a => a.location !== location)
     updateItem(index, { artwork: updatedArtwork })
+  }
+
+  const handleBulkUpload = (index: number, files: FileList) => {
+    const item = items[index]
+    
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+    
+    if (imageFiles.length === 0) {
+      toast.error('No valid image files found')
+      return
+    }
+
+    if (imageFiles.length !== files.length) {
+      toast.warning(`${files.length - imageFiles.length} non-image files were skipped`)
+    }
+
+    const artworkPromises = imageFiles.map((file, idx) => {
+      return new Promise<ArtworkFile>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string
+          const location = item.print_locations[idx % item.print_locations.length] || 'front'
+          resolve({
+            location,
+            dataUrl,
+            fileName: file.name,
+            uploadedAt: new Date().toISOString(),
+            approved: false
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    })
+
+    Promise.all(artworkPromises).then(newArtworks => {
+      const existingArtwork = item.artwork || []
+      const updatedArtwork = [...existingArtwork]
+      
+      newArtworks.forEach(newArt => {
+        const existingIndex = updatedArtwork.findIndex(a => a.location === newArt.location)
+        if (existingIndex >= 0) {
+          updatedArtwork[existingIndex] = newArt
+        } else {
+          updatedArtwork.push(newArt)
+        }
+      })
+      
+      updateItem(index, { artwork: updatedArtwork })
+      toast.success(`${newArtworks.length} file${newArtworks.length > 1 ? 's' : ''} uploaded`)
+    })
   }
   
   return (
@@ -236,18 +287,40 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
 
             {item.print_locations.length > 0 && (
               <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleArtworkSection(item.id)}
-                  className="w-full justify-start"
-                >
-                  <Images size={16} className="mr-2" />
-                  Artwork ({(item.artwork || []).length}/{item.print_locations.length})
-                  <span className="ml-auto">
-                    {expandedArtwork.has(item.id) ? '−' : '+'}
-                  </span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleArtworkSection(item.id)}
+                    className="flex-1 justify-start"
+                  >
+                    <Images size={16} className="mr-2" />
+                    Artwork ({(item.artwork || []).length}/{item.print_locations.length})
+                    <span className="ml-auto">
+                      {expandedArtwork.has(item.id) ? '−' : '+'}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const input = document.createElement('input')
+                      input.type = 'file'
+                      input.multiple = true
+                      input.accept = 'image/*'
+                      input.onchange = (e) => {
+                        const files = (e.target as HTMLInputElement).files
+                        if (files) {
+                          handleBulkUpload(index, files)
+                        }
+                      }
+                      input.click()
+                    }}
+                  >
+                    <UploadSimple size={16} className="mr-2" />
+                    Bulk Upload
+                  </Button>
+                </div>
 
                 {expandedArtwork.has(item.id) && (
                   <div className="grid grid-cols-4 gap-3 mt-3">

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from './StatusBadge'
 import type { Quote } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
-import { Briefcase } from '@phosphor-icons/react'
+import { Briefcase, Image } from '@phosphor-icons/react'
 
 interface QuoteCardProps {
   quote: Quote
@@ -16,6 +16,9 @@ export function QuoteCard({ quote, onClick, onConvertToJob, isExpanded }: QuoteC
   const itemCount = quote.line_items.reduce((sum, item) => sum + item.quantity, 0)
   const createdAgo = formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })
   
+  const allArtwork = quote.line_items.flatMap(item => item.artwork || [])
+  const artworkCount = allArtwork.length
+  
   return (
     <Card 
       className={`p-4 cursor-pointer hover:border-emerald-500/50 transition-all ${
@@ -24,14 +27,35 @@ export function QuoteCard({ quote, onClick, onConvertToJob, isExpanded }: QuoteC
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-2">
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-semibold text-foreground">{quote.quote_number}</span>
             <StatusBadge status={quote.status} />
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground mb-2">
             {quote.customer.company || quote.customer.name}
           </div>
+          {artworkCount > 0 && (
+            <div className="flex gap-1 mb-2">
+              {allArtwork.slice(0, 3).map((art, idx) => (
+                <div 
+                  key={idx}
+                  className="w-8 h-8 rounded border border-border overflow-hidden flex-shrink-0"
+                >
+                  <img 
+                    src={art.dataUrl} 
+                    alt={art.fileName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+              {artworkCount > 3 && (
+                <div className="w-8 h-8 rounded border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                  +{artworkCount - 3}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {quote.status === 'approved' && onConvertToJob && (

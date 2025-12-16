@@ -5,10 +5,11 @@ import { Progress } from '@/components/ui/progress'
 import { ProductMockup } from '@/components/ProductMockup'
 import { ArtworkUpload } from '@/components/ArtworkUpload'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, Check } from '@phosphor-icons/react'
+import { ArrowLeft, Check, Images, UploadSimple } from '@phosphor-icons/react'
 import type { Job, JobStatus, ArtworkFile } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { toast } from 'sonner'
 
 interface JobDetailProps {
   job: Job
@@ -25,6 +26,7 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork }: JobD
   const currentStepIndex = statusSteps.indexOf(job.status)
   const [mockupView, setMockupView] = useState<'front' | 'back'>('front')
   const primaryItem = job.line_items[0]
+  const bulkUploadRef = useRef<HTMLInputElement>(null)
 
   const handleArtworkApproval = (itemId: string, location: string, approved: boolean) => {
     if (!onUpdateArtwork) return
@@ -37,6 +39,59 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork }: JobD
     )
     
     onUpdateArtwork(itemId, updatedArtwork)
+  }
+
+  const handleBulkUpload = (itemId: string, files: FileList) => {
+    if (!onUpdateArtwork) return
+    
+    const item = job.line_items.find(i => i.id === itemId)
+    if (!item) return
+
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'))
+    
+    if (imageFiles.length === 0) {
+      toast.error('No valid image files found')
+      return
+    }
+
+    if (imageFiles.length !== files.length) {
+      toast.warning(`${files.length - imageFiles.length} non-image files were skipped`)
+    }
+
+    const artworkPromises = imageFiles.map((file, index) => {
+      return new Promise<ArtworkFile>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string
+          const location = item.print_locations[index % item.print_locations.length] || 'front'
+          resolve({
+            location,
+            dataUrl,
+            fileName: file.name,
+            uploadedAt: new Date().toISOString(),
+            approved: false
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    })
+
+    Promise.all(artworkPromises).then(newArtworks => {
+      const existingArtwork = item.artwork || []
+      const updatedArtwork = [...existingArtwork]
+      
+      newArtworks.forEach(newArt => {
+        const existingIndex = updatedArtwork.findIndex(a => a.location === newArt.location)
+        if (existingIndex >= 0) {
+          updatedArtwork[existingIndex] = newArt
+        } else {
+          updatedArtwork.push(newArt)
+        }
+      })
+      
+      onUpdateArtwork(itemId, updatedArtwork)
+      toast.success(`${newArtworks.length} file${newArtworks.length > 1 ? 's' : ''} uploaded`)
+    })
   }
 
   const allArtworkApproved = job.line_items.every(item => {
@@ -272,7 +327,29 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork }: JobD
 
                 {item.print_locations.length > 0 && (
                   <div className="pt-4 border-t border-border">
-                    <div className="text-sm font-semibold mb-3">Artwork Files</div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-sm font-semibold">Artwork Files</div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const input = document.createElement('input')
+                          input.type = 'file'
+                          input.multiple = true
+                          input.accept = 'image/*'
+                          input.onchange = (e) => {
+                            const files = (e.target as HTMLInputElement).files
+                            if (files) {
+                              handleBulkUpload(item.id, files)
+                            }
+                          }
+                          input.click()
+                        }}
+                      >
+                        <Images size={16} className="mr-2" />
+                        Upload Multiple Files
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-4 gap-3">
                       {item.print_locations.map(location => {
                         const artwork = (item.artwork || []).find(a => a.location === location)
