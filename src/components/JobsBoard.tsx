@@ -12,7 +12,7 @@ import {
 import { JobCard } from '@/components/JobCard'
 import { JobDetail } from '@/components/JobDetail'
 import { ProductionCalendar } from '@/components/ProductionCalendar'
-import type { Job, JobStatus, ArtworkFile, Customer } from '@/lib/types'
+import type { Job, JobStatus, ArtworkFile, Customer, Expense } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -24,6 +24,7 @@ interface JobsBoardProps {
   onUpdateJobArtwork: (jobId: string, itemId: string, artwork: ArtworkFile[]) => void
   onNavigateToCustomer: (customerId: string) => void
   onUpdateJobNickname?: (jobId: string, nickname: string) => void
+  onUpdateJobExpenses?: (jobId: string, expenses: Expense[]) => void
   onDeleteJobs?: (jobIds: string[]) => void
   onBulkStatusChange?: (jobIds: string[], status: JobStatus) => void
 }
@@ -35,6 +36,7 @@ export function JobsBoard({
   onUpdateJobArtwork, 
   onNavigateToCustomer,
   onUpdateJobNickname,
+  onUpdateJobExpenses,
   onDeleteJobs,
   onBulkStatusChange
 }: JobsBoardProps) {
@@ -293,6 +295,7 @@ export function JobsBoard({
                         onUpdateArtwork={(itemId, artwork) => onUpdateJobArtwork(job.id, itemId, artwork)}
                         onNavigateToCustomer={() => onNavigateToCustomer(job.customer.id)}
                         onUpdateNickname={onUpdateJobNickname ? (nickname) => onUpdateJobNickname(job.id, nickname) : undefined}
+                        onUpdateExpenses={onUpdateJobExpenses ? (expenses) => onUpdateJobExpenses(job.id, expenses) : undefined}
                         isInline
                       />
                     </div>

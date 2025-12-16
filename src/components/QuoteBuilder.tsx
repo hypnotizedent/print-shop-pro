@@ -15,9 +15,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy } from '@phosphor-icons/react'
-import type { Quote, Customer, DiscountType, CustomerDecorationTemplate } from '@/lib/types'
+import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
+import { PaymentTracker } from '@/components/PaymentTracker'
 
 interface QuoteBuilderProps {
   quote: Quote
@@ -356,6 +357,28 @@ export function QuoteBuilder({
                 />
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <PaymentTracker
+              quoteId={quote.id}
+              quoteTotal={quote.total}
+              payments={quote.payments || []}
+              onAddPayment={(payment: Payment) => {
+                setQuote({
+                  ...quote,
+                  payments: [...(quote.payments || []), payment]
+                })
+              }}
+              onDeletePayment={(paymentId: string) => {
+                setQuote({
+                  ...quote,
+                  payments: (quote.payments || []).filter(p => p.id !== paymentId)
+                })
+              }}
+            />
           </div>
         </div>
       </div>

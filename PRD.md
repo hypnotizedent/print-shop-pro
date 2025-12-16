@@ -75,6 +75,20 @@ This is a multi-view production management system with complex state management,
 - **Progression**: View calendar → See jobs grouped by due date → Color-coded by status → View daily piece count → Click job to see details → Navigate weeks with arrows → Click "Today" to return to current week
 - **Success criteria**: Calendar displays 7 days starting Monday; jobs appear on their due date; color coding matches status badges; shows up to 3 jobs per day with "+X more" indicator; displays total piece count per day; shows weekly totals (job count and piece count); clicking job opens inline job detail; today's date highlighted with primary color; week navigation smooth; clicking job auto-closes calendar and scrolls to job in list
 
+### Manual Payment Tracking
+- **Functionality**: Record payments received outside the Mint OS system (cash, check, Venmo, Zelle, PayPal, bank transfers, etc.) with payment tracking dashboard showing total paid and balance due
+- **Purpose**: Track all payments regardless of payment method; maintain accurate financial records; calculate remaining balance on quotes
+- **Trigger**: Click "Add Payment" button in quote detail payment tracking section
+- **Progression**: View payment tracker on quote → Click "Add Payment" → Enter amount and date → Select payment method (or specify custom) → Add reference number/transaction ID → Add notes → Submit → Payment added to history → Balance updates automatically
+- **Success criteria**: Payment form validates amount is positive number; supports all major payment methods plus custom option; displays payment history with method badges; shows real-time totals (quote total, total paid, balance due); can delete payment records with confirmation; payment data persists with quote; quote total, total paid, and balance cards update immediately; payment history shows method, date, reference, and notes
+
+### Job Expense & COGS Tracking
+- **Functionality**: Record all job-related expenses (materials, labor, shipping, outsourcing, supplies) with automatic profit margin calculation
+- **Purpose**: Track cost of goods sold (COGS) for accurate job profitability; identify high-cost jobs; calculate profit margins in real-time
+- **Trigger**: Click "Add Expense" button in job detail expense tracking section
+- **Progression**: View expense tracker on job → Click "Add Expense" → Select category → Enter description → Enter amount OR quantity + unit cost (auto-calculates total) → Add vendor and invoice number → Add date and notes → Submit → Expense added to history → Profit margin recalculates
+- **Success criteria**: Expense form supports direct amount entry or quantity × unit cost calculation; categories include materials, labor, shipping, outsourcing, supplies, and custom; displays expense history with category color badges; shows real-time metrics (job total, total expenses, profit, margin %); profit and margin turn red when negative; can delete expense records with confirmation; expense data persists with job; supports vendor tracking and invoice number references; category badges are color-coded for quick scanning
+
 ### Enhanced Job Detail Layout
 - **Functionality**: Compact, mockup-first job detail view with streamlined status progression and customer information
 - **Purpose**: Reduce vertical space consumption while maintaining all critical information; prioritize visual product representation

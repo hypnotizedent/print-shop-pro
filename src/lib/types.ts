@@ -93,6 +93,7 @@ export interface Quote {
   due_date: string
   created_at: string
   valid_until: string
+  payments?: Payment[]
 }
 
 export interface Job {
@@ -109,6 +110,7 @@ export interface Job {
   assigned_to: string[]
   progress: number
   nickname?: string
+  expenses?: Expense[]
 }
 
 export interface CustomerDecorationTemplate {
@@ -117,5 +119,39 @@ export interface CustomerDecorationTemplate {
   name: string
   description?: string
   decorations: Omit<Decoration, 'id'>[]
+  createdAt: string
+}
+
+export type PaymentMethod = 'cash' | 'check' | 'venmo' | 'zelle' | 'paypal' | 'bank-transfer' | 'other'
+
+export interface Payment {
+  id: string
+  quoteId: string
+  jobId?: string
+  amount: number
+  method: PaymentMethod
+  customMethod?: string
+  reference?: string
+  notes?: string
+  receivedDate: string
+  recordedBy?: string
+  createdAt: string
+}
+
+export type ExpenseCategory = 'materials' | 'labor' | 'shipping' | 'outsourcing' | 'supplies' | 'other'
+
+export interface Expense {
+  id: string
+  jobId: string
+  category: ExpenseCategory
+  customCategory?: string
+  description: string
+  amount: number
+  quantity?: number
+  unitCost?: number
+  vendor?: string
+  invoiceNumber?: string
+  expenseDate: string
+  notes?: string
   createdAt: string
 }

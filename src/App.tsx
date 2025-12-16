@@ -20,7 +20,7 @@ import {
   SignOut,
   Gear,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -121,6 +121,13 @@ function App() {
     setJobs((current) => {
       const existing = current || []
       return existing.map(j => j.id === jobId ? { ...j, nickname } : j)
+    })
+  }
+
+  const handleUpdateJobExpenses = (jobId: string, expenses: Expense[]) => {
+    setJobs((current) => {
+      const existing = current || []
+      return existing.map(j => j.id === jobId ? { ...j, expenses } : j)
     })
   }
 
@@ -315,6 +322,7 @@ function App() {
               onUpdateJobStatus={handleUpdateJobStatus}
               onUpdateJobArtwork={handleUpdateJobArtwork}
               onUpdateJobNickname={handleUpdateJobNickname}
+              onUpdateJobExpenses={handleUpdateJobExpenses}
               onNavigateToCustomer={(customerId) => {
                 const customer = customers?.find(c => c.id === customerId)
                 if (customer) {

@@ -14,10 +14,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck, Bell } from '@phosphor-icons/react'
-import type { Job, JobStatus, LegacyArtworkFile } from '@/lib/types'
+import type { Job, JobStatus, LegacyArtworkFile, Expense } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
+import { ExpenseTracker } from '@/components/ExpenseTracker'
 
 interface JobDetailProps {
   job: Job
@@ -26,12 +27,13 @@ interface JobDetailProps {
   onUpdateArtwork?: (itemId: string, artwork: LegacyArtworkFile[]) => void
   onNavigateToCustomer?: () => void
   onUpdateNickname?: (nickname: string) => void
+  onUpdateExpenses?: (expenses: Expense[]) => void
   isInline?: boolean
 }
 
 const statusSteps: JobStatus[] = ['pending', 'art-approval', 'scheduled', 'printing', 'finishing', 'ready']
 
-export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavigateToCustomer, onUpdateNickname, isInline = false }: JobDetailProps) {
+export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavigateToCustomer, onUpdateNickname, onUpdateExpenses, isInline = false }: JobDetailProps) {
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const currentStepIndex = statusSteps.indexOf(job.status)
@@ -484,6 +486,24 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
             </div>
           </div>
         )}
+
+        <div>
+          <ExpenseTracker
+            jobId={job.id}
+            jobTotal={job.line_items.reduce((sum, item) => sum + item.line_total, 0)}
+            expenses={job.expenses || []}
+            onAddExpense={(expense: Expense) => {
+              if (onUpdateExpenses) {
+                onUpdateExpenses([...(job.expenses || []), expense])
+              }
+            }}
+            onDeleteExpense={(expenseId: string) => {
+              if (onUpdateExpenses) {
+                onUpdateExpenses((job.expenses || []).filter(e => e.id !== expenseId))
+              }
+            }}
+          />
+        </div>
       </div>
 
       <JobDepartmentNotification
