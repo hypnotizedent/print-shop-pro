@@ -130,7 +130,13 @@ export function CustomerArtworkLibrary({
       artworkFile.versionHistory = [...(artworkFile.versionHistory || []).slice(-9), newVersion]
 
       onUpdateArtworkFile(artworkFile)
-      toast.success(`Artwork updated to version ${artworkFile.currentVersion}`)
+      toast.success(
+        `Artwork updated to version ${artworkFile.currentVersion}`,
+        {
+          description: formData.changeNotes || `${formData.name} - ${selectedFile!.fileName}`,
+          duration: 4000,
+        }
+      )
     } else if (editingArtwork) {
       const artworkFile: CustomerArtworkFile = {
         ...editingArtwork,
@@ -145,7 +151,26 @@ export function CustomerArtworkLibrary({
       }
 
       onUpdateArtworkFile(artworkFile)
-      toast.success('Artwork updated')
+      const statusChange = formData.productionReady !== editingArtwork.productionReady
+      if (statusChange && formData.productionReady) {
+        toast.success(
+          'Artwork marked as production-ready',
+          {
+            description: formData.name,
+            duration: 4000,
+          }
+        )
+      } else if (statusChange && !formData.productionReady) {
+        toast.warning(
+          'Artwork marked as not production-ready',
+          {
+            description: formData.name,
+            duration: 4000,
+          }
+        )
+      } else {
+        toast.success('Artwork updated')
+      }
     } else {
       const artworkFile: CustomerArtworkFile = {
         id: `caf-${Date.now()}`,
@@ -165,7 +190,16 @@ export function CustomerArtworkLibrary({
       }
 
       onSaveArtworkFile(artworkFile)
-      toast.success('Artwork saved to customer library')
+      const fileSize = selectedFile!.fileSize < 1024 * 1024 
+        ? `${(selectedFile!.fileSize / 1024).toFixed(1)} KB` 
+        : `${(selectedFile!.fileSize / (1024 * 1024)).toFixed(1)} MB`
+      toast.success(
+        'Artwork saved to customer library',
+        {
+          description: `${formData.name} - ${selectedFile!.fileName} (${fileSize})`,
+          duration: 4000,
+        }
+      )
     }
 
     handleCloseDialog()
@@ -202,9 +236,16 @@ export function CustomerArtworkLibrary({
   }
 
   const handleDelete = (artworkId: string) => {
+    const artwork = artworkFiles.find(a => a.id === artworkId)
     if (confirm('Are you sure you want to delete this artwork? This action cannot be undone.')) {
       onDeleteArtworkFile(artworkId)
-      toast.success('Artwork deleted')
+      toast.success(
+        'Artwork deleted',
+        {
+          description: artwork?.name || 'Artwork removed from library',
+          duration: 3000,
+        }
+      )
     }
   }
 

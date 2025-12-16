@@ -159,6 +159,10 @@ function App() {
   const handleUpdateJobArtwork = (jobId: string, itemId: string, artwork: LegacyArtworkFile[]) => {
     setJobs((current) => {
       const existing = current || []
+      const job = existing.find(j => j.id === jobId)
+      const item = job?.line_items.find(i => i.id === itemId)
+      const oldArtwork = item?.artwork || []
+      
       const updatedJobs = existing.map(j => {
         if (j.id === jobId) {
           return {
@@ -171,15 +175,59 @@ function App() {
         return j
       })
 
-      const job = updatedJobs.find(j => j.id === jobId)
-      const allApproved = artwork.every(a => a.approved)
-      if (allApproved && artwork.length > 0) {
-        const allItemsApproved = job?.line_items.every(item => 
-          (item.artwork || []).every(a => a.approved)
+      const updatedJob = updatedJobs.find(j => j.id === jobId)
+      
+      const newlyApproved = artwork.filter(a => {
+        const oldVersion = oldArtwork.find(old => old.location === a.location)
+        return a.approved && (!oldVersion || !oldVersion.approved)
+      })
+      
+      const newlyRejected = artwork.filter(a => {
+        const oldVersion = oldArtwork.find(old => old.location === a.location)
+        return !a.approved && oldVersion && oldVersion.approved
+      })
+      
+      if (newlyApproved.length > 0) {
+        const locations = newlyApproved.map(a => a.location).join(', ')
+        toast.success(
+          `Artwork approved for ${locations}`,
+          {
+            description: `Job ${job?.job_number} - ${item?.product_name}`,
+            duration: 4000,
+          }
         )
-        if (allItemsApproved) {
-          setTimeout(() => toast.success('All artwork approved!'), 100)
-        }
+      }
+      
+      if (newlyRejected.length > 0) {
+        const locations = newlyRejected.map(a => a.location).join(', ')
+        toast.warning(
+          `Artwork approval revoked for ${locations}`,
+          {
+            description: `Job ${job?.job_number} - ${item?.product_name}`,
+            duration: 4000,
+          }
+        )
+      }
+      
+      const allItemsApproved = updatedJob?.line_items.every(item => {
+        const artworkList = item.artwork || []
+        return artworkList.length > 0 && artworkList.every(a => a.approved)
+      })
+      
+      if (allItemsApproved && updatedJob) {
+        const totalArtwork = updatedJob.line_items.reduce(
+          (sum, item) => sum + (item.artwork || []).length, 
+          0
+        )
+        setTimeout(() => {
+          toast.success(
+            `All artwork approved! (${totalArtwork} files)`,
+            {
+              description: `Job ${updatedJob.job_number} is ready for production`,
+              duration: 5000,
+            }
+          )
+        }, 100)
       }
 
       return updatedJobs

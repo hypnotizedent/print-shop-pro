@@ -434,10 +434,22 @@ export function DecorationManager({
   }
 
   const updateDecoration = (id: string, updates: Partial<Decoration>) => {
+    const decoration = decorations.find(d => d.id === id)
+    const displayLocation = decoration?.customLocation || decoration?.location || 'Unknown location'
+    
     onChange(decorations.map(d => d.id === id ? { ...d, ...updates } : d))
     
+    if (updates.artwork === undefined && decoration?.artwork) {
+      toast.success(
+        `Artwork removed from ${displayLocation}`,
+        {
+          description: decoration.artwork.fileName,
+          duration: 3000,
+        }
+      )
+    }
+    
     if (updates.artwork && updates.imprintSize && productType) {
-      const decoration = decorations.find(d => d.id === id)
       if (decoration) {
         const validation = validateImprintSize(
           productType,
@@ -465,7 +477,18 @@ export function DecorationManager({
   }
 
   const removeDecoration = (id: string) => {
+    const decoration = decorations.find(d => d.id === id)
     onChange(decorations.filter(d => d.id !== id))
+    if (decoration) {
+      const displayLocation = decoration.customLocation || decoration.location
+      toast.success(
+        `Decoration removed`,
+        {
+          description: `${displayLocation} decoration deleted`,
+          duration: 3000,
+        }
+      )
+    }
   }
 
   const handleFileUpload = async (id: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -484,6 +507,9 @@ export function DecorationManager({
         const widthInches = (img.width / 300).toFixed(1)
         const heightInches = (img.height / 300).toFixed(1)
         const imprintSize = `${widthInches}" × ${heightInches}"`
+        
+        const decoration = decorations.find(d => d.id === id)
+        const displayLocation = decoration?.customLocation || decoration?.location || 'Unknown location'
 
         updateDecoration(id, {
           artwork: {
@@ -496,7 +522,18 @@ export function DecorationManager({
           },
           imprintSize,
         })
-        toast.success(`Artwork uploaded - Detected size: ${imprintSize}`)
+        
+        const fileSize = file.size < 1024 * 1024 
+          ? `${(file.size / 1024).toFixed(1)} KB` 
+          : `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        
+        toast.success(
+          `Artwork uploaded for ${displayLocation}`,
+          {
+            description: `${file.name} - ${imprintSize} (${fileSize})`,
+            duration: 4000,
+          }
+        )
       }
       img.src = e.target?.result as string
     }

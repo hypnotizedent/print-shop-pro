@@ -52,6 +52,13 @@ export function ArtworkUpload({
         uploadedAt: new Date().toISOString(),
         approved: false
       })
+      toast.success(
+        `Artwork uploaded for ${location}`,
+        {
+          description: `${file.name} (${formatFileSize(file.size)})`,
+          duration: 3000,
+        }
+      )
     }
     reader.readAsDataURL(file)
   }
@@ -89,7 +96,14 @@ export function ArtworkUpload({
     Promise.all(artworkPromises).then(artworks => {
       if (onBulkUpload) {
         onBulkUpload(artworks)
-        toast.success(`${artworks.length} file${artworks.length > 1 ? 's' : ''} uploaded`)
+        const totalSize = artworks.reduce((sum, a) => sum + (a.fileSize || 0), 0)
+        toast.success(
+          `${artworks.length} file${artworks.length > 1 ? 's' : ''} uploaded`,
+          {
+            description: `Total size: ${formatFileSize(totalSize)}`,
+            duration: 4000,
+          }
+        )
       }
     })
   }
