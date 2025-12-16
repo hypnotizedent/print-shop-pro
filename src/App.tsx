@@ -606,12 +606,12 @@ function App() {
                 }
                 setCurrentPage({ type: 'customer-detail', customer: newCustomer })
               }}
-              onSaveFilterPreset={handleSaveFilterPreset}
-              onDeleteFilterPreset={handleDeleteFilterPreset}
               onTogglePinPreset={handleTogglePinPreset}
               onAddRecentSearch={handleAddRecentSearch}
               onRemoveRecentSearch={handleRemoveRecentSearch}
               onClearRecentSearches={handleClearRecentSearches}
+            />
+          )}
             />
           )}
           
@@ -620,8 +620,6 @@ function App() {
               quotes={quotes || []}
               jobs={jobs || []}
               customers={customers || []}
-              paymentReminders={paymentReminders || []}
-              emailNotifications={emailNotifications || []}
               onSelectQuote={(quote) => {
                 setCurrentPage({ type: 'quote-builder', quote })
               }}
