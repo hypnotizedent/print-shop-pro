@@ -2,10 +2,19 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ProductMockupWithSize } from './ProductMockupWithSize'
 import { DecorationManager } from './DecorationManager'
-import { Trash, CaretDown, CaretRight } from '@phosphor-icons/react'
+import { Trash, CaretDown, CaretRight, Copy } from '@phosphor-icons/react'
 import type { LineItem, Sizes, Decoration } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
+import { generateId } from '@/lib/data'
 import { useState } from 'react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { toast } from 'sonner'
 
 interface LineItemGridProps {
   items: LineItem[]
@@ -61,6 +70,32 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
 
   const getTotalSetupFees = (item: LineItem): number => {
     return (item.decorations || []).reduce((sum, dec) => sum + dec.setupFee, 0)
+  }
+
+  const copyDecorationsFromItem = (targetIndex: number, sourceIndex: number) => {
+    const sourceItem = items[sourceIndex]
+    const sourceDecorations = sourceItem.decorations || []
+    
+    if (sourceDecorations.length === 0) {
+      toast.error('No decorations to copy from this item')
+      return
+    }
+
+    const copiedDecorations = sourceDecorations.map(decoration => ({
+      ...decoration,
+      id: generateId('dec'),
+      artwork: decoration.artwork ? {
+        ...decoration.artwork,
+      } : undefined,
+    }))
+
+    const targetItem = items[targetIndex]
+    const existingDecorations = targetItem.decorations || []
+    const mergedDecorations = [...existingDecorations, ...copiedDecorations]
+
+    updateItem(targetIndex, { decorations: mergedDecorations })
+    
+    toast.success(`Copied ${copiedDecorations.length} decoration${copiedDecorations.length !== 1 ? 's' : ''} from line item ${sourceIndex + 1}`)
   }
   
   return (
@@ -163,7 +198,7 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
                   <div className="py-2">
                     <button
                       onClick={() => toggleLocationsSection(item.id)}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {expandedLocations.has(item.id) ? (
                         <CaretDown size={14} weight="bold" />
@@ -185,6 +220,52 @@ export function LineItemGrid({ items, onChange }: LineItemGridProps) {
                         Total: ${item.line_total.toFixed(2)} ({item.quantity} pcs)
                       </div>
                     </button>
+                    
+                    {items.length > 1 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs mt-2 text-muted-foreground hover:text-primary"
+                          >
+                            <Copy size={14} className="mr-1.5" />
+                            Copy Decorations From...
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-64">
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            Copy from line item
+                          </div>
+                          <DropdownMenuSeparator />
+                          {items.map((sourceItem, sourceIndex) => {
+                            if (sourceIndex === index) return null
+                            const decorationCount = getTotalDecorations(sourceItem)
+                            if (decorationCount === 0) return null
+                            
+                            return (
+                              <DropdownMenuItem
+                                key={sourceItem.id}
+                                onClick={() => copyDecorationsFromItem(index, sourceIndex)}
+                                className="flex flex-col items-start gap-0.5 py-2"
+                              >
+                                <div className="font-medium text-xs">
+                                  #{sourceIndex + 1}: {sourceItem.product_name || 'Untitled'} 
+                                  {sourceItem.product_color && ` - ${sourceItem.product_color}`}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {decorationCount} decoration{decorationCount !== 1 ? 's' : ''}
+                                </div>
+                              </DropdownMenuItem>
+                            )
+                          }).filter(Boolean).length === 0 && (
+                            <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+                              No other line items with decorations
+                            </div>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                     
                     {expandedLocations.has(item.id) && (
                       <div className="mt-3 pb-3">
