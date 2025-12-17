@@ -365,3 +365,24 @@ export interface RecentSearch {
   timestamp: string
   resultsCount?: number
 }
+
+export type SupplierType = 'ssactivewear' | 'sanmar'
+
+export interface FavoriteProduct {
+  id: string
+  supplier: SupplierType
+  styleId: string
+  styleName: string
+  brandName: string
+  colorName?: string
+  colorCode?: string
+  imageUrl?: string
+  wholesalePrice?: number
+  retailPrice?: number
+  category?: string
+  sizes?: string[]
+  notes?: string
+  addedAt: string
+  lastUsed?: string
+  usageCount: number
+}

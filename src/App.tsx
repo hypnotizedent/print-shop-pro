@@ -11,6 +11,7 @@ import { CustomersList } from '@/components/CustomersList'
 import { CustomerDetail } from '@/components/CustomerDetail'
 import { Settings } from '@/components/Settings'
 import { Reports } from '@/components/Reports'
+import { ProductCatalog } from '@/components/ProductCatalog'
 import { GlobalSearch } from '@/components/GlobalSearch'
 import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
@@ -24,8 +25,9 @@ import {
   SignOut,
   Gear,
   Keyboard,
+  Package,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -40,7 +42,7 @@ import { createQuoteApprovalEmail, createQuoteApprovedEmail, createInvoiceEmail 
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 
-type View = 'home' | 'quotes' | 'jobs' | 'customers' | 'reports' | 'settings'
+type View = 'home' | 'quotes' | 'jobs' | 'customers' | 'catalog' | 'reports' | 'settings'
 type Page = 
   | { type: 'list'; view: View }
   | { type: 'quote-builder'; quote: Quote; fromCustomerId?: string }
@@ -58,6 +60,7 @@ function App() {
   const [emailTemplates, setEmailTemplates] = useKV<import('@/lib/types').EmailTemplate[]>('email-templates', sampleEmailTemplates)
   const [filterPresets, setFilterPresets] = useKV<FilterPreset[]>('filter-presets', [])
   const [recentSearches, setRecentSearches] = useKV<RecentSearch[]>('recent-searches', [])
+  const [favoriteProducts, setFavoriteProducts] = useKV<FavoriteProduct[]>('favorite-products', [])
   const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
     accountNumber: '',
     apiKey: ''
@@ -531,6 +534,24 @@ function App() {
     setRecentSearches([])
   }
 
+  const handleAddFavoriteProduct = (product: FavoriteProduct) => {
+    setFavoriteProducts((current) => [...(current || []), product])
+  }
+
+  const handleRemoveFavoriteProduct = (productId: string) => {
+    setFavoriteProducts((current) => {
+      const existing = current || []
+      return existing.filter(p => p.id !== productId)
+    })
+  }
+
+  const handleUpdateFavoriteProduct = (product: FavoriteProduct) => {
+    setFavoriteProducts((current) => {
+      const existing = current || []
+      return existing.map(p => p.id === product.id ? product : p)
+    })
+  }
+
   useKeyboardShortcuts([
     {
       key: 'n',
@@ -605,16 +626,24 @@ function App() {
       key: '5',
       metaKey: true,
       callback: () => {
-        setCurrentPage({ type: 'list', view: 'reports' })
-        toast('Reports', { description: 'Keyboard shortcut: ⌘+5' })
+        setCurrentPage({ type: 'list', view: 'catalog' })
+        toast('Catalog', { description: 'Keyboard shortcut: ⌘+5' })
       },
     },
     {
       key: '6',
       metaKey: true,
       callback: () => {
+        setCurrentPage({ type: 'list', view: 'reports' })
+        toast('Reports', { description: 'Keyboard shortcut: ⌘+6' })
+      },
+    },
+    {
+      key: '7',
+      metaKey: true,
+      callback: () => {
         setCurrentPage({ type: 'list', view: 'settings' })
-        toast('Settings', { description: 'Keyboard shortcut: ⌘+6' })
+        toast('Settings', { description: 'Keyboard shortcut: ⌘+7' })
       },
     },
     {
@@ -654,6 +683,7 @@ function App() {
     { id: 'quotes' as const, label: 'Quotes', icon: FileText },
     { id: 'jobs' as const, label: 'Jobs', icon: Briefcase },
     { id: 'customers' as const, label: 'Customers', icon: Users },
+    { id: 'catalog' as const, label: 'Catalog', icon: Package },
     { id: 'reports' as const, label: 'Reports', icon: ChartBar },
     { id: 'settings' as const, label: 'Settings', icon: Gear },
   ]
@@ -829,6 +859,15 @@ function App() {
               onRemoveRecentSearch={handleRemoveRecentSearch}
               onClearRecentSearches={handleClearRecentSearches}
               onNewQuote={handleNewQuote}
+            />
+          )}
+          
+          {currentPage.type === 'list' && currentPage.view === 'catalog' && (
+            <ProductCatalog
+              favorites={favoriteProducts || []}
+              onAddFavorite={handleAddFavoriteProduct}
+              onRemoveFavorite={handleRemoveFavoriteProduct}
+              onUpdateFavorite={handleUpdateFavoriteProduct}
             />
           )}
           
