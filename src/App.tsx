@@ -76,6 +76,9 @@ function App() {
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'home' })
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
   
+  const [hasRunArtworkMigration, setHasRunArtworkMigration] = useState(false)
+  const [hasRunCustomerMigration, setHasRunCustomerMigration] = useState(false)
+  
   useEffect(() => {
     const primaryColor = localStorage.getItem('theme-primary-color')
     const accentColor = localStorage.getItem('theme-accent-color')
@@ -101,7 +104,7 @@ function App() {
   }, [sanMarCreds])
 
   useEffect(() => {
-    if (customerArtworkFiles && customerArtworkFiles.length > 0) {
+    if (!hasRunArtworkMigration && customerArtworkFiles && customerArtworkFiles.length > 0) {
       const needsMigration = customerArtworkFiles.some(
         (file) => file.currentVersion === undefined
       )
@@ -119,12 +122,15 @@ function App() {
             return file
           })
         })
+        setHasRunArtworkMigration(true)
+      } else {
+        setHasRunArtworkMigration(true)
       }
     }
-  }, [])
+  }, [customerArtworkFiles, hasRunArtworkMigration, setCustomerArtworkFiles])
 
   useEffect(() => {
-    if (customers && customers.length > 0) {
+    if (!hasRunCustomerMigration && customers && customers.length > 0) {
       const needsEmailPreferences = customers.some(
         (customer) => !customer.emailPreferences
       )
@@ -155,9 +161,12 @@ function App() {
             return customer
           })
         })
+        setHasRunCustomerMigration(true)
+      } else {
+        setHasRunCustomerMigration(true)
       }
     }
-  }, [])
+  }, [customers, hasRunCustomerMigration, setCustomers])
   
   const handleLogin = (email: string, password: string) => {
     setIsLoggedIn(true)
