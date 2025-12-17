@@ -14,7 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin } from '@phosphor-icons/react'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin, CaretDown } from '@phosphor-icons/react'
 import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs, EmailNotification, EmailTemplate } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
@@ -56,6 +61,8 @@ export function CustomerDetail({
 }: CustomerDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedCustomer, setEditedCustomer] = useState(customer)
+  const [emailPreferencesOpen, setEmailPreferencesOpen] = useState(false)
+  const [emailHistoryOpen, setEmailHistoryOpen] = useState(false)
   
   const customerQuotes = quotes.filter(q => q.customer.id === customer.id)
   const customerJobs = jobs.filter(j => j.customer.id === customer.id)
@@ -342,17 +349,57 @@ export function CustomerDetail({
             </Card>
           </div>
 
-          <CustomerEmailPreferences
-            preferences={editedCustomer.emailPreferences}
-            onSave={handleEmailPreferencesSave}
-            isEditing={isEditing}
-          />
+          <Collapsible open={emailPreferencesOpen} onOpenChange={setEmailPreferencesOpen}>
+            <Card className="overflow-hidden">
+              <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <EnvelopeSimple size={20} className="text-primary" />
+                  <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
+                    Email Communication Preferences
+                  </h2>
+                </div>
+                <CaretDown 
+                  size={20} 
+                  className={`text-muted-foreground transition-transform ${emailPreferencesOpen ? 'rotate-180' : ''}`}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6 pt-2">
+                  <CustomerEmailPreferences
+                    preferences={editedCustomer.emailPreferences}
+                    onSave={handleEmailPreferencesSave}
+                    isEditing={isEditing}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
-          <EmailNotificationHistory
-            customerId={customer.id}
-            notifications={customerEmails}
-            title="Email History"
-          />
+          <Collapsible open={emailHistoryOpen} onOpenChange={setEmailHistoryOpen}>
+            <Card className="overflow-hidden">
+              <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <EnvelopeSimple size={20} className="text-primary" />
+                  <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
+                    Email History ({customerEmails.length})
+                  </h2>
+                </div>
+                <CaretDown 
+                  size={20} 
+                  className={`text-muted-foreground transition-transform ${emailHistoryOpen ? 'rotate-180' : ''}`}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6 pt-2">
+                  <EmailNotificationHistory
+                    customerId={customer.id}
+                    notifications={customerEmails}
+                    title=""
+                  />
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
           
           <CustomerArtworkLibrary
             customerId={customer.id}
