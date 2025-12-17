@@ -1,0 +1,323 @@
+[
+  {
+    "id": "printavo_quote_001",
+    "visualId": "Q-2025-1234",
+    "nickname": "Holiday T-Shirts 2025",
+    "contact": {
+      "id": "contact_001",
+      "fullName": "Sarah Johnson",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
+      "email": "sarah@example.com",
+      "phone": "(555) 123-4567",
+      "address": {
+        "companyName": "Example Corp",
+        "address1": "123 Main Street",
+        "address2": "Suite 100",
+        "city": "San Francisco",
+        "stateIso": "CA",
+        "zipCode": "94102",
+        "country": "USA"
+      }
+    },
+    "customer": {
+      "id": "customer_001",
+      "companyName": "Example Corp",
+      "orderCount": 35,
+      "taxExempt": false,
+      "salesTax": 8.5,
+      "resaleNumber": null
+    },
+    "customerNote": "Please use soft-hand ink for this order",
+    "productionNote": "Rush order - needs to ship by Friday",
+    "tags": ["rush", "corporate", "holiday"],
+    "status": {
+      "id": "2",
+      "name": "sent"
+    },
+    "subtotal": 750.00,
+    "total": 813.75,
+    "salesTax": 8.5,
+    "salesTaxAmount": 63.75,
+    "discountAmount": 0,
+    "discountAsPercentage": false,
+    "amountPaid": 200.00,
+    "amountOutstanding": 613.75,
+    "dueAt": "2025-12-31T00:00:00Z",
+    "customerDueAt": "2025-12-31T00:00:00Z",
+    "timestamps": {
+      "createdAt": "2025-12-15T10:30:00Z",
+      "updatedAt": "2025-12-16T14:20:00Z"
+    },
+    "lineItems": [
+      {
+        "id": "li_001",
+        "styleDescription": "Gildan 5000 Heavy Cotton T-Shirt",
+        "styleNumber": "G5000",
+        "itemNumber": "ITEM-001",
+        "color": "Black",
+        "category": "T-Shirt",
+        "items": 150,
+        "price": 5.00,
+        "unitCost": 3.50,
+        "taxed": true,
+        "sizes": {
+          "xs": 10,
+          "s": 30,
+          "m": 50,
+          "l": 40,
+          "xl": 15,
+          "2xl": 5
+        },
+        "personalizations": [
+          {
+            "location": "front",
+            "description": "Screen Print - 3 color logo - 12\" x 14\"",
+            "colors": 3
+          },
+          {
+            "location": "back",
+            "description": "Screen Print - 1 color text - 8\" x 3\"",
+            "colors": 1
+          }
+        ]
+      }
+    ],
+    "fees": [
+      {
+        "id": "fee_001",
+        "name": "Front Setup Fee",
+        "description": "3-color screen setup",
+        "amount": 75.00,
+        "taxable": false,
+        "type": "setup"
+      },
+      {
+        "id": "fee_002",
+        "name": "Back Setup Fee",
+        "description": "1-color screen setup",
+        "amount": 25.00,
+        "taxable": false,
+        "type": "setup"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "trans_001",
+        "amount": 200.00,
+        "type": "payment",
+        "method": "credit card",
+        "status": "settled",
+        "reference": "CH_12345ABC",
+        "notes": "Initial deposit",
+        "processedAt": "2025-12-16T09:00:00Z",
+        "timestamps": {
+          "createdAt": "2025-12-16T09:00:00Z"
+        }
+      }
+    ]
+  },
+  {
+    "id": "printavo_invoice_001",
+    "visualId": "INV-2025-5678",
+    "nickname": "School Spirit Wear",
+    "contact": {
+      "id": "contact_002",
+      "fullName": "Michael Chen",
+      "email": "mchen@school.edu",
+      "phone": "(555) 987-6543"
+    },
+    "customer": {
+      "id": "customer_002",
+      "companyName": "Lincoln High School",
+      "orderCount": 12,
+      "taxExempt": true,
+      "salesTax": 0,
+      "resaleNumber": "TAX-EXEMPT-123"
+    },
+    "productionNote": "PMS 287 Blue for school colors. Use Gildan or better quality.",
+    "tags": ["school", "embroidery"],
+    "status": {
+      "id": "5",
+      "name": "in production"
+    },
+    "subtotal": 1200.00,
+    "total": 1200.00,
+    "salesTax": 0,
+    "salesTaxAmount": 0,
+    "discountAmount": 100.00,
+    "discountAsPercentage": false,
+    "amountPaid": 1200.00,
+    "amountOutstanding": 0,
+    "dueAt": "2025-12-20T00:00:00Z",
+    "inProductionAt": "2025-12-17T00:00:00Z",
+    "timestamps": {
+      "createdAt": "2025-12-10T08:00:00Z",
+      "updatedAt": "2025-12-17T10:00:00Z"
+    },
+    "lineItems": [
+      {
+        "id": "li_002",
+        "styleDescription": "Port Authority Polo Shirt",
+        "styleNumber": "K500",
+        "color": "Navy",
+        "category": "Polo",
+        "items": 100,
+        "price": 12.00,
+        "sizes": {
+          "s": 20,
+          "m": 35,
+          "l": 30,
+          "xl": 12,
+          "2xl": 3
+        },
+        "personalizations": [
+          {
+            "location": "left chest",
+            "description": "Embroidery - School logo - 3.5\" x 3.5\"",
+            "colors": 2
+          }
+        ]
+      }
+    ],
+    "fees": [
+      {
+        "id": "fee_003",
+        "name": "Embroidery Digitizing",
+        "amount": 50.00,
+        "taxable": false
+      }
+    ],
+    "transactions": [
+      {
+        "id": "trans_002",
+        "amount": 600.00,
+        "type": "payment",
+        "method": "check",
+        "reference": "CHECK-4567",
+        "processedAt": "2025-12-10T00:00:00Z"
+      },
+      {
+        "id": "trans_003",
+        "amount": 600.00,
+        "type": "payment",
+        "method": "check",
+        "reference": "CHECK-4589",
+        "processedAt": "2025-12-15T00:00:00Z"
+      }
+    ],
+    "approvalRequests": [
+      {
+        "id": "approval_001",
+        "status": "approved",
+        "approver": {
+          "name": "Michael Chen",
+          "email": "mchen@school.edu"
+        }
+      }
+    ],
+    "tasks": [
+      {
+        "id": "task_001",
+        "type": "artwork",
+        "status": "completed",
+        "assignedUser": {
+          "id": "user_001",
+          "name": "Design Team",
+          "email": "design@printshop.com"
+        },
+        "completedAt": "2025-12-12T14:00:00Z"
+      },
+      {
+        "id": "task_002",
+        "type": "embroidery",
+        "status": "in progress",
+        "assignedUser": {
+          "id": "user_002",
+          "name": "Production Team",
+          "email": "production@printshop.com"
+        },
+        "dueAt": "2025-12-19T00:00:00Z"
+      }
+    ],
+    "expenses": [
+      {
+        "id": "expense_001",
+        "amount": 300.00,
+        "description": "Blank polo shirts",
+        "category": "materials",
+        "vendor": "SS Activewear"
+      },
+      {
+        "id": "expense_002",
+        "amount": 75.00,
+        "description": "Embroidery thread - Navy and White",
+        "category": "materials",
+        "vendor": "ThreadPro"
+      }
+    ]
+  },
+  {
+    "id": "printavo_quote_002",
+    "visualId": "Q-2025-5555",
+    "nickname": "Charity Run Shirts",
+    "contact": {
+      "id": "contact_003",
+      "fullName": "Emily Rodriguez",
+      "email": "emily@charityfoundation.org",
+      "phone": "(555) 234-5678"
+    },
+    "customer": {
+      "id": "customer_003",
+      "companyName": "Hope Foundation",
+      "orderCount": 8,
+      "taxExempt": true,
+      "salesTax": 0
+    },
+    "customerNote": "All proceeds go to charity - thank you for the discount!",
+    "productionNote": "Use eco-friendly water-based inks",
+    "tags": ["nonprofit", "charity", "dtg"],
+    "status": {
+      "id": "1",
+      "name": "draft"
+    },
+    "subtotal": 450.00,
+    "total": 382.50,
+    "salesTax": 0,
+    "salesTaxAmount": 0,
+    "discount": 15,
+    "discountAmount": 67.50,
+    "discountAsPercentage": true,
+    "amountPaid": 0,
+    "amountOutstanding": 382.50,
+    "dueAt": "2026-01-15T00:00:00Z",
+    "timestamps": {
+      "createdAt": "2025-12-17T11:00:00Z"
+    },
+    "lineItems": [
+      {
+        "id": "li_003",
+        "styleDescription": "Bella Canvas 3001 Soft T-Shirt",
+        "styleNumber": "BC3001",
+        "color": "Heather Blue",
+        "category": "T-Shirt",
+        "items": 75,
+        "price": 6.00,
+        "sizes": {
+          "s": 15,
+          "m": 30,
+          "l": 20,
+          "xl": 10
+        },
+        "personalizations": [
+          {
+            "location": "front",
+            "description": "DTG Full Color Logo - 10\" x 10\"",
+            "colors": 6
+          }
+        ]
+      }
+    ],
+    "fees": []
+  }
+]
