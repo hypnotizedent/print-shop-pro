@@ -23,6 +23,7 @@ import { PurchaseOrderManager } from '@/components/PurchaseOrderManager'
 import { SupplierPerformance } from '@/components/SupplierPerformance'
 import { WebhookDashboard } from '@/components/WebhookDashboard'
 import { ImprintTemplateManager } from '@/components/ImprintTemplateManager'
+import { PrintavoImporter } from '@/components/PrintavoImporter'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 import { WebhookConfig, WebhookEvent, InventoryAlert, WebhookNotification } from '@/lib/webhook-types'
@@ -741,6 +742,58 @@ export function Settings({
                   <Download size={16} className="mr-2" />
                   Export
                 </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Plugs size={24} className="text-primary" />
+              <div>
+                <h2 className="text-lg font-semibold">Data Import</h2>
+                <p className="text-sm text-muted-foreground">Import data from Printavo or other systems</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <Alert className="border-blue-500/30 bg-blue-500/5">
+                <AlertDescription className="text-sm">
+                  <div className="flex items-start gap-2">
+                    <Sparkle size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold mb-1">Import from Printavo</p>
+                      <p className="text-muted-foreground">
+                        Seamlessly migrate your data from Printavo API v2. Import quotes, invoices, customers, line items, payments, and more. 
+                        All Printavo fields are automatically mapped to Mint Prints format.
+                      </p>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+
+              <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
+                <div>
+                  <p className="font-medium">Printavo API v2 Data</p>
+                  <p className="text-sm text-muted-foreground">
+                    Import quotes, jobs, customers from Printavo GraphQL API
+                  </p>
+                </div>
+                <PrintavoImporter />
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/30 rounded-lg">
+                <p className="font-semibold">Supported Printavo Data:</p>
+                <ul className="list-disc list-inside space-y-0.5 ml-2">
+                  <li>Quotes & Invoices → Converted to Quotes & Jobs</li>
+                  <li>Customers & Contacts → Customer records</li>
+                  <li>Line Items & Personalizations → Quote line items with decorations</li>
+                  <li>Fees & Transactions → Payments and setup fees</li>
+                  <li>Tasks & Expenses → Job production tracking</li>
+                </ul>
+                <p className="mt-2 pt-2 border-t border-border">
+                  Export data from Printavo API v2 in JSON format and import it here. 
+                  See <a href="https://www.printavo.com/docs/api/v2" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Printavo API Documentation</a> for details.
+                </p>
               </div>
             </div>
           </Card>
