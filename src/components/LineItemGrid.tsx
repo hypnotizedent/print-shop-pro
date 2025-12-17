@@ -184,6 +184,39 @@ export function LineItemGrid({
     onChange(newItems)
   }
 
+  const handleMockupUpload = (index: number, file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string
+      const item = items[index]
+      
+      const mockupFile: import('@/lib/types').ArtworkFile = {
+        dataUrl,
+        fileName: file.name,
+        fileSize: file.size,
+        uploadedAt: new Date().toISOString(),
+      }
+
+      if (!item.decorations || item.decorations.length === 0) {
+        const newDecoration: Decoration = {
+          id: generateId('dec'),
+          method: 'other',
+          location: 'front',
+          inkThreadColors: '',
+          setupFee: 0,
+          mockup: mockupFile,
+        }
+        updateItem(index, { decorations: [newDecoration] })
+      } else {
+        const updatedDecorations = item.decorations.map((dec, i) => 
+          i === 0 ? { ...dec, mockup: mockupFile } : dec
+        )
+        updateItem(index, { decorations: updatedDecorations })
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handleApplySKUData = (index: number, productName: string, color: string, sizes: Partial<Sizes>, sku?: string) => {
     const fullSizes: Sizes = {
       XS: 0,
@@ -585,6 +618,7 @@ export function LineItemGrid({
                 color={item.product_color || '#94a3b8'}
                 decorations={item.decorations}
                 size="small"
+                onMockupUpload={(file) => handleMockupUpload(index, file)}
               />
             </div>
           </td>
