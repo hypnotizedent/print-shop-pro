@@ -250,6 +250,13 @@ function App() {
     })
   }
 
+  const handleUpdateJobProductionNotes = (jobId: string, production_notes: string) => {
+    setJobs((current) => {
+      const existing = current || []
+      return existing.map(j => j.id === jobId ? { ...j, production_notes } : j)
+    })
+  }
+
   const handleUpdateJobArtwork = (jobId: string, itemId: string, artwork: LegacyArtworkFile[]) => {
     setJobs((current) => {
       const existing = current || []
@@ -759,6 +766,7 @@ function App() {
               onUpdateJobArtwork={handleUpdateJobArtwork}
               onUpdateJobNickname={handleUpdateJobNickname}
               onUpdateJobExpenses={handleUpdateJobExpenses}
+              onUpdateJobProductionNotes={handleUpdateJobProductionNotes}
               onNavigateToCustomer={(customerId) => {
                 const customer = customers?.find(c => c.id === customerId)
                 if (customer) {

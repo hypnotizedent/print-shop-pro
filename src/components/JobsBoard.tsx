@@ -31,6 +31,7 @@ interface JobsBoardProps {
   onNavigateToCustomer: (customerId: string) => void
   onUpdateJobNickname?: (jobId: string, nickname: string) => void
   onUpdateJobExpenses?: (jobId: string, expenses: Expense[]) => void
+  onUpdateJobProductionNotes?: (jobId: string, production_notes: string) => void
   onDeleteJobs?: (jobIds: string[]) => void
   onBulkStatusChange?: (jobIds: string[], status: JobStatus) => void
   onSaveFilterPreset?: (preset: FilterPreset) => void
@@ -53,6 +54,7 @@ export function JobsBoard({
   onNavigateToCustomer,
   onUpdateJobNickname,
   onUpdateJobExpenses,
+  onUpdateJobProductionNotes,
   onDeleteJobs,
   onBulkStatusChange,
   onSaveFilterPreset,
@@ -438,6 +440,7 @@ export function JobsBoard({
                         onNavigateToCustomer={() => onNavigateToCustomer(job.customer.id)}
                         onUpdateNickname={onUpdateJobNickname ? (nickname) => onUpdateJobNickname(job.id, nickname) : undefined}
                         onUpdateExpenses={onUpdateJobExpenses ? (expenses) => onUpdateJobExpenses(job.id, expenses) : undefined}
+                        onUpdateProductionNotes={onUpdateJobProductionNotes ? (notes) => onUpdateJobProductionNotes(job.id, notes) : undefined}
                         isInline
                       />
                     </div>

@@ -29,18 +29,21 @@ interface JobDetailProps {
   onNavigateToCustomer?: () => void
   onUpdateNickname?: (nickname: string) => void
   onUpdateExpenses?: (expenses: Expense[]) => void
+  onUpdateProductionNotes?: (notes: string) => void
   isInline?: boolean
 }
 
 const statusSteps: JobStatus[] = ['pending', 'art-approval', 'scheduled', 'printing', 'finishing', 'ready']
 
-export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavigateToCustomer, onUpdateNickname, onUpdateExpenses, isInline = false }: JobDetailProps) {
+export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavigateToCustomer, onUpdateNickname, onUpdateExpenses, onUpdateProductionNotes, isInline = false }: JobDetailProps) {
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
   const currentStepIndex = statusSteps.indexOf(job.status)
   const [mockupView, setMockupView] = useState<'front' | 'back'>('front')
   const [isEditingNickname, setIsEditingNickname] = useState(false)
   const [nicknameValue, setNicknameValue] = useState(job.nickname || '')
+  const [isEditingProductionNotes, setIsEditingProductionNotes] = useState(false)
+  const [productionNotesValue, setProductionNotesValue] = useState(job.production_notes || '')
   const [showDepartmentNotification, setShowDepartmentNotification] = useState(false)
   const [showExpenseTracker, setShowExpenseTracker] = useState(false)
   const primaryItem = job.line_items[0]
@@ -427,17 +430,98 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
                 </div>
               </Card>
             )}
-            
-            {job.production_notes && (
-              <Card className="p-4">
-                <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-2">
-                  Production Notes
-                </div>
-                <p className="text-sm leading-relaxed">{job.production_notes}</p>
-              </Card>
-            )}
           </div>
         </div>
+        
+        {onUpdateProductionNotes ? (
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
+                Production Notes
+              </div>
+              {!isEditingProductionNotes && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingProductionNotes(true)}
+                  className="text-xs h-7"
+                >
+                  {productionNotesValue ? 'Edit' : '+ Add Notes'}
+                </Button>
+              )}
+            </div>
+            {isEditingProductionNotes ? (
+              <div className="space-y-2">
+                <textarea
+                  value={productionNotesValue}
+                  onChange={(e) => setProductionNotesValue(e.target.value)}
+                  placeholder="Enter production notes... (customer preferences, special instructions, etc.)"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm min-h-[100px] resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setProductionNotesValue(job.production_notes || '')
+                      setIsEditingProductionNotes(false)
+                    }
+                    if (e.key === 's' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault()
+                      onUpdateProductionNotes(productionNotesValue)
+                      setIsEditingProductionNotes(false)
+                      toast.success('Production notes saved')
+                    }
+                  }}
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Press Cmd+S to save, Esc to cancel
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setProductionNotesValue(job.production_notes || '')
+                        setIsEditingProductionNotes(false)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        onUpdateProductionNotes(productionNotesValue)
+                        setIsEditingProductionNotes(false)
+                        toast.success('Production notes saved')
+                      }}
+                    >
+                      Save Notes
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="text-sm leading-relaxed cursor-pointer hover:bg-secondary/50 rounded p-2 -m-2 transition-colors min-h-[60px] flex items-center"
+                onClick={() => setIsEditingProductionNotes(true)}
+              >
+                {productionNotesValue || (
+                  <span className="text-muted-foreground italic">
+                    Click to add production notes...
+                  </span>
+                )}
+              </div>
+            )}
+          </Card>
+        ) : (
+          job.production_notes && (
+            <Card className="p-4">
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-2">
+                Production Notes
+              </div>
+              <p className="text-sm leading-relaxed">{job.production_notes}</p>
+            </Card>
+          )
+        )}
         
         <div>
           <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
