@@ -685,28 +685,7 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
                 <Button variant="ghost" size="icon" onClick={() => setShowExpenseTracker(false)}>
                   <Check size={20} />
                 </Button>
-              <ExpenseTracker
-                jobId={job.id}
-                jobTotal={job.line_items.reduce((sum, item) => sum + item.line_total, 0)}
-                expenses={job.expenses || []}
-                onAddExpense={(expense: Expense) => {
-                  if (onUpdateExpenses) {
-                    onUpdateExpenses([...(job.expenses || []), expense])
-                  }
-                }}
-                onDeleteExpense={(expenseId: string) => {
-                  if (onUpdateExpenses) {
-                    onUpdateExpenses((job.expenses || []).filter(e => e.id !== expenseId))
-                  }
-                }}
-              />
-            </div>
-          </Card>
-        </div>
-      )}
-    </div>
-  )
-}              </div>
+              </div>
               <ExpenseTracker
                 jobId={job.id}
                 jobTotal={job.line_items.reduce((sum, item) => sum + item.line_total, 0)}
