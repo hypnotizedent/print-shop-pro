@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChartBar, TrendUp, Users, CurrencyDollar, Package, Warning, Envelope } from '@phosphor-icons/react'
+import { ChartBar, TrendUp, Users, CurrencyDollar, Package, Warning, Envelope, Plus } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, PaymentReminder, EmailNotification } from '@/lib/types'
 import { UnpaidBalancesReport } from '@/components/UnpaidBalancesReport'
 import { EmailStats } from '@/components/EmailStats'
@@ -14,9 +15,11 @@ interface ReportsProps {
   paymentReminders?: PaymentReminder[]
   emailNotifications?: EmailNotification[]
   onSelectQuote?: (quote: Quote) => void
+  onNewQuote?: () => void
+  onNewJob?: () => void
 }
 
-export function Reports({ quotes, jobs, customers, paymentReminders = [], emailNotifications = [], onSelectQuote }: ReportsProps) {
+export function Reports({ quotes, jobs, customers, paymentReminders = [], emailNotifications = [], onSelectQuote, onNewQuote, onNewJob }: ReportsProps) {
   const stats = useMemo(() => {
     const totalRevenue = quotes
       .filter(q => q.status === 'approved')
@@ -81,9 +84,30 @@ export function Reports({ quotes, jobs, customers, paymentReminders = [], emailN
   return (
     <div className="h-full overflow-auto p-8">
       <div className="max-w-7xl">
-        <div className="flex items-center gap-3 mb-8">
-          <ChartBar size={32} className="text-primary" />
-          <h1 className="text-2xl font-bold">Reports & Analytics</h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <ChartBar size={32} className="text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold">Reports & Analytics</h1>
+              <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
+                Business insights and performance metrics
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            {onNewQuote && (
+              <Button onClick={onNewQuote} variant="outline" className="flex-1 sm:flex-none gap-2">
+                <Plus size={18} weight="bold" />
+                <span className="hidden sm:inline">New Quote</span>
+              </Button>
+            )}
+            {onNewJob && (
+              <Button onClick={onNewJob} className="flex-1 sm:flex-none gap-2">
+                <Plus size={18} weight="bold" />
+                New Job
+              </Button>
+            )}
+          </div>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">

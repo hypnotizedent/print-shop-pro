@@ -32,6 +32,7 @@ interface CustomersListProps {
   onAddRecentSearch?: (search: RecentSearch) => void
   onRemoveRecentSearch?: (searchId: string) => void
   onClearRecentSearches?: () => void
+  onNewQuote?: () => void
 }
 
 type SortOption = 'alphabetical' | 'revenue-high' | 'revenue-low' | 'recent-orders' | 'oldest-orders'
@@ -51,6 +52,7 @@ export function CustomersList({
   onAddRecentSearch,
   onRemoveRecentSearch,
   onClearRecentSearches,
+  onNewQuote,
 }: CustomersListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('alphabetical')
@@ -183,15 +185,26 @@ export function CustomersList({
   return (
     <div className="h-full flex flex-col">
       <div className="border-b border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Customers</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportCSV}>
-              <Download size={18} className="mr-2" />
-              Export CSV
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 className="text-2xl font-bold">Customers</h1>
+            <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
+              {filteredAndSortedCustomers.length} customer{filteredAndSortedCustomers.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            {onNewQuote && (
+              <Button onClick={onNewQuote} variant="outline" className="flex-1 sm:flex-none gap-2">
+                <Plus size={18} weight="bold" />
+                <span className="hidden sm:inline">New Quote</span>
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleExportCSV} className="flex-1 sm:flex-none gap-2">
+              <Download size={18} />
+              <span className="hidden sm:inline">Export CSV</span>
             </Button>
-            <Button onClick={onNewCustomer}>
-              <Plus size={18} className="mr-2" />
+            <Button onClick={onNewCustomer} className="flex-1 sm:flex-none gap-2">
+              <Plus size={18} weight="bold" />
               New Customer
             </Button>
           </div>

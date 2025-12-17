@@ -232,7 +232,12 @@ export function QuotesList({
     <div className="h-full flex flex-col overflow-hidden">
       <div className="border-b border-border p-4 md:p-6 flex-shrink-0">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <h1 className="text-xl md:text-2xl font-bold">Quotes</h1>
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">Quotes</h1>
+            <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
+              {filteredAndSortedQuotes.length} quote{filteredAndSortedQuotes.length !== 1 ? 's' : ''} • {needsAction.length} need{needsAction.length !== 1 ? '' : 's'} action
+            </p>
+          </div>
           <div className="flex gap-2 w-full sm:w-auto">
             {onSendEmails && (
               <BulkQuoteReminders
@@ -241,8 +246,8 @@ export function QuotesList({
                 onSendEmails={onSendEmails}
               />
             )}
-            <Button onClick={onNewQuote} className="flex-1 sm:flex-none">
-              <Plus size={18} className="mr-2" />
+            <Button onClick={onNewQuote} className="flex-1 sm:flex-none gap-2">
+              <Plus size={18} weight="bold" />
               New Quote
             </Button>
           </div>

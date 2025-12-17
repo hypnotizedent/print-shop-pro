@@ -17,7 +17,7 @@ import { FilterPresetManager } from '@/components/FilterPresetManager'
 import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
 import type { Job, JobStatus, ArtworkFile, Customer, Expense, FilterPreset, RecentSearch } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank, X } from '@phosphor-icons/react'
+import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank, X, Plus } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
 
@@ -39,6 +39,8 @@ interface JobsBoardProps {
   onAddRecentSearch?: (search: RecentSearch) => void
   onRemoveRecentSearch?: (searchId: string) => void
   onClearRecentSearches?: () => void
+  onNewJob?: () => void
+  onNewQuote?: () => void
 }
 
 export function JobsBoard({ 
@@ -59,6 +61,8 @@ export function JobsBoard({
   onAddRecentSearch,
   onRemoveRecentSearch,
   onClearRecentSearches,
+  onNewJob,
+  onNewQuote,
 }: JobsBoardProps) {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -171,16 +175,35 @@ export function JobsBoard({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="border-b border-border p-4 md:p-6 flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl md:text-2xl font-bold">Jobs</h1>
-          <Button
-            variant={showCalendar ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setShowCalendar(!showCalendar)}
-          >
-            <CalendarBlank size={16} className="mr-2" />
-            {showCalendar ? 'Hide' : 'Show'} Calendar
-          </Button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">Jobs</h1>
+            <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
+              {filteredAndSortedJobs.length} job{filteredAndSortedJobs.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {onNewQuote && (
+              <Button onClick={onNewQuote} variant="outline" className="gap-2">
+                <Plus size={18} weight="bold" />
+                <span className="hidden sm:inline">New Quote</span>
+              </Button>
+            )}
+            {onNewJob && (
+              <Button onClick={onNewJob} className="gap-2">
+                <Plus size={18} weight="bold" />
+                New Job
+              </Button>
+            )}
+            <Button
+              variant={showCalendar ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowCalendar(!showCalendar)}
+            >
+              <CalendarBlank size={16} className="mr-2" />
+              {showCalendar ? 'Hide' : 'Show'} Calendar
+            </Button>
+          </div>
         </div>
         
         <div className="flex items-center gap-2">

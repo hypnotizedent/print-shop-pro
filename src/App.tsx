@@ -638,6 +638,8 @@ function App() {
               onAddRecentSearch={handleAddRecentSearch}
               onRemoveRecentSearch={handleRemoveRecentSearch}
               onClearRecentSearches={handleClearRecentSearches}
+              onNewJob={handleNewJob}
+              onNewQuote={handleNewQuote}
             />
           )}
           
@@ -661,6 +663,7 @@ function App() {
               onAddRecentSearch={handleAddRecentSearch}
               onRemoveRecentSearch={handleRemoveRecentSearch}
               onClearRecentSearches={handleClearRecentSearches}
+              onNewQuote={handleNewQuote}
             />
           )}
           
@@ -672,6 +675,8 @@ function App() {
               onSelectQuote={(quote) => {
                 setCurrentPage({ type: 'quote-builder', quote })
               }}
+              onNewQuote={handleNewQuote}
+              onNewJob={handleNewJob}
             />
           )}
           
