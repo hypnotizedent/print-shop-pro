@@ -5,6 +5,7 @@ export interface SSActivewearProduct {
   categoryName: string
   colorCount: number
   colors: SSActivewearColor[]
+  styleImage?: string
 }
 
 export interface SSActivewearColor {
@@ -12,6 +13,9 @@ export interface SSActivewearColor {
   colorName: string
   colorCode: string
   sizes: SSActivewearSize[]
+  colorFrontImage?: string
+  colorBackImage?: string
+  colorSideImage?: string
 }
 
 export interface SSActivewearSize {

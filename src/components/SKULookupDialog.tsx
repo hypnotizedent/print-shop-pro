@@ -178,11 +178,27 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                       onClick={() => handleSelectProduct(result)}
                       className="w-full text-left p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      <div className="font-semibold">{result.brandName} {result.styleName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        SKU: {result.styleID} • {result.colorCount} color{result.colorCount !== 1 ? 's' : ''}
+                      <div className="flex gap-3">
+                        {result.styleImage && (
+                          <div className="w-16 h-16 flex-shrink-0 bg-muted rounded overflow-hidden">
+                            <img 
+                              src={result.styleImage} 
+                              alt={`${result.brandName} ${result.styleName}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold">{result.brandName} {result.styleName}</div>
+                          <div className="text-sm text-muted-foreground">
+                            SKU: {result.styleID} • {result.colorCount} color{result.colorCount !== 1 ? 's' : ''}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">{result.categoryName}</div>
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">{result.categoryName}</div>
                     </button>
                   ))}
                 </div>
@@ -192,10 +208,24 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
 
           {product && (
             <div className="border border-border rounded-lg p-4 space-y-4">
-              <div>
-                <div className="text-sm font-semibold text-muted-foreground mb-1">PRODUCT</div>
-                <div className="text-lg font-bold">{product.brandName} {product.styleName}</div>
-                <div className="text-sm text-muted-foreground">{product.categoryName}</div>
+              <div className="flex gap-4">
+                {(selectedColor?.colorFrontImage || product.styleImage) && (
+                  <div className="w-24 h-24 flex-shrink-0 bg-muted rounded overflow-hidden">
+                    <img 
+                      src={selectedColor?.colorFrontImage || product.styleImage} 
+                      alt={`${product.brandName} ${product.styleName}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-muted-foreground mb-1">PRODUCT</div>
+                  <div className="text-lg font-bold">{product.brandName} {product.styleName}</div>
+                  <div className="text-sm text-muted-foreground">{product.categoryName}</div>
+                </div>
               </div>
 
               {product.colors && product.colors.length > 0 && (
