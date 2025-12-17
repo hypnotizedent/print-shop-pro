@@ -233,12 +233,28 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                   <Label htmlFor="color-select">Color</Label>
                   <Select value={selectedColor?.colorID.toString()} onValueChange={handleColorChange}>
                     <SelectTrigger id="color-select" className="mt-2">
-                      <SelectValue placeholder="Select a color" />
+                      <SelectValue placeholder="Select a color">
+                        {selectedColor && (
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                              style={{ backgroundColor: `#${selectedColor.colorCode}` }}
+                            />
+                            <span>{selectedColor.colorName}</span>
+                          </div>
+                        )}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {product.colors.map(color => (
                         <SelectItem key={color.colorID} value={color.colorID.toString()}>
-                          {color.colorName}
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                              style={{ backgroundColor: `#${color.colorCode}` }}
+                            />
+                            <span>{color.colorName}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
