@@ -12,6 +12,8 @@ import { CustomerDetail } from '@/components/CustomerDetail'
 import { Settings } from '@/components/Settings'
 import { Reports } from '@/components/Reports'
 import { GlobalSearch } from '@/components/GlobalSearch'
+import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp'
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 import { 
   House,
   FileText, 
@@ -21,6 +23,7 @@ import {
   Sparkle,
   SignOut,
   Gear,
+  Keyboard,
 } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch } from '@/lib/types'
 import { 
@@ -54,6 +57,7 @@ function App() {
   const [filterPresets, setFilterPresets] = useKV<FilterPreset[]>('filter-presets', [])
   const [recentSearches, setRecentSearches] = useKV<RecentSearch[]>('recent-searches', [])
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'home' })
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
   
   useEffect(() => {
     const primaryColor = localStorage.getItem('theme-primary-color')
@@ -497,6 +501,124 @@ function App() {
   const handleClearRecentSearches = () => {
     setRecentSearches([])
   }
+
+  useKeyboardShortcuts([
+    {
+      key: 'n',
+      metaKey: true,
+      callback: () => {
+        if (currentPage.type === 'list') {
+          if (currentPage.view === 'quotes') {
+            handleNewQuote()
+            toast.success('New quote created', { description: 'Keyboard shortcut: ⌘+N' })
+          } else if (currentPage.view === 'jobs') {
+            handleNewJob()
+            toast.success('New job created', { description: 'Keyboard shortcut: ⌘+N' })
+          } else if (currentPage.view === 'customers') {
+            const newCustomer: Customer = {
+              id: generateId('c'),
+              name: '',
+              email: '',
+            }
+            setCurrentPage({ type: 'customer-detail', customer: newCustomer })
+            toast.success('New customer', { description: 'Keyboard shortcut: ⌘+N' })
+          } else if (currentPage.view === 'home') {
+            handleNewQuote()
+            toast.success('New quote created', { description: 'Keyboard shortcut: ⌘+N' })
+          }
+        }
+      },
+    },
+    {
+      key: 'k',
+      metaKey: true,
+      callback: () => {
+        const searchInput = document.querySelector('[data-global-search]') as HTMLInputElement
+        if (searchInput) {
+          searchInput.focus()
+          toast('Search focused', { description: 'Keyboard shortcut: ⌘+K' })
+        }
+      },
+    },
+    {
+      key: '1',
+      metaKey: true,
+      callback: () => {
+        setCurrentPage({ type: 'list', view: 'home' })
+        toast('Home', { description: 'Keyboard shortcut: ⌘+1' })
+      },
+    },
+    {
+      key: '2',
+      metaKey: true,
+      callback: () => {
+        setCurrentPage({ type: 'list', view: 'quotes' })
+        toast('Quotes', { description: 'Keyboard shortcut: ⌘+2' })
+      },
+    },
+    {
+      key: '3',
+      metaKey: true,
+      callback: () => {
+        setCurrentPage({ type: 'list', view: 'jobs' })
+        toast('Jobs', { description: 'Keyboard shortcut: ⌘+3' })
+      },
+    },
+    {
+      key: '4',
+      metaKey: true,
+      callback: () => {
+        setCurrentPage({ type: 'list', view: 'customers' })
+        toast('Customers', { description: 'Keyboard shortcut: ⌘+4' })
+      },
+    },
+    {
+      key: '5',
+      metaKey: true,
+      callback: () => {
+        setCurrentPage({ type: 'list', view: 'reports' })
+        toast('Reports', { description: 'Keyboard shortcut: ⌘+5' })
+      },
+    },
+    {
+      key: '6',
+      metaKey: true,
+      callback: () => {
+        setCurrentPage({ type: 'list', view: 'settings' })
+        toast('Settings', { description: 'Keyboard shortcut: ⌘+6' })
+      },
+    },
+    {
+      key: '?',
+      shiftKey: true,
+      callback: () => {
+        setShowKeyboardHelp(true)
+      },
+    },
+    {
+      key: 'Escape',
+      callback: () => {
+        if (showKeyboardHelp) {
+          setShowKeyboardHelp(false)
+        } else if (currentPage.type === 'quote-builder') {
+          if (currentPage.fromCustomerId) {
+            const customer = customers?.find(c => c.id === currentPage.fromCustomerId)
+            if (customer) {
+              setCurrentPage({ type: 'customer-detail', customer })
+            } else {
+              setCurrentPage({ type: 'list', view: 'quotes' })
+            }
+          } else {
+            setCurrentPage({ type: 'list', view: 'quotes' })
+          }
+          toast('Quote builder closed', { description: 'Keyboard shortcut: Esc' })
+        } else if (currentPage.type === 'customer-detail') {
+          setCurrentPage({ type: 'list', view: 'customers' })
+          toast('Customer detail closed', { description: 'Keyboard shortcut: Esc' })
+        }
+      },
+    },
+  ])
   
   const navItems = [
     { id: 'home' as const, label: 'Home', icon: House },
@@ -516,6 +638,7 @@ function App() {
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
       <Toaster position="top-right" />
+      <KeyboardShortcutsHelp open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp} />
       
       <header className="border-b border-border px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-4 flex-shrink-0">
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -533,10 +656,22 @@ function App() {
             onSelectCustomer={handleSearchSelectCustomer}
           />
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="flex-shrink-0">
-          <SignOut size={18} className="md:mr-2" />
-          <span className="hidden md:inline">Logout</span>
-        </Button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowKeyboardHelp(true)} 
+            className="flex-shrink-0"
+            title="Keyboard shortcuts (?)"
+          >
+            <Keyboard size={18} className="md:mr-2" />
+            <span className="hidden md:inline">Shortcuts</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="flex-shrink-0">
+            <SignOut size={18} className="md:mr-2" />
+            <span className="hidden md:inline">Logout</span>
+          </Button>
+        </div>
       </header>
       
       <div className="flex-1 flex min-h-0 overflow-hidden">

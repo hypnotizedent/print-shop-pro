@@ -96,6 +96,7 @@ export function GlobalSearch({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           className="pl-10"
+          data-global-search
         />
       </div>
 
