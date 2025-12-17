@@ -27,7 +27,7 @@ import {
   Keyboard,
   Package,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate, CustomerPricingRule, QuoteTemplate } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate, CustomerPricingRule, QuoteTemplate, TaxCertificate } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -65,6 +65,7 @@ function App() {
   const [productTemplates, setProductTemplates] = useKV<ProductTemplate[]>('product-templates', [])
   const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
   const [quoteTemplates, setQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
+  const [taxCertificates, setTaxCertificates] = useKV<TaxCertificate[]>('tax-certificates', [])
   const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
     accountNumber: '',
     apiKey: ''
@@ -503,6 +504,24 @@ function App() {
     setCustomerArtworkFiles((current) => {
       const existing = current || []
       return existing.map(a => a.id === artwork.id ? artwork : a)
+    })
+  }
+
+  const handleSaveTaxCertificate = (certificate: TaxCertificate) => {
+    setTaxCertificates((current) => [...(current || []), certificate])
+  }
+
+  const handleDeleteTaxCertificate = (certificateId: string) => {
+    setTaxCertificates((current) => {
+      const existing = current || []
+      return existing.filter(c => c.id !== certificateId)
+    })
+  }
+
+  const handleUpdateTaxCertificate = (certificate: TaxCertificate) => {
+    setTaxCertificates((current) => {
+      const existing = current || []
+      return existing.map(c => c.id === certificate.id ? certificate : c)
     })
   }
 
@@ -1033,6 +1052,7 @@ function App() {
               quotes={quotes || []}
               jobs={jobs || []}
               customerArtworkFiles={customerArtworkFiles || []}
+              taxCertificates={taxCertificates || []}
               emailNotifications={emailNotifications || []}
               emailTemplates={emailTemplates || []}
               onBack={() => setCurrentPage({ type: 'list', view: 'customers' })}
@@ -1042,6 +1062,9 @@ function App() {
               onSaveArtworkFile={handleSaveArtworkFile}
               onDeleteArtworkFile={handleDeleteArtworkFile}
               onUpdateArtworkFile={handleUpdateArtworkFile}
+              onSaveTaxCertificate={handleSaveTaxCertificate}
+              onDeleteTaxCertificate={handleDeleteTaxCertificate}
+              onUpdateTaxCertificate={handleUpdateTaxCertificate}
               onSendEmail={addEmailNotification}
             />
           )}

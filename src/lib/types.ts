@@ -73,6 +73,20 @@ export interface CustomerEmailPreferences {
   productionUpdates: boolean
 }
 
+export interface TaxCertificate {
+  id: string
+  customerId: string
+  certificateNumber: string
+  state: string
+  expirationDate: string
+  issuedDate: string
+  fileUrl?: string
+  notes?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Customer {
   id: string
   name: string
@@ -88,6 +102,8 @@ export interface Customer {
     country?: string
   }
   emailPreferences?: CustomerEmailPreferences
+  taxExempt?: boolean
+  taxCertificateId?: string
 }
 
 export interface Sizes {
@@ -153,6 +169,8 @@ export interface Quote {
   subtotal: number
   discount: number
   discount_type: DiscountType
+  tax_rate?: number
+  tax_amount?: number
   total: number
   notes_customer: string
   notes_internal: string
