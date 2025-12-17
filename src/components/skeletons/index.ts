@@ -1,0 +1,6 @@
+export * from './CardSkeleton'
+export * from './TableSkeleton'
+export * from './DetailSkeleton'
+export * from './DashboardSkeleton'
+export * from './ListSkeleton'
+export * from './ProductCatalogSkeleton'

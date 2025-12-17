@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { DashboardSkeleton } from '@/components/skeletons'
 import { 
   TrendUp, 
   TrendDown,
@@ -51,6 +52,15 @@ export function Home({
   onNewQuote,
   onNewJob
 }: HomeProps) {
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
+
   const stats = useMemo(() => {
     const oneMonthAgo = new Date()
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
@@ -143,6 +153,10 @@ export function Home({
       style: 'currency',
       currency: 'USD',
     }).format(amount)
+  }
+
+  if (isLoading) {
+    return <DashboardSkeleton />
   }
 
   return (

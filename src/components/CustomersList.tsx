@@ -13,6 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { FilterPresetManager } from '@/components/FilterPresetManager'
 import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
+import { CustomersListSkeleton } from '@/components/skeletons'
 import { Plus, MagnifyingGlass, EnvelopeSimple, Phone, Buildings, CurrencyDollar, Clock, Download, FunnelSimple, X } from '@phosphor-icons/react'
 import type { Customer, Quote, Job, CustomerTier, FilterPreset, RecentSearch } from '@/lib/types'
 import { exportCustomersToCSV } from '@/lib/csv-export'
@@ -58,6 +59,14 @@ export function CustomersList({
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('alphabetical')
   const [groupBy, setGroupBy] = useState<GroupByOption>('none')
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
   const [tierFilter, setTierFilter] = useState<TierFilterOption>('all')
   
   const { recordSearch } = useRecentSearches('customers', recentSearches, onAddRecentSearch || (() => {}))
@@ -188,6 +197,10 @@ export function CustomersList({
       Object.entries(groups).filter(([_, customers]) => customers.length > 0)
     )
   }, [filteredAndSortedCustomers, groupBy])
+  
+  if (isInitialLoading) {
+    return <CustomersListSkeleton />
+  }
   
   return (
     <div className="h-full flex flex-col">

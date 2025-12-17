@@ -15,6 +15,7 @@ import { JobDetail } from '@/components/JobDetail'
 import { ProductionCalendar } from '@/components/ProductionCalendar'
 import { FilterPresetManager } from '@/components/FilterPresetManager'
 import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
+import { JobsListSkeleton } from '@/components/skeletons'
 import type { Job, JobStatus, ArtworkFile, Customer, Expense, FilterPreset, RecentSearch } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank, X, Plus } from '@phosphor-icons/react'
@@ -72,6 +73,14 @@ export function JobsBoard({
   const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc')
   const [selectedJobIds, setSelectedJobIds] = useState<Set<string>>(new Set())
   const [showCalendar, setShowCalendar] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
   
   const handleJobClick = (job: Job) => {
     if (expandedJobId === job.id) {
@@ -173,6 +182,9 @@ export function JobsBoard({
     }
   }, [searchTerm])
   
+  if (isInitialLoading) {
+    return <JobsListSkeleton />
+  }
   
   return (
     <div className="h-full flex flex-col overflow-hidden">

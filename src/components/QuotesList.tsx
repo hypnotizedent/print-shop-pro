@@ -14,6 +14,7 @@ import { QuoteCard } from '@/components/QuoteCard'
 import { BulkQuoteReminders } from '@/components/BulkQuoteReminders'
 import { FilterPresetManager } from '@/components/FilterPresetManager'
 import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
+import { QuotesListSkeleton } from '@/components/skeletons'
 import { Plus, MagnifyingGlass, FunnelSimple, CheckSquare, FileText, Trash, EnvelopeSimple, FilePlus, X } from '@phosphor-icons/react'
 import type { Quote, Customer, QuoteStatus, EmailTemplate, EmailNotification, FilterPreset, RecentSearch } from '@/lib/types'
 import { useState, useEffect } from 'react'
@@ -69,6 +70,14 @@ export function QuotesList({
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
   const [dateSort, setDateSort] = useState<'asc' | 'desc'>('desc')
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set())
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
   
   const filteredAndSortedQuotes = quotes
     .filter(q => {
@@ -227,6 +236,9 @@ export function QuotesList({
     return sort === 'desc' ? 'Newest First' : 'Oldest First'
   }
   
+  if (isInitialLoading) {
+    return <QuotesListSkeleton />
+  }
   
   return (
     <div className="h-full flex flex-col overflow-hidden">

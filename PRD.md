@@ -54,6 +54,13 @@ This is a multi-view production management system with complex state management,
 - **Progression**: Approved quote selected → Click invoice dropdown → Choose "Send to Customer" or "Download PDF" → Email draft opens with invoice details OR PDF preview opens → For bulk: select multiple quotes → Click "Send Invoices" or "Export as ZIP" → Multiple email drafts open OR ZIP file downloads
 - **Success criteria**: Invoice includes all quote details (line items, pricing, customer info, nickname); formatting is professional and print-ready; email draft pre-fills customer email and invoice details; bulk send opens individual email drafts; bulk export creates ZIP with all invoices named by quote number and nickname; ZIP downloads correctly
 
+### Loading States & Skeletons
+- **Functionality**: Display skeleton loading screens during data fetching and page transitions for smooth UX
+- **Purpose**: Provide visual feedback during async operations and prevent jarring layout shifts
+- **Trigger**: Initial page load, navigation between views, API calls, data fetching operations
+- **Progression**: Navigate to page → Show skeleton matching expected layout → Data loads → Fade to real content
+- **Success criteria**: Skeletons match final layout structure; smooth fade transition (300ms); skeletons appear for operations >200ms; no layout shift when content loads; dark theme optimized with subtle pulse animation; specific skeletons for each view (quotes list, jobs board, customers, home dashboard, product catalog)
+
 ### Artwork Upload with File Size Recognition
 - **Functionality**: Upload artwork files for each print location with automatic file size detection and display; visual mockup preview with imprint size estimation based on file size
 - **Purpose**: Track artwork files for production with visibility into file sizes for quality and storage management; provide visual representation of print areas and estimated dimensions
