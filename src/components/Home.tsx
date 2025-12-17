@@ -283,13 +283,7 @@ export function Home({
                   return (
                     <div 
                       key={job.id}
-                      className={`flex items-start justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
-                        isOverdue 
-                          ? 'border-destructive bg-destructive/5 hover:bg-destructive/10' 
-                          : isUrgent 
-                            ? 'border-accent bg-accent/5 hover:bg-accent/10'
-                            : 'border-border hover:bg-secondary/50'
-                      }`}
+                      className="flex items-start justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
                       onClick={() => onSelectJob(job)}
                     >
                       <div className="flex-1 min-w-0">
@@ -303,8 +297,8 @@ export function Home({
                         <div className="flex items-center gap-3 mt-2">
                           {dueDate && (
                             <div className="flex items-center gap-1">
-                              <Calendar size={12} className={isOverdue ? 'text-destructive' : isUrgent ? 'text-accent' : 'text-muted-foreground'} />
-                              <p className={`text-xs ${isOverdue ? 'text-destructive font-medium' : isUrgent ? 'text-accent font-medium' : 'text-muted-foreground'}`}>
+                              <Calendar size={12} className="text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground">
                                 {isOverdue ? 'Overdue' : 'Due'} {format(dueDate, 'MMM d')} 
                                 {daysUntilDue !== null && ` (${Math.abs(daysUntilDue)}d)`}
                               </p>
@@ -357,7 +351,7 @@ export function Home({
                 {quotesNeedingFollowUp.map(quote => (
                   <div 
                     key={quote.id}
-                    className="flex items-start justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer"
+                    className="flex items-start justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
                     onClick={() => onSelectQuote(quote)}
                   >
                     <div className="flex-1 min-w-0">

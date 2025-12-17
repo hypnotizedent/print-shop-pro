@@ -35,9 +35,9 @@ export function JobCard({ job, onClick, onStatusChange, onStatusFilter, isExpand
   
   return (
     <Card 
-      className={`p-4 cursor-pointer hover:border-border/80 transition-colors bg-card border-border/50 ${
-        isExpanded ? 'border-border' : ''
-      } ${isSelected ? 'bg-muted/30 border-border' : ''}`}
+      className={`p-4 cursor-pointer hover:bg-accent/50 transition-colors ${
+        isSelected ? 'bg-muted/30' : ''
+      }`}
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
