@@ -20,6 +20,7 @@ import { MagnifyingGlass, Sparkle, Warning } from '@phosphor-icons/react'
 import { ssActivewearAPI, type SSActivewearProduct, type SSActivewearColor } from '@/lib/ssactivewear-api'
 import { toast } from 'sonner'
 import type { Sizes } from '@/lib/types'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface SKULookupDialogProps {
   open: boolean
@@ -28,30 +29,36 @@ interface SKULookupDialogProps {
 }
 
 export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialogProps) {
-  const [sku, setSku] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<SSActivewearProduct[]>([])
   const [product, setProduct] = useState<SSActivewearProduct | null>(null)
   const [selectedColor, setSelectedColor] = useState<SSActivewearColor | null>(null)
 
   const handleSearch = async () => {
-    if (!sku.trim()) {
-      toast.error('Please enter a SKU')
+    if (!searchQuery.trim()) {
+      toast.error('Please enter a search term')
       return
     }
 
     setLoading(true)
+    setSearchResults([])
+    setProduct(null)
+    setSelectedColor(null)
+    
     try {
-      const result = await ssActivewearAPI.getProductByStyle(sku.trim())
-      if (result) {
-        setProduct(result)
-        if (result.colors && result.colors.length > 0) {
-          setSelectedColor(result.colors[0])
+      const results = await ssActivewearAPI.searchProducts(searchQuery.trim())
+      if (results && results.length > 0) {
+        setSearchResults(results)
+        
+        if (results.length === 1) {
+          handleSelectProduct(results[0])
+          toast.success('Product found!')
+        } else {
+          toast.success(`Found ${results.length} products`)
         }
-        toast.success('Product found!')
       } else {
-        toast.error('Product not found')
-        setProduct(null)
-        setSelectedColor(null)
+        toast.error('No products found')
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -61,13 +68,20 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
           toast.error(`Search failed: ${error.message}`)
         }
       } else {
-        toast.error('Failed to lookup SKU')
+        toast.error('Failed to search products')
       }
-      setProduct(null)
-      setSelectedColor(null)
+      setSearchResults([])
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSelectProduct = (selectedProduct: SSActivewearProduct) => {
+    setProduct(selectedProduct)
+    if (selectedProduct.colors && selectedProduct.colors.length > 0) {
+      setSelectedColor(selectedProduct.colors[0])
+    }
+    setSearchResults([])
   }
 
   const handleApply = () => {
@@ -89,7 +103,8 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
 
     onApply(productName, colorName, sizes)
     
-    setSku('')
+    setSearchQuery('')
+    setSearchResults([])
     setProduct(null)
     setSelectedColor(null)
     onOpenChange(false)
@@ -105,7 +120,8 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
   }
 
   const handleClose = () => {
-    setSku('')
+    setSearchQuery('')
+    setSearchResults([])
     setProduct(null)
     setSelectedColor(null)
     onOpenChange(false)
@@ -113,26 +129,26 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkle size={20} className="text-primary" weight="fill" />
-            SS Activewear SKU Lookup
+            SS Activewear Product Search
           </DialogTitle>
           <DialogDescription>
-            Search for products by style number to autofill product details
+            Search for products by name, SKU, or style number
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label htmlFor="sku-search">Style Number / SKU</Label>
+              <Label htmlFor="product-search">Product Name or SKU</Label>
               <Input
-                id="sku-search"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="e.g., G500, 18000, SS4500"
+                id="product-search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="e.g., Gildan Softstyle, G500, 18000"
                 className="mt-2"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -148,6 +164,31 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
               </Button>
             </div>
           </div>
+
+          {searchResults.length > 0 && (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="text-sm font-semibold text-muted-foreground mb-2">
+                SEARCH RESULTS ({searchResults.length})
+              </div>
+              <ScrollArea className="flex-1 border border-border rounded-lg">
+                <div className="p-2 space-y-2">
+                  {searchResults.map((result) => (
+                    <button
+                      key={result.styleID}
+                      onClick={() => handleSelectProduct(result)}
+                      className="w-full text-left p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="font-semibold">{result.brandName} {result.styleName}</div>
+                      <div className="text-sm text-muted-foreground">
+                        SKU: {result.styleID} • {result.colorCount} color{result.colorCount !== 1 ? 's' : ''}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">{result.categoryName}</div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
 
           {product && (
             <div className="border border-border rounded-lg p-4 space-y-4">
