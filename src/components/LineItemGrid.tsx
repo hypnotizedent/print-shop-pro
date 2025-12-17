@@ -28,6 +28,7 @@ interface LineItemGridProps {
   customerTemplates?: CustomerDecorationTemplate[]
   customerArtworkFiles?: CustomerArtworkFile[]
   onSaveTemplate?: (template: CustomerDecorationTemplate) => void
+  onAddImprint?: (itemId: string) => void
 }
 
 export function LineItemGrid({ 
@@ -39,6 +40,7 @@ export function LineItemGrid({
   customerTemplates = [],
   customerArtworkFiles = [],
   onSaveTemplate,
+  onAddImprint,
 }: LineItemGridProps) {
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
   const [copyDialogOpen, setCopyDialogOpen] = useState(false)
@@ -61,6 +63,22 @@ export function LineItemGrid({
   
   const removeItem = (index: number) => {
     onChange(items.filter((_, i) => i !== index))
+  }
+
+  const duplicateItem = (index: number) => {
+    const itemToDuplicate = items[index]
+    const duplicatedItem: LineItem = {
+      ...itemToDuplicate,
+      id: generateId('li'),
+      decorations: itemToDuplicate.decorations?.map(dec => ({
+        ...dec,
+        id: generateId('dec'),
+      }))
+    }
+    const newItems = [...items]
+    newItems.splice(index + 1, 0, duplicatedItem)
+    onChange(newItems)
+    toast.success('Line item duplicated')
   }
 
   const toggleLocationsSection = (itemId: string) => {
@@ -279,14 +297,31 @@ export function LineItemGrid({
                     </div>
                   </td>
                   <td className="px-2 py-2.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeItem(index)}
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash size={14} />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground"
+                        >
+                          <Copy size={14} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => duplicateItem(index)}>
+                          <Copy size={14} className="mr-2" />
+                          Duplicate Line Item
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => removeItem(index)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash size={14} className="mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
                 <tr className="border-b border-border bg-muted/10">
@@ -294,7 +329,7 @@ export function LineItemGrid({
                     <div className="py-2">
                       <button
                         onClick={() => toggleLocationsSection(item.id)}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
                       >
                         {expandedLocations.has(item.id) ? (
                           <CaretDown size={14} weight="bold" />
@@ -317,91 +352,100 @@ export function LineItemGrid({
                         </div>
                       </button>
                       
-                      <div className="flex gap-2 flex-wrap mt-2">
-                        {items.length > 1 && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs text-muted-foreground hover:text-primary"
-                              >
-                                <Copy size={14} className="mr-1.5" />
-                                Copy Decorations From...
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-64">
-                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                                Copy from line item
-                              </div>
-                              <DropdownMenuSeparator />
-                              {items.map((sourceItem, sourceIndex) => {
-                                if (sourceIndex === index) return null
-                                const decorationCount = getTotalDecorations(sourceItem)
-                                if (decorationCount === 0) return null
-                                
-                                return (
-                                  <DropdownMenuItem
-                                    key={sourceItem.id}
-                                    onClick={() => copyDecorationsFromItem(index, sourceIndex)}
-                                    className="flex flex-col items-start gap-0.5 py-2"
-                                  >
-                                    <div className="font-medium text-xs">
-                                      #{sourceIndex + 1}: {sourceItem.product_name || 'Untitled'} 
-                                      {sourceItem.product_color && ` - ${sourceItem.product_color}`}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {decorationCount} decoration{decorationCount !== 1 ? 's' : ''}
-                                    </div>
-                                  </DropdownMenuItem>
-                                )
-                              }).filter(Boolean).length === 0 && (
-                                <div className="px-2 py-3 text-xs text-muted-foreground text-center">
-                                  No other line items with decorations
-                                </div>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-
-                        {customerId && customerQuotes.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCopyFromPreviousQuotes(index)}
-                            className="h-7 text-xs text-muted-foreground hover:text-emerald-500"
-                          >
-                            <Clock size={14} className="mr-1.5" />
-                            Copy from Previous Quotes ({customerQuotes.length})
-                          </Button>
-                        )}
-
-                        {items.length > 1 && (item.decorations || []).length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleBulkCopyToAllItems(index)}
-                            className="h-7 text-xs text-muted-foreground hover:text-primary"
-                          >
-                            <CopySimple size={14} className="mr-1.5" />
-                            Copy to All Line Items
-                          </Button>
-                        )}
-                      </div>
-                      
                       {expandedLocations.has(item.id) && (
-                        <div className="mt-3 pb-3">
-                          <DecorationManager
-                            decorations={item.decorations || []}
-                            onChange={(decorations) => handleDecorationsChange(index, decorations)}
-                            productType={item.product_type}
-                            customerId={customerId}
-                            customerName={customerName}
-                            customerTemplates={customerTemplatesForCustomer}
-                            customerArtworkFiles={customerArtworkFiles}
-                            onSaveTemplate={onSaveTemplate}
-                          />
-                        </div>
+                        <>
+                          {(items.length > 1 || (customerId && customerQuotes.length > 0)) && (
+                            <div className="mt-3 mb-3 p-3 bg-muted/30 border border-border rounded-lg">
+                              <div className="text-xs font-semibold text-muted-foreground mb-2">
+                                QUICK ACTIONS
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {items.length > 1 && (item.decorations || []).length > 0 && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleBulkCopyToAllItems(index)}
+                                    className="h-8 text-xs"
+                                  >
+                                    <CopySimple size={14} className="mr-1.5" />
+                                    Apply to All Items
+                                  </Button>
+                                )}
+
+                                {items.length > 1 && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 text-xs"
+                                      >
+                                        <Copy size={14} className="mr-1.5" />
+                                        Copy From Line Item
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-72">
+                                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                        Select line item to copy decorations from
+                                      </div>
+                                      <DropdownMenuSeparator />
+                                      {items.map((sourceItem, sourceIndex) => {
+                                        if (sourceIndex === index) return null
+                                        const decorationCount = getTotalDecorations(sourceItem)
+                                        if (decorationCount === 0) return null
+                                        
+                                        return (
+                                          <DropdownMenuItem
+                                            key={sourceItem.id}
+                                            onClick={() => copyDecorationsFromItem(index, sourceIndex)}
+                                            className="flex flex-col items-start gap-0.5 py-2"
+                                          >
+                                            <div className="font-medium text-xs">
+                                              #{sourceIndex + 1}: {sourceItem.product_name || 'Untitled'} 
+                                              {sourceItem.product_color && ` - ${sourceItem.product_color}`}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                              {decorationCount} decoration{decorationCount !== 1 ? 's' : ''} • Setup: ${getTotalSetupFees(sourceItem).toFixed(2)}
+                                            </div>
+                                          </DropdownMenuItem>
+                                        )
+                                      }).filter(Boolean).length === 0 && (
+                                        <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+                                          No other line items with decorations
+                                        </div>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+
+                                {customerId && customerQuotes.length > 0 && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCopyFromPreviousQuotes(index)}
+                                    className="h-8 text-xs"
+                                  >
+                                    <Clock size={14} className="mr-1.5" />
+                                    Previous Orders ({customerQuotes.length})
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-3 pb-3">
+                            <DecorationManager
+                              decorations={item.decorations || []}
+                              onChange={(decorations) => handleDecorationsChange(index, decorations)}
+                              productType={item.product_type}
+                              customerId={customerId}
+                              customerName={customerName}
+                              customerTemplates={customerTemplatesForCustomer}
+                              customerArtworkFiles={customerArtworkFiles}
+                              onSaveTemplate={onSaveTemplate}
+                            />
+                          </div>
+                        </>
                       )}
                     </div>
                   </td>

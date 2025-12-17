@@ -25,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy, CurrencyDollar, Bell, ClockCounterClockwise, Envelope } from '@phosphor-icons/react'
+import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy, CurrencyDollar, Bell, ClockCounterClockwise, Envelope, Sparkle } from '@phosphor-icons/react'
 import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder, CustomerArtworkFile, FavoriteProduct, LineItem } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
@@ -142,6 +142,37 @@ export function QuoteBuilder({
       ...quote,
       line_items: [...quote.line_items, createEmptyLineItem()],
     })
+  }
+
+  const handleAddImprint = () => {
+    if (quote.line_items.length === 0) {
+      toast.error('Add a line item first')
+      return
+    }
+    
+    const lastItemIndex = quote.line_items.length - 1
+    const lastItem = quote.line_items[lastItemIndex]
+    
+    const newDecoration = {
+      id: generateId('dec'),
+      method: 'screen-print' as const,
+      location: 'Front',
+      inkThreadColors: '',
+      setupFee: 0,
+    }
+    
+    const updatedItems = [...quote.line_items]
+    updatedItems[lastItemIndex] = {
+      ...lastItem,
+      decorations: [...(lastItem.decorations || []), newDecoration],
+    }
+    
+    setQuote({
+      ...quote,
+      line_items: updatedItems,
+    })
+    
+    toast.success('Imprint added to last line item')
   }
 
   const handleAddFavoriteToQuote = (item: LineItem) => {
@@ -338,16 +369,28 @@ export function QuoteBuilder({
               <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
                 Line Items
               </div>
-              <Button 
-                onClick={handleAddLineItem} 
-                size="sm" 
-                variant="outline"
-                title="Add Line Item (⌘N)"
-              >
-                <Plus size={16} className="mr-1" />
-                Add Line Item
-                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded">⌘N</kbd>
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleAddImprint} 
+                  size="sm" 
+                  variant="outline"
+                  disabled={quote.line_items.length === 0}
+                  title="Add imprint to last line item"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Add Imprint
+                </Button>
+                <Button 
+                  onClick={handleAddLineItem} 
+                  size="sm" 
+                  variant="default"
+                  title="Add Line Item (⌘N)"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Add Line Item
+                  <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-primary-foreground/20 rounded">⌘N</kbd>
+                </Button>
+              </div>
             </div>
             
             {quote.line_items.length === 0 ? (
