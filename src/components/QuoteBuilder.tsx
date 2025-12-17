@@ -11,13 +11,21 @@ import { PricingSummary } from '@/components/PricingSummary'
 import { QuoteHistory } from '@/components/QuoteHistory'
 import { PricingRulesSuggestions } from '@/components/PricingRulesSuggestions'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy, CurrencyDollar, Bell, ClockCounterClockwise } from '@phosphor-icons/react'
+import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy, CurrencyDollar, Bell, ClockCounterClockwise, Envelope } from '@phosphor-icons/react'
 import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder, CustomerArtworkFile, FavoriteProduct, LineItem } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
@@ -26,6 +34,7 @@ import { PaymentReminders } from '@/components/PaymentReminders'
 import { QuoteReminderScheduler } from '@/components/QuoteReminderScheduler'
 import { FavoriteProductQuickAdd } from '@/components/FavoriteProductQuickAdd'
 import { ProductTemplateQuickAdd } from '@/components/ProductTemplateQuickAdd'
+import { Badge } from '@/components/ui/badge'
 
 interface QuoteBuilderProps {
   quote: Quote
@@ -76,6 +85,9 @@ export function QuoteBuilder({
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [paymentsOpen, setPaymentsOpen] = useState(false)
+  const [messagesOpen, setMessagesOpen] = useState(false)
   
   useEffect(() => {
     const updated = calculateQuoteTotals(quote)
@@ -180,6 +192,10 @@ export function QuoteBuilder({
       toast.success('Quote duplicated')
     }
   }
+
+  const totalPaid = (quote.payments || []).reduce((sum, p) => sum + p.amount, 0)
+  const balanceDue = quote.total - totalPaid
+  const hasOutstandingBalance = balanceDue > 0
   
   return (
     <div className={`h-full ${isInline ? '' : 'overflow-auto'}`}>
@@ -361,11 +377,11 @@ export function QuoteBuilder({
           <Separator />
           
           <div className="grid grid-cols-2 gap-6">
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
+            <div className="space-y-4">
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
                 Details
               </div>
-              <div className="space-y-4">
+              <div className="bg-card border border-border rounded-lg p-4 space-y-4">
                 <div>
                   <label className="text-sm text-muted-foreground mb-1.5 block">
                     Due Date
@@ -383,8 +399,9 @@ export function QuoteBuilder({
                   <Textarea
                     value={quote.notes_customer}
                     onChange={(e) => setQuote({ ...quote, notes_customer: e.target.value })}
-                    placeholder="Notes visible to customer..."
-                    rows={3}
+                    placeholder="Rush order needed for company event"
+                    rows={2}
+                    className="resize-none"
                   />
                 </div>
                 <div>
@@ -394,18 +411,19 @@ export function QuoteBuilder({
                   <Textarea
                     value={quote.notes_internal}
                     onChange={(e) => setQuote({ ...quote, notes_internal: e.target.value })}
-                    placeholder="Staff only notes..."
-                    rows={3}
+                    placeholder="VIP customer - priority production"
+                    rows={2}
+                    className="resize-none"
                   />
                 </div>
               </div>
             </div>
             
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
+            <div className="space-y-4">
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase">
                 Pricing
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {pricingRules && pricingRules.length > 0 && (
                   <PricingRulesSuggestions
                     quote={quote}
@@ -416,7 +434,7 @@ export function QuoteBuilder({
                     }}
                   />
                 )}
-                <div className="bg-card border border-border rounded-lg p-6">
+                <div className="bg-card border border-border rounded-lg p-5">
                   <PricingSummary
                     subtotal={quote.subtotal}
                     discount={quote.discount}
@@ -434,74 +452,132 @@ export function QuoteBuilder({
 
           <Separator />
 
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <QuoteHistory quote={quote} />
+          <div className="flex items-center justify-between gap-3 bg-muted/50 border border-border rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <ClockCounterClockwise size={16} className="mr-2" />
+                    History
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Quote History</DialogTitle>
+                    <DialogDescription>
+                      Track all changes and status updates for Quote {quote.quote_number}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    <QuoteHistory quote={quote} />
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={paymentsOpen} onOpenChange={setPaymentsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="relative">
+                    <CurrencyDollar size={16} className="mr-2" />
+                    Payments
+                    {hasOutstandingBalance && (
+                      <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-xs">
+                        ${balanceDue.toFixed(2)} Due
+                      </Badge>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Payment Tracking</DialogTitle>
+                    <DialogDescription>
+                      Manage payments and reminders for Quote {quote.quote_number}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4 space-y-6">
+                    <PaymentTracker
+                      quoteId={quote.id}
+                      quoteTotal={quote.total}
+                      payments={quote.payments || []}
+                      onAddPayment={(payment: Payment) => {
+                        setQuote({
+                          ...quote,
+                          payments: [...(quote.payments || []), payment]
+                        })
+                      }}
+                      onDeletePayment={(paymentId: string) => {
+                        setQuote({
+                          ...quote,
+                          payments: (quote.payments || []).filter(p => p.id !== paymentId)
+                        })
+                      }}
+                    />
+                    
+                    <Separator />
+                    
+                    <PaymentReminders
+                      quote={quote}
+                      reminder={paymentReminders.find(r => r.quoteId === quote.id)}
+                      onUpdateReminder={(reminder) => {
+                        if (onUpdateReminder) {
+                          onUpdateReminder(reminder)
+                        }
+                      }}
+                      onSendManualReminder={() => {
+                        toast.success(`Payment reminder sent to ${quote.customer.email}`)
+                      }}
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={messagesOpen} onOpenChange={setMessagesOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Envelope size={16} className="mr-2" />
+                    Messages
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Email Messages</DialogTitle>
+                    <DialogDescription>
+                      Send quote reminders and updates to {quote.customer.email || 'customer'}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    {onSendEmail ? (
+                      <QuoteReminderScheduler
+                        quote={quote}
+                        emailTemplates={emailTemplates}
+                        onSendEmail={onSendEmail}
+                      />
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8">
+                        Email functionality not available
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-4">
-                Payments & Messages
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 px-4 py-2 bg-background rounded-md border border-border">
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-muted-foreground">Subtotal</span>
+                  <span className="font-semibold text-foreground">${quote.subtotal.toFixed(2)}</span>
+                </div>
+                <Separator orientation="vertical" className="h-8" />
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-muted-foreground">Tax</span>
+                  <span className="font-semibold text-foreground">${quote.tax_amount.toFixed(2)}</span>
+                </div>
+                <Separator orientation="vertical" className="h-8" />
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="font-bold text-lg text-primary">${quote.total.toFixed(2)}</span>
+                </div>
               </div>
-              <Tabs defaultValue="payments" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="payments" className="text-xs">
-                    <CurrencyDollar size={14} className="mr-1.5" />
-                    Payments
-                  </TabsTrigger>
-                  <TabsTrigger value="messages" className="text-xs">
-                    <Bell size={14} className="mr-1.5" />
-                    Messages
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="payments" className="space-y-4 mt-4">
-                  <PaymentTracker
-                    quoteId={quote.id}
-                    quoteTotal={quote.total}
-                    payments={quote.payments || []}
-                    onAddPayment={(payment: Payment) => {
-                      setQuote({
-                        ...quote,
-                        payments: [...(quote.payments || []), payment]
-                      })
-                    }}
-                    onDeletePayment={(paymentId: string) => {
-                      setQuote({
-                        ...quote,
-                        payments: (quote.payments || []).filter(p => p.id !== paymentId)
-                      })
-                    }}
-                  />
-                  
-                  <PaymentReminders
-                    quote={quote}
-                    reminder={paymentReminders.find(r => r.quoteId === quote.id)}
-                    onUpdateReminder={(reminder) => {
-                      if (onUpdateReminder) {
-                        onUpdateReminder(reminder)
-                      }
-                    }}
-                    onSendManualReminder={() => {
-                      const totalPaid = (quote.payments || []).reduce((sum, p) => sum + p.amount, 0)
-                      const balance = quote.total - totalPaid
-                      console.log(`Sending payment reminder for quote ${quote.quote_number}`)
-                      console.log(`Customer: ${quote.customer.email}`)
-                      console.log(`Balance: $${balance.toFixed(2)}`)
-                    }}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="messages" className="mt-4">
-                  {onSendEmail && (
-                    <QuoteReminderScheduler
-                      quote={quote}
-                      emailTemplates={emailTemplates}
-                      onSendEmail={onSendEmail}
-                    />
-                  )}
-                </TabsContent>
-              </Tabs>
             </div>
           </div>
         </div>
