@@ -27,7 +27,7 @@ import {
   Keyboard,
   Package,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate, CustomerPricingRule, QuoteTemplate, TaxCertificate } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate, CustomerPricingRule, QuoteTemplate, TaxCertificate, PurchaseOrder } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -66,6 +66,7 @@ function App() {
   const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
   const [quoteTemplates, setQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
   const [taxCertificates, setTaxCertificates] = useKV<TaxCertificate[]>('tax-certificates', [])
+  const [purchaseOrders, setPurchaseOrders] = useKV<PurchaseOrder[]>('purchase-orders', [])
   const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
     accountNumber: '',
     apiKey: ''
@@ -652,6 +653,24 @@ function App() {
     toast.success(`Quote created from template: ${template.name}`)
   }
 
+  const handleCreatePurchaseOrder = (po: PurchaseOrder) => {
+    setPurchaseOrders((current) => [...(current || []), po])
+  }
+
+  const handleUpdatePurchaseOrder = (po: PurchaseOrder) => {
+    setPurchaseOrders((current) => {
+      const existing = current || []
+      return existing.map(p => p.id === po.id ? po : p)
+    })
+  }
+
+  const handleReceiveInventory = (po: PurchaseOrder) => {
+    setPurchaseOrders((current) => {
+      const existing = current || []
+      return existing.map(p => p.id === po.id ? po : p)
+    })
+  }
+
 
   useKeyboardShortcuts([
     {
@@ -995,10 +1014,14 @@ function App() {
               jobs={jobs || []}
               customers={customers || []}
               quoteTemplates={quoteTemplates || []}
+              purchaseOrders={purchaseOrders || []}
               onSaveQuoteTemplate={handleSaveQuoteTemplate}
               onUpdateQuoteTemplate={handleUpdateQuoteTemplate}
               onDeleteQuoteTemplate={handleDeleteQuoteTemplate}
               onUseQuoteTemplate={handleUseQuoteTemplate}
+              onCreatePurchaseOrder={handleCreatePurchaseOrder}
+              onUpdatePurchaseOrder={handleUpdatePurchaseOrder}
+              onReceiveInventory={handleReceiveInventory}
             />
           )}
           

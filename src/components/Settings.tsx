@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate } from '@/lib/types'
+import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate, PurchaseOrder } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
 import { SmsTemplates } from '@/components/SmsTemplates'
@@ -18,6 +18,7 @@ import { EmailTemplatesManager } from '@/components/EmailTemplatesManager'
 import { ScheduledEmailsManager } from '@/components/ScheduledEmailsManager'
 import { PricingRulesManager } from '@/components/PricingRulesManager'
 import { QuoteTemplateManager } from '@/components/QuoteTemplateManager'
+import { PurchaseOrderManager } from '@/components/PurchaseOrderManager'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 
@@ -26,10 +27,14 @@ interface SettingsProps {
   jobs: Job[]
   customers: Customer[]
   quoteTemplates?: QuoteTemplate[]
+  purchaseOrders?: PurchaseOrder[]
   onSaveQuoteTemplate?: (template: QuoteTemplate) => void
   onUpdateQuoteTemplate?: (template: QuoteTemplate) => void
   onDeleteQuoteTemplate?: (templateId: string) => void
   onUseQuoteTemplate?: (template: QuoteTemplate) => void
+  onCreatePurchaseOrder?: (po: PurchaseOrder) => void
+  onUpdatePurchaseOrder?: (po: PurchaseOrder) => void
+  onReceiveInventory?: (po: PurchaseOrder) => void
 }
 
 export function Settings({ 
@@ -37,10 +42,14 @@ export function Settings({
   jobs, 
   customers,
   quoteTemplates: externalQuoteTemplates,
+  purchaseOrders: externalPurchaseOrders,
   onSaveQuoteTemplate: externalSaveQuoteTemplate,
   onUpdateQuoteTemplate: externalUpdateQuoteTemplate,
   onDeleteQuoteTemplate: externalDeleteQuoteTemplate,
   onUseQuoteTemplate: externalUseQuoteTemplate,
+  onCreatePurchaseOrder: externalCreatePurchaseOrder,
+  onUpdatePurchaseOrder: externalUpdatePurchaseOrder,
+  onReceiveInventory: externalReceiveInventory,
 }: SettingsProps) {
   const [primaryColor, setPrimaryColor] = useKV<string>('theme-primary-color', 'oklch(0.7 0.17 166)')
   const [accentColor, setAccentColor] = useKV<string>('theme-accent-color', 'oklch(0.78 0.15 166)')
@@ -63,8 +72,10 @@ export function Settings({
   const [scheduledEmails, setScheduledEmails] = useKV<ScheduledEmail[]>('scheduled-emails', [])
   const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
   const [internalQuoteTemplates, setInternalQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
+  const [internalPurchaseOrders, setInternalPurchaseOrders] = useKV<PurchaseOrder[]>('purchase-orders', [])
   
   const quoteTemplates = externalQuoteTemplates || internalQuoteTemplates
+  const purchaseOrders = externalPurchaseOrders || internalPurchaseOrders
   
   const [primaryInput, setPrimaryInput] = useState(primaryColor || 'oklch(0.7 0.17 166)')
   const [accentInput, setAccentInput] = useState(accentColor || 'oklch(0.78 0.15 166)')
@@ -298,13 +309,43 @@ export function Settings({
     }
   }
 
+  const handleCreatePurchaseOrder = (po: PurchaseOrder) => {
+    if (externalCreatePurchaseOrder) {
+      externalCreatePurchaseOrder(po)
+    } else {
+      setInternalPurchaseOrders((current) => [...(current || []), po])
+    }
+  }
+
+  const handleUpdatePurchaseOrder = (po: PurchaseOrder) => {
+    if (externalUpdatePurchaseOrder) {
+      externalUpdatePurchaseOrder(po)
+    } else {
+      setInternalPurchaseOrders((current) => {
+        const existing = current || []
+        return existing.map((p) => p.id === po.id ? po : p)
+      })
+    }
+  }
+
+  const handleReceiveInventory = (po: PurchaseOrder) => {
+    if (externalReceiveInventory) {
+      externalReceiveInventory(po)
+    } else {
+      setInternalPurchaseOrders((current) => {
+        const existing = current || []
+        return existing.map((p) => p.id === po.id ? po : p)
+      })
+    }
+  }
+
   return (
     <div className="h-full overflow-auto p-8">
       <div className="max-w-4xl">
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="general">
               <Palette size={16} className="mr-2" />
               General
@@ -312,6 +353,10 @@ export function Settings({
             <TabsTrigger value="api">
               <ShoppingBag size={16} className="mr-2" />
               Suppliers
+            </TabsTrigger>
+            <TabsTrigger value="purchase-orders">
+              <ShoppingBag size={16} className="mr-2" />
+              Purchase Orders
             </TabsTrigger>
             <TabsTrigger value="pricing">
               <Percent size={16} className="mr-2" />
@@ -623,6 +668,17 @@ export function Settings({
                 </div>
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="purchase-orders" className="space-y-6">
+            <PurchaseOrderManager
+              purchaseOrders={purchaseOrders || []}
+              quotes={quotes}
+              jobs={jobs}
+              onCreatePurchaseOrder={handleCreatePurchaseOrder}
+              onUpdatePurchaseOrder={handleUpdatePurchaseOrder}
+              onReceiveInventory={handleReceiveInventory}
+            />
           </TabsContent>
 
           <TabsContent value="pricing" className="space-y-6">

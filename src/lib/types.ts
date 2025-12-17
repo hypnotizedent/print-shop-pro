@@ -524,3 +524,59 @@ export interface ProductTemplate {
   lastUsed?: string
   isActive: boolean
 }
+
+export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partially-received' | 'received' | 'cancelled'
+
+export interface PurchaseOrderLineItem {
+  id: string
+  supplier: SupplierType
+  styleId: string
+  styleName: string
+  brandName: string
+  colorName: string
+  colorCode: string
+  sizes: Sizes
+  quantityOrdered: number
+  quantityReceived: number
+  unitCost: number
+  lineTotal: number
+  associatedOrders: Array<{
+    type: 'quote' | 'job'
+    id: string
+    number: string
+    customerName: string
+    sizes: Sizes
+  }>
+  receivedItems?: Array<{
+    id: string
+    sizes: Sizes
+    receivedDate: string
+    receivedBy: string
+    assignedTo?: {
+      type: 'quote' | 'job'
+      id: string
+      number: string
+    }
+  }>
+}
+
+export interface PurchaseOrder {
+  id: string
+  poNumber: string
+  supplier: SupplierType
+  status: PurchaseOrderStatus
+  orderDate: string
+  expectedDeliveryDate?: string
+  actualDeliveryDate?: string
+  lineItems: PurchaseOrderLineItem[]
+  subtotal: number
+  shipping?: number
+  tax?: number
+  total: number
+  notes?: string
+  tracking?: string
+  orderedBy?: string
+  receivedBy?: string
+  createdAt: string
+  updatedAt: string
+}
