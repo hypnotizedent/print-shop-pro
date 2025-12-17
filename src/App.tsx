@@ -39,6 +39,7 @@ import {
   generateId,
   calculateQuoteTotals
 } from '@/lib/data'
+import { generateSamplePurchaseOrders } from '@/lib/sample-purchase-orders'
 import { createQuoteApprovalEmail, createQuoteApprovedEmail, createInvoiceEmail } from '@/lib/email-notifications'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
@@ -66,7 +67,7 @@ function App() {
   const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
   const [quoteTemplates, setQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
   const [taxCertificates, setTaxCertificates] = useKV<TaxCertificate[]>('tax-certificates', [])
-  const [purchaseOrders, setPurchaseOrders] = useKV<PurchaseOrder[]>('purchase-orders', [])
+  const [purchaseOrders, setPurchaseOrders] = useKV<PurchaseOrder[]>('purchase-orders', generateSamplePurchaseOrders())
   const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
     accountNumber: '',
     apiKey: ''

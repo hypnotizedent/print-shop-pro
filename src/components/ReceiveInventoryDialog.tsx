@@ -26,10 +26,13 @@ import {
   WarningCircle,
   FileText,
   User,
+  Star,
+  Warning,
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { PurchaseOrder, PurchaseOrderLineItem, Sizes } from '@/lib/types'
 import { generateId } from '@/lib/data'
+import { Textarea } from '@/components/ui/textarea'
 
 interface ReceiveInventoryDialogProps {
   open: boolean
@@ -59,6 +62,9 @@ export function ReceiveInventoryDialog({
   const [actualDeliveryDate, setActualDeliveryDate] = useState(
     new Date().toISOString().split('T')[0]
   )
+  const [accuracyRating, setAccuracyRating] = useState<number>(100)
+  const [deliveryRating, setDeliveryRating] = useState<number>(5)
+  const [qualityIssues, setQualityIssues] = useState<string>('')
 
   useEffect(() => {
     if (open) {
@@ -219,6 +225,9 @@ export function ReceiveInventoryDialog({
       status: newStatus,
       actualDeliveryDate,
       receivedBy,
+      accuracyRating,
+      deliveryRating,
+      qualityIssues: qualityIssues.trim() ? qualityIssues.split('\n').filter(i => i.trim()) : undefined,
       updatedAt: new Date().toISOString(),
     }
 
@@ -401,6 +410,67 @@ export function ReceiveInventoryDialog({
             })}
           </div>
         </ScrollArea>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <Star size={16} />
+            Supplier Performance
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="accuracy-rating">Order Accuracy (%)</Label>
+              <Input
+                id="accuracy-rating"
+                type="number"
+                min="0"
+                max="100"
+                value={accuracyRating}
+                onChange={(e) => setAccuracyRating(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                placeholder="100"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                100% = Perfect order, 0% = Major issues
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="delivery-rating">Delivery Rating (1-5)</Label>
+              <Select value={deliveryRating.toString()} onValueChange={(v) => setDeliveryRating(parseInt(v))}>
+                <SelectTrigger id="delivery-rating">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 - Excellent</SelectItem>
+                  <SelectItem value="4">4 - Good</SelectItem>
+                  <SelectItem value="3">3 - Fair</SelectItem>
+                  <SelectItem value="2">2 - Poor</SelectItem>
+                  <SelectItem value="1">1 - Very Poor</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Rate packaging, condition, and timeliness
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="quality-issues">Quality Issues (Optional)</Label>
+            <Textarea
+              id="quality-issues"
+              value={qualityIssues}
+              onChange={(e) => setQualityIssues(e.target.value)}
+              placeholder="Wrong color in box 3&#10;Missing 2XL sizes&#10;Damaged packaging on item SKU-123"
+              rows={3}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              One issue per line. Leave blank if no issues.
+            </p>
+          </div>
+        </div>
 
         <Separator />
 

@@ -579,4 +579,87 @@ export interface PurchaseOrder {
   receivedBy?: string
   createdAt: string
   updatedAt: string
+  accuracyRating?: number
+  deliveryRating?: number
+  qualityIssues?: string[]
+}
+
+export interface SupplierPerformanceMetrics {
+  supplier: SupplierType
+  totalOrders: number
+  averageDeliveryTime: number
+  onTimeDeliveryRate: number
+  averageAccuracyRate: number
+  totalSpent: number
+  averageOrderValue: number
+  costTrends: Array<{
+    month: string
+    totalSpent: number
+    orderCount: number
+    averageOrderValue: number
+  }>
+  deliveryTimeTrends: Array<{
+    month: string
+    averageDeliveryDays: number
+    onTimePercentage: number
+  }>
+  accuracyTrends: Array<{
+    month: string
+    accuracyRate: number
+    issueCount: number
+  }>
+  topProducts: Array<{
+    styleId: string
+    styleName: string
+    brandName: string
+    orderCount: number
+    totalQuantity: number
+    totalSpent: number
+  }>
+  issuesSummary: {
+    totalIssues: number
+    byType: Record<string, number>
+    recentIssues: Array<{
+      poNumber: string
+      orderDate: string
+      issue: string
+    }>
+  }
+  lastUpdated: string
+}
+
+export type SupplierIssueType = 
+  | 'wrong-color'
+  | 'wrong-size'
+  | 'missing-items'
+  | 'damaged-items'
+  | 'late-delivery'
+  | 'quality-issue'
+  | 'pricing-discrepancy'
+  | 'other'
+
+export interface SupplierPerformanceRecord {
+  id: string
+  purchaseOrderId: string
+  poNumber: string
+  supplier: SupplierType
+  orderDate: string
+  expectedDeliveryDate?: string
+  actualDeliveryDate?: string
+  deliveryDays?: number
+  onTime: boolean
+  accuracyRate: number
+  orderTotal: number
+  issues: Array<{
+    type: SupplierIssueType
+    description: string
+    affectedLineItems?: string[]
+    resolvedDate?: string
+    resolutionNotes?: string
+  }>
+  qualityRating?: number
+  costVariance?: number
+  notes?: string
+  createdAt: string
+  updatedAt: string
 }

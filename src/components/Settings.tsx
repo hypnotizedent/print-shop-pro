@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent } from '@phosphor-icons/react'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent, ChartLine } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate, PurchaseOrder } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
@@ -19,6 +19,7 @@ import { ScheduledEmailsManager } from '@/components/ScheduledEmailsManager'
 import { PricingRulesManager } from '@/components/PricingRulesManager'
 import { QuoteTemplateManager } from '@/components/QuoteTemplateManager'
 import { PurchaseOrderManager } from '@/components/PurchaseOrderManager'
+import { SupplierPerformance } from '@/components/SupplierPerformance'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 
@@ -345,7 +346,7 @@ export function Settings({
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="general">
               <Palette size={16} className="mr-2" />
               General
@@ -356,7 +357,11 @@ export function Settings({
             </TabsTrigger>
             <TabsTrigger value="purchase-orders">
               <ShoppingBag size={16} className="mr-2" />
-              Purchase Orders
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="supplier-performance">
+              <ChartLine size={16} className="mr-2" />
+              Performance
             </TabsTrigger>
             <TabsTrigger value="pricing">
               <Percent size={16} className="mr-2" />
@@ -678,6 +683,12 @@ export function Settings({
               onCreatePurchaseOrder={handleCreatePurchaseOrder}
               onUpdatePurchaseOrder={handleUpdatePurchaseOrder}
               onReceiveInventory={handleReceiveInventory}
+            />
+          </TabsContent>
+
+          <TabsContent value="supplier-performance" className="space-y-6">
+            <SupplierPerformance
+              purchaseOrders={purchaseOrders || []}
             />
           </TabsContent>
 
