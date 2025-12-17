@@ -17,12 +17,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy, CurrencyDollar, Bell, ClockCounterClockwise } from '@phosphor-icons/react'
-import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder, CustomerArtworkFile } from '@/lib/types'
+import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder, CustomerArtworkFile, FavoriteProduct, LineItem } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
 import { PaymentTracker } from '@/components/PaymentTracker'
 import { PaymentReminders } from '@/components/PaymentReminders'
 import { QuoteReminderScheduler } from '@/components/QuoteReminderScheduler'
+import { FavoriteProductQuickAdd } from '@/components/FavoriteProductQuickAdd'
 
 interface QuoteBuilderProps {
   quote: Quote
@@ -32,6 +33,7 @@ interface QuoteBuilderProps {
   customerArtworkFiles?: CustomerArtworkFile[]
   paymentReminders?: PaymentReminder[]
   emailTemplates?: import('@/lib/types').EmailTemplate[]
+  favoriteProducts?: FavoriteProduct[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
@@ -40,6 +42,7 @@ interface QuoteBuilderProps {
   onDuplicateQuote?: (quote: Quote) => void
   onUpdateReminder?: (reminder: PaymentReminder) => void
   onSendEmail?: (notification: import('@/lib/types').EmailNotification) => void
+  onUpdateFavoriteProduct?: (product: FavoriteProduct) => void
   isInline?: boolean
 }
 
@@ -51,6 +54,7 @@ export function QuoteBuilder({
   customerArtworkFiles = [],
   paymentReminders = [],
   emailTemplates = [],
+  favoriteProducts = [],
   onSave, 
   onBack, 
   onCreateCustomer,
@@ -59,6 +63,7 @@ export function QuoteBuilder({
   onDuplicateQuote,
   onUpdateReminder,
   onSendEmail,
+  onUpdateFavoriteProduct,
   isInline = false
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
@@ -116,6 +121,13 @@ export function QuoteBuilder({
     setQuote({
       ...quote,
       line_items: [...quote.line_items, createEmptyLineItem()],
+    })
+  }
+
+  const handleAddFavoriteToQuote = (item: LineItem) => {
+    setQuote({
+      ...quote,
+      line_items: [...quote.line_items, item],
     })
   }
   
@@ -274,6 +286,17 @@ export function QuoteBuilder({
           </div>
           
           <Separator />
+
+          {favoriteProducts && favoriteProducts.length > 0 && onUpdateFavoriteProduct && (
+            <>
+              <FavoriteProductQuickAdd
+                favorites={favoriteProducts}
+                onAddToQuote={handleAddFavoriteToQuote}
+                onUpdateFavorite={onUpdateFavoriteProduct}
+              />
+              <Separator />
+            </>
+          )}
           
           <div>
             <div className="flex items-center justify-between mb-3">

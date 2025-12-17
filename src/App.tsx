@@ -901,6 +901,7 @@ function App() {
               customerArtworkFiles={customerArtworkFiles || []}
               paymentReminders={paymentReminders || []}
               emailTemplates={emailTemplates || []}
+              favoriteProducts={favoriteProducts || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {
@@ -918,6 +919,7 @@ function App() {
               onSaveDecorationTemplate={handleSaveDecorationTemplate}
               onUpdateReminder={handleUpdatePaymentReminder}
               onSendEmail={addEmailNotification}
+              onUpdateFavoriteProduct={handleUpdateFavoriteProduct}
               onNavigateToCustomer={currentPage.quote.customer.id ? () => {
                 const customer = customers?.find(c => c.id === currentPage.quote.customer.id)
                 if (customer) {
