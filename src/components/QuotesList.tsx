@@ -15,6 +15,7 @@ import { BulkQuoteReminders } from '@/components/BulkQuoteReminders'
 import { FilterPresetManager } from '@/components/FilterPresetManager'
 import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
 import { QuotesListSkeleton } from '@/components/skeletons'
+import { StatusFilterPills } from '@/components/StatusFilterPills'
 import { Plus, MagnifyingGlass, FunnelSimple, CheckSquare, FileText, Trash, EnvelopeSimple, FilePlus, X } from '@phosphor-icons/react'
 import type { Quote, Customer, QuoteStatus, EmailTemplate, EmailNotification, FilterPreset, RecentSearch } from '@/lib/types'
 import { useState, useEffect } from 'react'
@@ -379,6 +380,20 @@ export function QuotesList({
             />
           )}
         </div>
+
+        <StatusFilterPills
+          type="quote"
+          activeStatus={statusFilter}
+          onStatusChange={(status) => setStatusFilter(status as QuoteStatus | 'all')}
+          counts={{
+            all: quotes.length,
+            draft: quotes.filter(q => q.status === 'draft').length,
+            sent: quotes.filter(q => q.status === 'sent').length,
+            approved: quotes.filter(q => q.status === 'approved').length,
+            rejected: quotes.filter(q => q.status === 'rejected').length,
+            expired: quotes.filter(q => q.status === 'expired').length,
+          }}
+        />
         
         {hasSelection && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">

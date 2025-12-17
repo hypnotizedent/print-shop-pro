@@ -16,6 +16,7 @@ import { ProductionCalendar } from '@/components/ProductionCalendar'
 import { FilterPresetManager } from '@/components/FilterPresetManager'
 import { RecentSearchesDropdown, useRecentSearches } from '@/components/RecentSearchesDropdown'
 import { JobsListSkeleton } from '@/components/skeletons'
+import { StatusFilterPills } from '@/components/StatusFilterPills'
 import type { Job, JobStatus, ArtworkFile, Customer, Expense, FilterPreset, RecentSearch } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MagnifyingGlass, FunnelSimple, CheckSquare, Trash, CalendarBlank, X, Plus } from '@phosphor-icons/react'
@@ -337,6 +338,23 @@ export function JobsBoard({
             />
           )}
         </div>
+
+        <StatusFilterPills
+          type="job"
+          activeStatus={statusFilter}
+          onStatusChange={(status) => setStatusFilter(status as JobStatus | 'all')}
+          counts={{
+            all: jobs.length,
+            pending: jobs.filter(j => j.status === 'pending').length,
+            'art-approval': jobs.filter(j => j.status === 'art-approval').length,
+            scheduled: jobs.filter(j => j.status === 'scheduled').length,
+            printing: jobs.filter(j => j.status === 'printing').length,
+            finishing: jobs.filter(j => j.status === 'finishing').length,
+            ready: jobs.filter(j => j.status === 'ready').length,
+            shipped: jobs.filter(j => j.status === 'shipped').length,
+            delivered: jobs.filter(j => j.status === 'delivered').length,
+          }}
+        />
         
         {hasSelection && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
