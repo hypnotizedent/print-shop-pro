@@ -728,10 +728,10 @@ export function LineItemGrid({
                         )}
 
                         {customerId && customerQuotes.length > 0 && (
+                          <Button
                             onClick={() => handleCopyFromPreviousQuotes(index)}
                             variant="outline"
                             size="sm"
-                            onClick={() => handleCopyFromPreviousQuotes(index)}
                             className="h-8 text-xs"
                           >
                             <Clock size={14} className="mr-1.5" />
