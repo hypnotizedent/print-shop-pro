@@ -60,23 +60,15 @@ export function Home({
       return createdDate >= oneMonthAgo && q.status !== 'approved' && q.status !== 'rejected'
     })
     
-    const approvedQuotes = quotes.filter(q => q.status === 'approved')
-    const expiredQuotes = quotes.filter(q => q.status === 'expired')
-    
     const activeJobs = jobs.filter(j => j.status !== 'delivered')
     const completedJobs = jobs.filter(j => j.status === 'delivered')
     
-    const totalQuoteValue = quotes.reduce((sum, q) => {
-      if (q.status !== 'rejected' && q.status !== 'expired') {
-        return sum + q.total
-      }
-      return sum
-    }, 0)
-    
-    const totalJobValue = jobs.reduce((sum, j) => {
-      const quote = quotes.find(q => q.id === j.quote_id)
-      return sum + (quote?.total || 0)
-    }, 0)
+    const totalJobValue = jobs
+      .filter(j => j.status !== 'delivered')
+      .reduce((sum, j) => {
+        const quote = quotes.find(q => q.id === j.quote_id)
+        return sum + (quote?.total || 0)
+      }, 0)
     
     const pendingArtApproval = jobs.filter(j => 
       j.status === 'pending' || j.status === 'art-approval'
@@ -93,12 +85,9 @@ export function Home({
     return {
       quotesNeedingFollowUp: quotesNeedingFollowUp.length,
       followUpValue,
-      approvedQuotes: approvedQuotes.length,
-      expiredQuotes: expiredQuotes.length,
       activeJobs: activeJobs.length,
       completedJobs: completedJobs.length,
       totalCustomers: customers.length,
-      totalQuoteValue,
       totalJobValue,
       pendingArtApproval: pendingArtApproval.length,
       inProduction: inProduction.length,
@@ -106,45 +95,28 @@ export function Home({
     }
   }, [quotes, jobs, customers])
 
-  const recentQuotes = useMemo(() => {
-    return [...quotes]
+  const quotesNeedingFollowUp = useMemo(() => {
+    const oneMonthAgo = new Date()
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+    
+    return quotes
+      .filter(q => {
+        const createdDate = new Date(q.created_at)
+        return createdDate >= oneMonthAgo && q.status !== 'approved' && q.status !== 'rejected'
+      })
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 5)
   }, [quotes])
 
-  const urgentJobs = useMemo(() => {
-    const today = new Date()
+  const activeJobs = useMemo(() => {
     return jobs
-      .filter(j => {
-        if (j.status === 'delivered') return false
-        if (!j.due_date) return false
-        const dueDate = new Date(j.due_date)
-        const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-        return daysUntilDue <= 7 && daysUntilDue >= 0
+      .filter(j => j.status !== 'delivered')
+      .sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0
+        if (!a.due_date) return 1
+        if (!b.due_date) return -1
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
       })
-      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
-      .slice(0, 5)
   }, [jobs])
-
-  const recentCustomers = useMemo(() => {
-    const customersWithActivity = customers.map(customer => {
-      const customerQuotes = quotes.filter(q => q.customer.id === customer.id)
-      const latestQuote = customerQuotes.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )[0]
-      
-      return {
-        ...customer,
-        lastActivity: latestQuote?.created_at || '',
-        quoteCount: customerQuotes.length
-      }
-    })
-    
-    return customersWithActivity
-      .filter(c => c.lastActivity)
-      .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
-      .slice(0, 5)
-  }, [customers, quotes])
 
   const getStatusBadgeVariant = (status: QuoteStatus | JobStatus) => {
     switch (status) {
@@ -199,6 +171,22 @@ export function Home({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToJobs}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+              <Briefcase size={20} className="text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeJobs}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Not marked as complete
+              </p>
+              <div className="mt-2 text-sm font-medium text-primary">
+                {formatCurrency(stats.totalJobValue)} in production
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToQuotes}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Follow-Up Needed</CardTitle>
@@ -211,38 +199,6 @@ export function Home({
               </p>
               <div className="mt-2 text-sm font-medium text-primary">
                 {formatCurrency(stats.followUpValue)} potential value
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToJobs}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-              <Briefcase size={20} className="text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeJobs}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.completedJobs} completed this month
-              </p>
-              <div className="mt-2 text-sm font-medium text-primary">
-                {formatCurrency(stats.totalJobValue)} in production
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToCustomers}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-              <Users size={20} className="text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCustomers}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {recentCustomers.length} active this week
-              </p>
-              <div className="mt-2 text-sm font-medium text-accent">
-                {(stats.totalQuoteValue / stats.totalCustomers || 0).toFixed(0)} avg. quote value
               </div>
             </CardContent>
           </Card>
@@ -262,122 +218,17 @@ export function Home({
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Quotes</CardTitle>
-                  <CardDescription>Latest quote activity</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm" onClick={onNavigateToQuotes}>
-                  View All
-                  <ArrowRight size={16} className="ml-2" />
-                </Button>
-              </div>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToCustomers}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+              <Users size={20} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {recentQuotes.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText size={48} className="mx-auto mb-3 text-muted-foreground/50" />
-                    <p className="text-muted-foreground mb-4">No quotes yet</p>
-                    <Button onClick={onNewQuote} variant="outline" size="sm" className="gap-2">
-                      <Plus size={16} />
-                      Create First Quote
-                    </Button>
-                  </div>
-                ) : (
-                  recentQuotes.map(quote => (
-                    <div 
-                      key={quote.id}
-                      className="flex items-start justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer"
-                      onClick={() => onSelectQuote(quote)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm">{quote.quote_number}</p>
-                          {quote.nickname && (
-                            <span className="text-xs text-muted-foreground truncate">• {quote.nickname}</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">{quote.customer.name}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(new Date(quote.created_at), 'MMM d, yyyy')}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge variant={getStatusBadgeVariant(quote.status)}>
-                          {quote.status}
-                        </Badge>
-                        <span className="text-sm font-medium">{formatCurrency(quote.total)}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Urgent Jobs</CardTitle>
-                  <CardDescription>Due within 7 days</CardDescription>
-                </div>
-                <Button variant="ghost" size="sm" onClick={onNavigateToJobs}>
-                  View All
-                  <ArrowRight size={16} className="ml-2" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {urgentJobs.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <CheckCircle size={32} className="mx-auto mb-2 text-primary" />
-                    No urgent jobs
-                  </div>
-                ) : (
-                  urgentJobs.map(job => {
-                    const dueDate = new Date(job.due_date)
-                    const today = new Date()
-                    const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-                    
-                    return (
-                      <div 
-                        key={job.id}
-                        className="flex items-start justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer"
-                        onClick={() => onSelectJob(job)}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{job.job_number}</p>
-                            {job.nickname && (
-                              <span className="text-xs text-muted-foreground truncate">• {job.nickname}</span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground truncate">{job.customer.name}</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Clock size={12} className={daysUntilDue <= 2 ? 'text-destructive' : 'text-muted-foreground'} />
-                            <p className={`text-xs ${daysUntilDue <= 2 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                              Due {format(dueDate, 'MMM d')} ({daysUntilDue}d)
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <Badge variant={getStatusBadgeVariant(job.status)}>
-                            {job.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
+              <div className="text-2xl font-bold">{stats.totalCustomers}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats.completedJobs} jobs completed
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -386,50 +237,139 @@ export function Home({
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Customers</CardTitle>
-                <CardDescription>Latest customer activity</CardDescription>
+                <CardTitle>All Active Jobs</CardTitle>
+                <CardDescription>Jobs not marked as delivered, sorted by due date</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={onNavigateToCustomers}>
-                View All
+              <Button variant="ghost" size="sm" onClick={onNavigateToJobs}>
+                View Jobs Board
                 <ArrowRight size={16} className="ml-2" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentCustomers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No customer activity yet
+              {activeJobs.length === 0 ? (
+                <div className="text-center py-12">
+                  <Briefcase size={48} className="mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-muted-foreground mb-4">No active jobs</p>
+                  <Button onClick={onNewJob} variant="outline" size="sm" className="gap-2">
+                    <Plus size={16} />
+                    Create First Job
+                  </Button>
                 </div>
               ) : (
-                recentCustomers.map(customer => (
-                  <div 
-                    key={customer.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{customer.name}</p>
-                      {customer.company && (
-                        <p className="text-sm text-muted-foreground">{customer.company}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Last activity: {format(new Date(customer.lastActivity), 'MMM d, yyyy')}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-sm text-muted-foreground">{customer.quoteCount} quotes</span>
-                      {customer.tier && (
-                        <Badge variant="outline" className="text-xs">
-                          {customer.tier}
+                activeJobs.map(job => {
+                  const quote = quotes.find(q => q.id === job.quote_id)
+                  const today = new Date()
+                  const dueDate = job.due_date ? new Date(job.due_date) : null
+                  const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null
+                  const isUrgent = daysUntilDue !== null && daysUntilDue <= 7 && daysUntilDue >= 0
+                  const isOverdue = daysUntilDue !== null && daysUntilDue < 0
+                  
+                  return (
+                    <div 
+                      key={job.id}
+                      className={`flex items-start justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
+                        isOverdue 
+                          ? 'border-destructive bg-destructive/5 hover:bg-destructive/10' 
+                          : isUrgent 
+                            ? 'border-accent bg-accent/5 hover:bg-accent/10'
+                            : 'border-border hover:bg-secondary/50'
+                      }`}
+                      onClick={() => onSelectJob(job)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">{job.job_number}</p>
+                          {job.nickname && (
+                            <span className="text-xs text-muted-foreground truncate">• {job.nickname}</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{job.customer.name}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          {dueDate && (
+                            <div className="flex items-center gap-1">
+                              <Calendar size={12} className={isOverdue ? 'text-destructive' : isUrgent ? 'text-accent' : 'text-muted-foreground'} />
+                              <p className={`text-xs ${isOverdue ? 'text-destructive font-medium' : isUrgent ? 'text-accent font-medium' : 'text-muted-foreground'}`}>
+                                {isOverdue ? 'Overdue' : 'Due'} {format(dueDate, 'MMM d')} 
+                                {daysUntilDue !== null && ` (${Math.abs(daysUntilDue)}d)`}
+                              </p>
+                            </div>
+                          )}
+                          {quote && (
+                            <div className="flex items-center gap-1">
+                              <CurrencyDollar size={12} className="text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground">
+                                {formatCurrency(quote.total)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge variant={getStatusBadgeVariant(job.status)}>
+                          {job.status}
                         </Badge>
-                      )}
+                        {job.line_items && job.line_items.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            {job.line_items.reduce((sum, item) => sum + item.quantity, 0)} items
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
           </CardContent>
         </Card>
+
+        {quotesNeedingFollowUp.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Quotes Needing Follow-Up</CardTitle>
+                  <CardDescription>Created this month but not yet approved</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" onClick={onNavigateToQuotes}>
+                  View All Quotes
+                  <ArrowRight size={16} className="ml-2" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {quotesNeedingFollowUp.map(quote => (
+                  <div 
+                    key={quote.id}
+                    className="flex items-start justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer"
+                    onClick={() => onSelectQuote(quote)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">{quote.quote_number}</p>
+                        {quote.nickname && (
+                          <span className="text-xs text-muted-foreground truncate">• {quote.nickname}</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{quote.customer.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Created {format(new Date(quote.created_at), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge variant={getStatusBadgeVariant(quote.status)}>
+                        {quote.status}
+                      </Badge>
+                      <span className="text-sm font-medium">{formatCurrency(quote.total)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )
