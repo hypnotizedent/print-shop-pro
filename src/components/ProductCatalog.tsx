@@ -25,6 +25,33 @@ import { sanMarAPI } from '@/lib/sanmar-api'
 import { ProductTemplateManager } from '@/components/ProductTemplateManager'
 import type { FavoriteProduct, SupplierType, ProductTemplate } from '@/lib/types'
 
+function ProductCardSkeleton() {
+  return (
+    <Card className="overflow-hidden">
+      <Skeleton className="aspect-square w-full" />
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+          <Skeleton className="h-8 w-8 rounded-md" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-5 w-20" />
+        </div>
+        <div className="flex justify-between items-center pt-2">
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-6 w-16" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 interface ProductCatalogProps {
   favorites: FavoriteProduct[]
   templates: ProductTemplate[]
@@ -307,23 +334,7 @@ export function ProductCatalog({
             {isSearching && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Array.from({ length: 12 }).map((_, i) => (
-                  <Card key={i} className="overflow-hidden">
-                    <Skeleton className="aspect-square w-full" />
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-5 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                        </div>
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                      </div>
-                      <div className="flex gap-2">
-                        <Skeleton className="h-5 w-16" />
-                        <Skeleton className="h-5 w-20" />
-                      </div>
-                      <Skeleton className="h-6 w-20" />
-                    </CardContent>
-                  </Card>
+                  <ProductCardSkeleton key={i} />
                 ))}
               </div>
             )}

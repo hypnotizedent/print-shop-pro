@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { MagnifyingGlass, Sparkle, Warning, FunnelSimple, CheckCircle, WarningCircle, XCircle } from '@phosphor-icons/react'
 import { ssActivewearAPI, type SSActivewearProduct, type SSActivewearColor, type SSActivewearSize } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarProduct, type SanMarColor, type SanMarSize } from '@/lib/sanmar-api'
@@ -277,6 +278,28 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
             </div>
           </div>
           </div>
+
+          {loading && (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="text-sm font-semibold text-muted-foreground mb-2">
+                SEARCHING...
+              </div>
+              <div className="border border-border rounded-lg p-2 space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="p-3 border border-border rounded-lg">
+                    <div className="flex gap-3">
+                      <Skeleton className="w-16 h-16 flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-3 w-1/3" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {searchResults.length > 0 && (
             <div className="flex-1 overflow-hidden flex flex-col">

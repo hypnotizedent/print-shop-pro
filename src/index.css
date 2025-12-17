@@ -12,6 +12,27 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    oklch(0.3 0.016 249) 0%,
+    oklch(0.35 0.018 249) 20%,
+    oklch(0.3 0.016 249) 40%,
+    oklch(0.3 0.016 249) 100%
+  );
+  background-size: 1000px 100%;
+}
+
 :root {
   --background: oklch(0.15 0.01 249);
   --foreground: oklch(0.96 0.003 249);
