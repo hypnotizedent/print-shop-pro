@@ -426,52 +426,52 @@ export function Settings({
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-12">
-            <TabsTrigger value="general">
+          <TabsList className="inline-flex w-full justify-start overflow-x-auto flex-wrap gap-1">
+            <TabsTrigger value="general" className="flex-shrink-0">
               <Palette size={16} className="mr-2" />
               General
             </TabsTrigger>
-            <TabsTrigger value="api">
+            <TabsTrigger value="api" className="flex-shrink-0">
               <ShoppingBag size={16} className="mr-2" />
               Suppliers
             </TabsTrigger>
-            <TabsTrigger value="webhooks">
+            <TabsTrigger value="webhooks" className="flex-shrink-0">
               <Plugs size={16} className="mr-2" />
               Webhooks
             </TabsTrigger>
-            <TabsTrigger value="purchase-orders">
+            <TabsTrigger value="purchase-orders" className="flex-shrink-0">
               <ShoppingBag size={16} className="mr-2" />
               Orders
             </TabsTrigger>
-            <TabsTrigger value="supplier-performance">
+            <TabsTrigger value="supplier-performance" className="flex-shrink-0">
               <ChartLine size={16} className="mr-2" />
               Performance
             </TabsTrigger>
-            <TabsTrigger value="pricing">
+            <TabsTrigger value="pricing" className="flex-shrink-0">
               <Percent size={16} className="mr-2" />
               Pricing
             </TabsTrigger>
-            <TabsTrigger value="quote-templates">
+            <TabsTrigger value="quote-templates" className="flex-shrink-0">
               <Tag size={16} className="mr-2" />
               Templates
             </TabsTrigger>
-            <TabsTrigger value="email-templates">
+            <TabsTrigger value="email-templates" className="flex-shrink-0">
               <Envelope size={16} className="mr-2" />
               Emails
             </TabsTrigger>
-            <TabsTrigger value="scheduled-emails">
+            <TabsTrigger value="scheduled-emails" className="flex-shrink-0">
               <Clock size={16} className="mr-2" />
               Scheduled
             </TabsTrigger>
-            <TabsTrigger value="sms">
+            <TabsTrigger value="sms" className="flex-shrink-0">
               <DeviceMobile size={16} className="mr-2" />
               SMS
             </TabsTrigger>
-            <TabsTrigger value="templates">
+            <TabsTrigger value="templates" className="flex-shrink-0">
               <ChatCircle size={16} className="mr-2" />
               SMS Templates
             </TabsTrigger>
-            <TabsTrigger value="opt-outs">
+            <TabsTrigger value="opt-outs" className="flex-shrink-0">
               <BellSlash size={16} className="mr-2" />
               Opt-Outs
             </TabsTrigger>
