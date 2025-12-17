@@ -24,6 +24,7 @@ import { PaymentTracker } from '@/components/PaymentTracker'
 import { PaymentReminders } from '@/components/PaymentReminders'
 import { QuoteReminderScheduler } from '@/components/QuoteReminderScheduler'
 import { FavoriteProductQuickAdd } from '@/components/FavoriteProductQuickAdd'
+import { ProductTemplateQuickAdd } from '@/components/ProductTemplateQuickAdd'
 
 interface QuoteBuilderProps {
   quote: Quote
@@ -34,6 +35,7 @@ interface QuoteBuilderProps {
   paymentReminders?: PaymentReminder[]
   emailTemplates?: import('@/lib/types').EmailTemplate[]
   favoriteProducts?: FavoriteProduct[]
+  productTemplates?: import('@/lib/types').ProductTemplate[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
@@ -43,6 +45,7 @@ interface QuoteBuilderProps {
   onUpdateReminder?: (reminder: PaymentReminder) => void
   onSendEmail?: (notification: import('@/lib/types').EmailNotification) => void
   onUpdateFavoriteProduct?: (product: FavoriteProduct) => void
+  onUpdateProductTemplate?: (template: import('@/lib/types').ProductTemplate) => void
   isInline?: boolean
 }
 
@@ -55,6 +58,7 @@ export function QuoteBuilder({
   paymentReminders = [],
   emailTemplates = [],
   favoriteProducts = [],
+  productTemplates = [],
   onSave, 
   onBack, 
   onCreateCustomer,
@@ -64,6 +68,7 @@ export function QuoteBuilder({
   onUpdateReminder,
   onSendEmail,
   onUpdateFavoriteProduct,
+  onUpdateProductTemplate,
   isInline = false
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
@@ -286,6 +291,17 @@ export function QuoteBuilder({
           </div>
           
           <Separator />
+
+          {productTemplates && productTemplates.length > 0 && (
+            <>
+              <ProductTemplateQuickAdd
+                templates={productTemplates}
+                onAddToQuote={handleAddLineItem}
+                onUpdateTemplate={onUpdateProductTemplate}
+              />
+              <Separator />
+            </>
+          )}
 
           {favoriteProducts && favoriteProducts.length > 0 && onUpdateFavoriteProduct && (
             <>

@@ -27,7 +27,7 @@ import {
   Keyboard,
   Package,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -61,6 +61,7 @@ function App() {
   const [filterPresets, setFilterPresets] = useKV<FilterPreset[]>('filter-presets', [])
   const [recentSearches, setRecentSearches] = useKV<RecentSearch[]>('recent-searches', [])
   const [favoriteProducts, setFavoriteProducts] = useKV<FavoriteProduct[]>('favorite-products', [])
+  const [productTemplates, setProductTemplates] = useKV<ProductTemplate[]>('product-templates', [])
   const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
     accountNumber: '',
     apiKey: ''
@@ -552,6 +553,25 @@ function App() {
     })
   }
 
+  const handleSaveProductTemplate = (template: ProductTemplate) => {
+    setProductTemplates((current) => [...(current || []), template])
+  }
+
+  const handleUpdateProductTemplate = (template: ProductTemplate) => {
+    setProductTemplates((current) => {
+      const existing = current || []
+      return existing.map(t => t.id === template.id ? template : t)
+    })
+  }
+
+  const handleDeleteProductTemplate = (templateId: string) => {
+    setProductTemplates((current) => {
+      const existing = current || []
+      return existing.filter(t => t.id !== templateId)
+    })
+  }
+
+
   useKeyboardShortcuts([
     {
       key: 'n',
@@ -865,9 +885,13 @@ function App() {
           {currentPage.type === 'list' && currentPage.view === 'catalog' && (
             <ProductCatalog
               favorites={favoriteProducts || []}
+              templates={productTemplates || []}
               onAddFavorite={handleAddFavoriteProduct}
               onRemoveFavorite={handleRemoveFavoriteProduct}
               onUpdateFavorite={handleUpdateFavoriteProduct}
+              onSaveTemplate={handleSaveProductTemplate}
+              onUpdateTemplate={handleUpdateProductTemplate}
+              onDeleteTemplate={handleDeleteProductTemplate}
             />
           )}
           
@@ -902,6 +926,7 @@ function App() {
               paymentReminders={paymentReminders || []}
               emailTemplates={emailTemplates || []}
               favoriteProducts={favoriteProducts || []}
+              productTemplates={productTemplates || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {
@@ -920,6 +945,7 @@ function App() {
               onUpdateReminder={handleUpdatePaymentReminder}
               onSendEmail={addEmailNotification}
               onUpdateFavoriteProduct={handleUpdateFavoriteProduct}
+              onUpdateProductTemplate={handleUpdateProductTemplate}
               onNavigateToCustomer={currentPage.quote.customer.id ? () => {
                 const customer = customers?.find(c => c.id === currentPage.quote.customer.id)
                 if (customer) {

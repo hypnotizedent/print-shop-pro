@@ -17,16 +17,22 @@ import {
   Trash,
   ArrowCounterClockwise,
   Package,
+  Stack,
 } from '@phosphor-icons/react'
 import { ssActivewearAPI } from '@/lib/ssactivewear-api'
 import { sanMarAPI } from '@/lib/sanmar-api'
-import type { FavoriteProduct, SupplierType } from '@/lib/types'
+import { ProductTemplateManager } from '@/components/ProductTemplateManager'
+import type { FavoriteProduct, SupplierType, ProductTemplate } from '@/lib/types'
 
 interface ProductCatalogProps {
   favorites: FavoriteProduct[]
+  templates: ProductTemplate[]
   onAddFavorite: (product: FavoriteProduct) => void
   onRemoveFavorite: (productId: string) => void
   onUpdateFavorite: (product: FavoriteProduct) => void
+  onSaveTemplate: (template: ProductTemplate) => void
+  onUpdateTemplate: (template: ProductTemplate) => void
+  onDeleteTemplate: (templateId: string) => void
 }
 
 interface CatalogProduct {
@@ -45,8 +51,17 @@ interface CatalogProduct {
   stock?: number
 }
 
-export function ProductCatalog({ favorites, onAddFavorite, onRemoveFavorite, onUpdateFavorite }: ProductCatalogProps) {
-  const [activeTab, setActiveTab] = useState<'browse' | 'favorites'>('browse')
+export function ProductCatalog({ 
+  favorites, 
+  templates,
+  onAddFavorite, 
+  onRemoveFavorite, 
+  onUpdateFavorite,
+  onSaveTemplate,
+  onUpdateTemplate,
+  onDeleteTemplate,
+}: ProductCatalogProps) {
+  const [activeTab, setActiveTab] = useState<'browse' | 'favorites' | 'templates'>('browse')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierType>('ssactivewear')
   const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([])
@@ -242,8 +257,8 @@ export function ProductCatalog({ favorites, onAddFavorite, onRemoveFavorite, onU
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'favorites')} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'browse' | 'favorites' | 'templates')} className="w-full">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="browse" className="gap-2">
               <Package />
               Browse Products
@@ -251,6 +266,10 @@ export function ProductCatalog({ favorites, onAddFavorite, onRemoveFavorite, onU
             <TabsTrigger value="favorites" className="gap-2">
               <Star />
               Favorites ({favorites.length})
+            </TabsTrigger>
+            <TabsTrigger value="templates" className="gap-2">
+              <Stack />
+              Templates ({templates.length})
             </TabsTrigger>
           </TabsList>
 
@@ -497,6 +516,16 @@ export function ProductCatalog({ favorites, onAddFavorite, onRemoveFavorite, onU
                 <p className="text-sm mt-2">Browse products and click the star icon to save favorites</p>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="templates" className="mt-6">
+            <ProductTemplateManager
+              templates={templates}
+              favorites={favorites}
+              onSaveTemplate={onSaveTemplate}
+              onUpdateTemplate={onUpdateTemplate}
+              onDeleteTemplate={onDeleteTemplate}
+            />
           </TabsContent>
         </Tabs>
       </div>

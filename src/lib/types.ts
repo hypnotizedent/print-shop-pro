@@ -386,3 +386,38 @@ export interface FavoriteProduct {
   lastUsed?: string
   usageCount: number
 }
+
+export interface ProductTemplate {
+  id: string
+  name: string
+  description?: string
+  product: {
+    supplier: SupplierType
+    styleId: string
+    styleName: string
+    brandName: string
+    colorName?: string
+    colorCode?: string
+    imageUrl?: string
+    wholesalePrice?: number
+    retailPrice?: number
+  }
+  defaultSizes?: Sizes
+  decorations: Omit<Decoration, 'id'>[]
+  pricing: {
+    unitPrice: number
+    setupFee: number
+    priceByQuantity?: Array<{
+      minQty: number
+      maxQty?: number
+      unitPrice: number
+    }>
+  }
+  notes?: string
+  tags?: string[]
+  createdAt: string
+  updatedAt: string
+  usageCount: number
+  lastUsed?: string
+  isActive: boolean
+}
