@@ -23,6 +23,7 @@ export function KeyboardShortcutsHelp({ open, onOpenChange }: KeyboardShortcutsH
       category: 'Actions',
       items: [
         { keys: ['⌘', 'N'], description: 'New Quote / Job / Customer (context-aware)' },
+        { keys: ['⌘', 'S'], description: 'Save Quote (when in Quote Builder)' },
         { keys: ['⌘', 'K'], description: 'Focus search' },
         { keys: ['Esc'], description: 'Close detail view or go back' },
         { keys: ['?'], description: 'Show keyboard shortcuts' },

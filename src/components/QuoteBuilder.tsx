@@ -84,7 +84,7 @@ export function QuoteBuilder({
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
-        handleSave()
+        handleSave(true)
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault()
@@ -100,10 +100,14 @@ export function QuoteBuilder({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [quote, isInline])
   
-  const handleSave = () => {
+  const handleSave = (fromKeyboard = false) => {
     onSave(quote)
     setLastSaved(new Date())
-    toast.success('Quote saved')
+    if (fromKeyboard) {
+      toast.success('Quote saved', { description: 'Keyboard shortcut: ⌘+S' })
+    } else {
+      toast.success('Quote saved')
+    }
   }
   
   const handleAddLineItem = () => {
@@ -223,7 +227,7 @@ export function QuoteBuilder({
             
             <Button 
               variant="outline" 
-              onClick={handleSave}
+              onClick={() => handleSave(false)}
               title="Save (⌘S)"
             >
               <FloppyDisk size={16} className="mr-2" />
@@ -233,7 +237,7 @@ export function QuoteBuilder({
             <Button 
               onClick={() => {
                 setQuote({ ...quote, status: 'sent' })
-                handleSave()
+                handleSave(false)
               }}
               disabled={!quote.customer.id || quote.line_items.length === 0}
             >
