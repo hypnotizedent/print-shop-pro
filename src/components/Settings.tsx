@@ -599,7 +599,7 @@ export function Settings({
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="inline-flex w-full justify-start overflow-x-auto flex-wrap gap-1">
+          <TabsList className="inline-flex w-full justify-start flex-wrap gap-1 h-auto">
             {filteredTabs.map((tab) => {
               const Icon = tab.icon
               return (
