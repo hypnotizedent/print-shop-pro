@@ -700,7 +700,7 @@ function App() {
       metaKey: true,
       callback: () => {
         setCurrentPage({ type: 'list', view: 'catalog' })
-        toast('Catalog', { description: 'Keyboard shortcut: ⌘+5' })
+        toast('Catalog', { description: 'Keyboard shortcut: ���+5' })
       },
     },
     {
