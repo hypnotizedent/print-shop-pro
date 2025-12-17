@@ -145,6 +145,20 @@ This is a multi-view production management system with complex state management,
 - **Progression**: View reports page → See revenue totals → Review quote/job status breakdowns → See top customers by revenue
 - **Success criteria**: All metrics calculate correctly; top customers ranked by total approved quote value; status breakdowns show percentages; data updates when underlying data changes
 
+### Customer Pricing Rules
+- **Functionality**: Create automatic pricing rules based on customer tier (Bronze/Silver/Gold/Platinum) or order volume with configurable discounts applied to products, setup fees, or total
+- **Purpose**: Reward loyal customers and high-volume orders with automatic discounts; ensure consistent pricing across similar orders; incentivize larger orders
+- **Trigger**: Navigate to Settings → Pricing tab; assign customer tier in customer profile
+- **Progression**: Create pricing rule → Select rule type (tier discount, volume discount, product discount, category discount) → Set conditions (customer tiers, minimum quantity, minimum order value) → Configure discount (percentage or fixed amount) → Set priority and activate → Rule applies automatically when conditions met → Quote builder shows suggested discount → Manual approval to apply
+- **Success criteria**: Can create multiple pricing rules with different conditions; rules sorted by priority; higher priority rules evaluated first; tier-based rules only apply to customers with assigned tiers; volume rules check total quantity across all line items; minimum order value rules check quote subtotal; discount calculation applies to specified target (product only, setup only, or total); active/inactive toggle works; quote builder displays applicable rules with suggested discount amount; pricing rules indicator shows which rules match current quote; suggested discount can be accepted or ignored; rules manageable from Settings with full CRUD operations
+
+### Quote Templates by Category
+- **Functionality**: Pre-configured quote templates organized by category (Events, Retail, Corporate, Non-Profit, Sports, School, Custom) with saved line items, decorations, pricing, and default settings
+- **Purpose**: Accelerate quote creation for common order types; ensure consistency across similar projects; reduce data entry for recurring order patterns
+- **Trigger**: Navigate to Settings → Templates tab; create new quote from template
+- **Progression**: Create template → Select category → Name and describe template → Configure default line items with products and decorations → Set default discount and notes → Add tags for searchability → Save template → Browse templates by category or search → Click "Use Template" → New quote created with all template settings → Customize as needed → Save quote
+- **Success criteria**: Templates organized into 7 categories with dedicated tabs; each template shows category icon, name, description, item count, and usage statistics; can filter templates by category; search across template names, descriptions, and tags; template preview shows all included line items and decorations; using template creates new quote with all line items, decorations, default customer tier, default discount, and default notes pre-filled; template line items fully editable after creation; templates track usage count and last used date; can create template from existing quote; can edit and delete templates; category customization allows for "Custom" category with user-defined name; templates include optional default customer info for recurring clients
+
 ### Inline Spreadsheet Editing
 - **Functionality**: Click-to-edit cells for line items with keyboard navigation (Tab, Enter, Arrow keys, Escape)
 - **Purpose**: Speed data entry by mimicking familiar spreadsheet UX

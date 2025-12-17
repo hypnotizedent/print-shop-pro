@@ -8,14 +8,16 @@ import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail } from '@/lib/types'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent } from '@phosphor-icons/react'
+import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
 import { SmsTemplates } from '@/components/SmsTemplates'
 import { CustomerSmsOptOuts } from '@/components/CustomerSmsOptOuts'
 import { EmailTemplatesManager } from '@/components/EmailTemplatesManager'
 import { ScheduledEmailsManager } from '@/components/ScheduledEmailsManager'
+import { PricingRulesManager } from '@/components/PricingRulesManager'
+import { QuoteTemplateManager } from '@/components/QuoteTemplateManager'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 
@@ -45,6 +47,8 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
   const [smsPreferences, setSmsPreferences] = useKV<CustomerSmsPreferences[]>('customer-sms-preferences', [])
   const [emailTemplates, setEmailTemplates] = useKV<EmailTemplate[]>('email-templates', [])
   const [scheduledEmails, setScheduledEmails] = useKV<ScheduledEmail[]>('scheduled-emails', [])
+  const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
+  const [quoteTemplates, setQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
   
   const [primaryInput, setPrimaryInput] = useState(primaryColor || 'oklch(0.7 0.17 166)')
   const [accentInput, setAccentInput] = useState(accentColor || 'oklch(0.78 0.15 166)')
@@ -222,13 +226,53 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
     toast.success('SanMar API configured!')
   }
 
+  const handleSavePricingRule = (rule: CustomerPricingRule) => {
+    setPricingRules((current) => [...(current || []), rule])
+  }
+
+  const handleUpdatePricingRule = (rule: CustomerPricingRule) => {
+    setPricingRules((current) => {
+      const existing = current || []
+      return existing.map((r) => r.id === rule.id ? rule : r)
+    })
+  }
+
+  const handleDeletePricingRule = (ruleId: string) => {
+    setPricingRules((current) => {
+      const existing = current || []
+      return existing.filter((r) => r.id !== ruleId)
+    })
+  }
+
+  const handleSaveQuoteTemplate = (template: QuoteTemplate) => {
+    setQuoteTemplates((current) => [...(current || []), template])
+  }
+
+  const handleUpdateQuoteTemplate = (template: QuoteTemplate) => {
+    setQuoteTemplates((current) => {
+      const existing = current || []
+      return existing.map((t) => t.id === template.id ? template : t)
+    })
+  }
+
+  const handleDeleteQuoteTemplate = (templateId: string) => {
+    setQuoteTemplates((current) => {
+      const existing = current || []
+      return existing.filter((t) => t.id !== templateId)
+    })
+  }
+
+  const handleUseQuoteTemplate = (template: QuoteTemplate) => {
+    toast.info('Template integration coming soon')
+  }
+
   return (
     <div className="h-full overflow-auto p-8">
       <div className="max-w-4xl">
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="general">
               <Palette size={16} className="mr-2" />
               General
@@ -237,13 +281,21 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
               <ShoppingBag size={16} className="mr-2" />
               Suppliers
             </TabsTrigger>
+            <TabsTrigger value="pricing">
+              <Percent size={16} className="mr-2" />
+              Pricing
+            </TabsTrigger>
+            <TabsTrigger value="quote-templates">
+              <Tag size={16} className="mr-2" />
+              Templates
+            </TabsTrigger>
             <TabsTrigger value="email-templates">
               <Envelope size={16} className="mr-2" />
-              Email Templates
+              Emails
             </TabsTrigger>
             <TabsTrigger value="scheduled-emails">
               <Clock size={16} className="mr-2" />
-              Scheduled Emails
+              Scheduled
             </TabsTrigger>
             <TabsTrigger value="sms">
               <DeviceMobile size={16} className="mr-2" />
@@ -538,6 +590,29 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
                   </p>
                 </div>
               </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="pricing" className="space-y-6">
+            <Card className="p-6">
+              <PricingRulesManager
+                rules={pricingRules || []}
+                onSaveRule={handleSavePricingRule}
+                onUpdateRule={handleUpdatePricingRule}
+                onDeleteRule={handleDeletePricingRule}
+              />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="quote-templates" className="space-y-6">
+            <Card className="p-6">
+              <QuoteTemplateManager
+                templates={quoteTemplates || []}
+                onSaveTemplate={handleSaveQuoteTemplate}
+                onUpdateTemplate={handleUpdateQuoteTemplate}
+                onDeleteTemplate={handleDeleteQuoteTemplate}
+                onUseTemplate={handleUseQuoteTemplate}
+              />
             </Card>
           </TabsContent>
 

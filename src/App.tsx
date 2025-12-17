@@ -27,7 +27,7 @@ import {
   Keyboard,
   Package,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate, CustomerPricingRule, QuoteTemplate } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -62,6 +62,8 @@ function App() {
   const [recentSearches, setRecentSearches] = useKV<RecentSearch[]>('recent-searches', [])
   const [favoriteProducts, setFavoriteProducts] = useKV<FavoriteProduct[]>('favorite-products', [])
   const [productTemplates, setProductTemplates] = useKV<ProductTemplate[]>('product-templates', [])
+  const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
+  const [quoteTemplates, setQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
   const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
     accountNumber: '',
     apiKey: ''

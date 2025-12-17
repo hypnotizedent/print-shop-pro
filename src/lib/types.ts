@@ -6,6 +6,57 @@ export type DiscountType = 'percent' | 'fixed'
 
 export type CustomerTier = 'bronze' | 'silver' | 'gold' | 'platinum'
 
+export type PricingRuleType = 'tier-discount' | 'volume-discount' | 'product-discount' | 'category-discount'
+
+export interface CustomerPricingRule {
+  id: string
+  name: string
+  description?: string
+  type: PricingRuleType
+  isActive: boolean
+  priority: number
+  conditions: {
+    customerTiers?: CustomerTier[]
+    minOrderValue?: number
+    minQuantity?: number
+    productCategories?: string[]
+    specificProducts?: string[]
+  }
+  discount: {
+    type: 'percent' | 'fixed'
+    value: number
+    applyTo: 'product' | 'setup' | 'total'
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+export type QuoteTemplateCategory = 'events' | 'retail' | 'corporate' | 'nonprofit' | 'sports' | 'school' | 'custom'
+
+export interface QuoteTemplate {
+  id: string
+  name: string
+  description?: string
+  category: QuoteTemplateCategory
+  customCategory?: string
+  lineItems: Omit<LineItem, 'id'>[]
+  defaultCustomer?: Partial<Customer>
+  defaultDiscount?: {
+    type: DiscountType
+    value: number
+  }
+  defaultNotes?: {
+    customer?: string
+    internal?: string
+  }
+  tags?: string[]
+  createdAt: string
+  updatedAt: string
+  usageCount: number
+  lastUsed?: string
+  isActive: boolean
+}
+
 export interface CustomerEmailPreferences {
   quoteApprovalRequests: boolean
   quoteApprovedConfirmations: boolean
