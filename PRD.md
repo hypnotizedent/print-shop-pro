@@ -321,3 +321,80 @@ Animations should be minimal and functional - emphasizing state changes and prov
   - **Breakpoints**: Mobile (<768px), Tablet (768-1024px), Desktop (1024px+)
   - **Touch Targets**: Minimum 44x44px for all interactive elements
   - **Overflow**: Horizontal scroll where necessary (job details, size grids) with scroll indicators
+
+## Webhook Integration for Real-Time Inventory Updates
+
+### Overview
+The webhook system enables real-time inventory synchronization with supplier APIs (SS Activewear, SanMar), providing automatic notifications when product stock levels change, prices update, or products are discontinued.
+
+### Core Features
+
+#### Webhook Configuration Management
+- **Functionality**: Create and manage webhook endpoints for each supplier integration
+- **Purpose**: Enable automatic inventory updates without manual polling, reducing API calls and ensuring data freshness
+- **Trigger**: Navigate to Settings → Webhooks tab
+- **Progression**: Create webhook → Select supplier source → Configure event types → Activate → Test with mock data → Receive live updates
+- **Success criteria**: Webhook configurations persist; can be toggled on/off; test webhooks generate realistic mock events; clear status indicators show active/inactive state
+
+#### Real-Time Event Processing
+- **Functionality**: Automatically process incoming webhook payloads and update internal inventory snapshots
+- **Purpose**: Maintain accurate inventory data without constant API polling
+- **Trigger**: Supplier sends webhook POST request when inventory changes
+- **Progression**: Receive webhook → Validate payload → Parse supplier-specific format → Update inventory snapshots → Generate notifications/alerts → Mark event as processed
+- **Success criteria**: Events process within 1 second; failed events can be retried; processing errors are logged with details; completed events show processing timestamp
+
+#### Inventory Alert System
+- **Functionality**: Automatic alerts when products fall below thresholds or go out of stock
+- **Purpose**: Proactive notification of inventory issues that could impact active quotes or jobs
+- **Trigger**: Webhook event contains low/out-of-stock inventory update
+- **Progression**: Process inventory update → Compare to thresholds → Generate alert if needed → Check for affected quotes/jobs → Display alert in dashboard → User acknowledges → Alert archived
+- **Success criteria**: Alerts appear within seconds of webhook receipt; show affected quotes/jobs; can be acknowledged individually or in bulk; acknowledged alerts move to history
+
+#### Event Log & Monitoring
+- **Functionality**: Comprehensive log of all webhook events with filtering and search
+- **Purpose**: Audit trail and troubleshooting for webhook integrations
+- **Trigger**: View Settings → Webhooks → Events tab
+- **Progression**: View event list → Filter by status/source → Search by SKU/product → Expand event details → View product updates → Retry failed events
+- **Success criteria**: Events sortable by date; expandable details show full payload; failed events display error messages; search responds within 200ms
+
+### Event Types Supported
+- **inventory.updated**: General inventory level changes
+- **inventory.low_stock**: Product falls below 10 unit threshold
+- **inventory.out_of_stock**: Product quantity reaches zero
+- **inventory.restocked**: Previously out-of-stock product becomes available
+- **product.updated**: Product details or specifications change
+- **product.discontinued**: Supplier discontinues product
+- **pricing.updated**: Product price changes
+
+### Webhook Dashboard Metrics
+- **Active Webhooks**: Count of enabled webhook configurations
+- **Total Events**: Historical count of received webhook events
+- **Pending Alerts**: Unacknowledged inventory alerts requiring attention
+- **Completed Events**: Successfully processed webhook count
+
+### Integration with Existing Features
+- **Product Catalog**: Inventory snapshots displayed alongside product details
+- **Quote Builder**: Low stock warnings appear when adding products to quotes
+- **Purchase Orders**: Alerts cross-reference with pending purchase orders
+- **Supplier Performance**: Webhook reliability metrics tracked per supplier
+
+### Technical Implementation
+- **Webhook Processor**: Parses supplier-specific payload formats (SS Activewear, SanMar)
+- **Inventory Store**: In-memory cache of inventory snapshots keyed by supplier:style:color:size
+- **Notification Engine**: Generates user-facing notifications from webhook events
+- **Alert Generator**: Creates actionable alerts with affected quote/job references
+- **Retry Logic**: Automatic retry with exponential backoff for failed events
+
+### Security Considerations
+- **Webhook Secrets**: Optional secret keys for payload verification
+- **HTTPS Only**: Webhooks must use secure endpoints
+- **Rate Limiting**: Protection against webhook flooding
+- **Payload Validation**: Strict schema validation before processing
+
+### Future Enhancements
+- **Email Notifications**: Send email alerts for critical inventory issues
+- **SMS Alerts**: Text notifications for urgent out-of-stock items
+- **Webhook Analytics**: Detailed metrics on webhook performance and reliability
+- **Custom Thresholds**: Per-product low stock threshold configuration
+- **Predictive Alerts**: Machine learning to predict stockouts before they occur
+

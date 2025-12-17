@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent, ChartLine } from '@phosphor-icons/react'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent, ChartLine, Plugs } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate, PurchaseOrder } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
@@ -20,8 +20,10 @@ import { PricingRulesManager } from '@/components/PricingRulesManager'
 import { QuoteTemplateManager } from '@/components/QuoteTemplateManager'
 import { PurchaseOrderManager } from '@/components/PurchaseOrderManager'
 import { SupplierPerformance } from '@/components/SupplierPerformance'
+import { WebhookDashboard } from '@/components/WebhookDashboard'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
+import { WebhookConfig, WebhookEvent, InventoryAlert, WebhookNotification } from '@/lib/webhook-types'
 
 interface SettingsProps {
   quotes: Quote[]
@@ -74,6 +76,10 @@ export function Settings({
   const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
   const [internalQuoteTemplates, setInternalQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
   const [internalPurchaseOrders, setInternalPurchaseOrders] = useKV<PurchaseOrder[]>('purchase-orders', [])
+  const [webhookConfigs, setWebhookConfigs] = useKV<WebhookConfig[]>('webhook-configs', [])
+  const [webhookEvents, setWebhookEvents] = useKV<WebhookEvent[]>('webhook-events', [])
+  const [inventoryAlerts, setInventoryAlerts] = useKV<InventoryAlert[]>('inventory-alerts', [])
+  const [webhookNotifications, setWebhookNotifications] = useKV<WebhookNotification[]>('webhook-notifications', [])
   
   const quoteTemplates = externalQuoteTemplates || internalQuoteTemplates
   const purchaseOrders = externalPurchaseOrders || internalPurchaseOrders
@@ -340,13 +346,87 @@ export function Settings({
     }
   }
 
+  const handleSaveWebhookConfig = (config: WebhookConfig) => {
+    setWebhookConfigs((current) => {
+      const existing = current || []
+      const index = existing.findIndex((c) => c.id === config.id)
+      if (index >= 0) {
+        const updated = [...existing]
+        updated[index] = config
+        return updated
+      }
+      return [...existing, config]
+    })
+  }
+
+  const handleDeleteWebhookConfig = (configId: string) => {
+    setWebhookConfigs((current) => {
+      const existing = current || []
+      return existing.filter((c) => c.id !== configId)
+    })
+  }
+
+  const handleToggleWebhookConfig = (configId: string, isActive: boolean) => {
+    setWebhookConfigs((current) => {
+      const existing = current || []
+      return existing.map((c) => c.id === configId ? { ...c, isActive } : c)
+    })
+  }
+
+  const handleUpdateWebhookEvent = (event: WebhookEvent) => {
+    setWebhookEvents((current) => {
+      const existing = current || []
+      const index = existing.findIndex((e) => e.id === event.id)
+      if (index >= 0) {
+        const updated = [...existing]
+        updated[index] = event
+        return updated
+      }
+      return [event, ...existing]
+    })
+  }
+
+  const handleAddWebhookEvent = (event: WebhookEvent) => {
+    setWebhookEvents((current) => [event, ...(current || [])])
+  }
+
+  const handleAcknowledgeAlert = (alertId: string) => {
+    setInventoryAlerts((current) => {
+      const existing = current || []
+      return existing.map((a) =>
+        a.id === alertId
+          ? { ...a, acknowledgedAt: new Date().toISOString(), acknowledgedBy: 'System' }
+          : a
+      )
+    })
+  }
+
+  const handleDismissAllAlerts = () => {
+    setInventoryAlerts((current) => {
+      const existing = current || []
+      return existing.map((a) => ({
+        ...a,
+        acknowledgedAt: a.acknowledgedAt || new Date().toISOString(),
+        acknowledgedBy: a.acknowledgedBy || 'System',
+      }))
+    })
+  }
+
+  const handleAddInventoryAlert = (alert: InventoryAlert) => {
+    setInventoryAlerts((current) => [alert, ...(current || [])])
+  }
+
+  const handleAddWebhookNotification = (notification: WebhookNotification) => {
+    setWebhookNotifications((current) => [notification, ...(current || [])])
+  }
+
   return (
     <div className="h-full overflow-auto p-8">
       <div className="max-w-4xl">
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-11">
+          <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="general">
               <Palette size={16} className="mr-2" />
               General
@@ -354,6 +434,10 @@ export function Settings({
             <TabsTrigger value="api">
               <ShoppingBag size={16} className="mr-2" />
               Suppliers
+            </TabsTrigger>
+            <TabsTrigger value="webhooks">
+              <Plugs size={16} className="mr-2" />
+              Webhooks
             </TabsTrigger>
             <TabsTrigger value="purchase-orders">
               <ShoppingBag size={16} className="mr-2" />
@@ -673,6 +757,24 @@ export function Settings({
                 </div>
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="webhooks" className="space-y-6">
+            <WebhookDashboard
+              configs={webhookConfigs || []}
+              events={webhookEvents || []}
+              alerts={inventoryAlerts || []}
+              notifications={webhookNotifications || []}
+              onSaveConfig={handleSaveWebhookConfig}
+              onDeleteConfig={handleDeleteWebhookConfig}
+              onToggleConfig={handleToggleWebhookConfig}
+              onUpdateEvent={handleUpdateWebhookEvent}
+              onAcknowledgeAlert={handleAcknowledgeAlert}
+              onDismissAllAlerts={handleDismissAllAlerts}
+              onAddEvent={handleAddWebhookEvent}
+              onAddAlert={handleAddInventoryAlert}
+              onAddNotification={handleAddWebhookNotification}
+            />
           </TabsContent>
 
           <TabsContent value="purchase-orders" className="space-y-6">
