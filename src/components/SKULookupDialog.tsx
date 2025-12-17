@@ -428,9 +428,8 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                             const colorId = isSanMarColor(color) ? color.colorID : color.colorID.toString()
                             
                             return (
-                              <SelectItem key={colorId} value={colorId}>
                                 <div className="flex items-center gap-2 w-full">
-                                  <div 
+                                <div className="flex items-center gap-2 w-full">
                                     className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
                                     style={{ backgroundColor: `#${color.colorCode}` }}
                                   />
