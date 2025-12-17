@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { WebhookManager } from './WebhookManager'
 import { WebhookEventViewer } from './WebhookEventViewer'
 import { InventoryAlerts } from './InventoryAlerts'
+import { WebhookAnalytics } from './WebhookAnalytics'
 import { toast } from 'sonner'
 import { 
   WebhookConfig, 
@@ -19,12 +20,15 @@ import {
   parseSSActivewearWebhook,
   parseSanMarWebhook 
 } from '@/lib/webhook-processor'
+import { generateRealisticWebhookScenario } from '@/lib/sample-webhook-data'
 import { 
   Plugs, 
   Bell, 
   ClockCounterClockwise,
   ArrowsClockwise,
   CheckCircle,
+  ChartBar,
+  Flask,
 } from '@phosphor-icons/react'
 
 interface WebhookDashboardProps {
@@ -154,13 +158,34 @@ export function WebhookDashboard({
     }, 1000)
   }
 
+  const handleGenerateSampleData = () => {
+    const sampleEvents = generateRealisticWebhookScenario()
+    
+    sampleEvents.forEach(event => {
+      onAddEvent(event)
+    })
+    
+    toast.success(`Generated ${sampleEvents.length} sample webhook events`, {
+      description: 'Analytics dashboard populated with realistic data'
+    })
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Webhook Integration</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage real-time supplier inventory updates and alerts
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Webhook Integration</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage real-time supplier inventory updates and alerts
+          </p>
+        </div>
+        
+        {events.length === 0 && (
+          <Button onClick={handleGenerateSampleData} variant="outline">
+            <Flask size={18} className="mr-2" />
+            Generate Sample Data
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -216,7 +241,7 @@ export function WebhookDashboard({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">
             <Plugs size={16} className="mr-2" />
             Webhooks
@@ -244,6 +269,10 @@ export function WebhookDashboard({
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="analytics">
+            <ChartBar size={16} className="mr-2" />
+            Analytics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
@@ -269,6 +298,10 @@ export function WebhookDashboard({
             onAcknowledge={onAcknowledgeAlert}
             onDismissAll={onDismissAllAlerts}
           />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <WebhookAnalytics events={events} />
         </TabsContent>
       </Tabs>
 

@@ -2088,6 +2088,240 @@ const activeAPI = isDevelopment ? mockSSActivewearAPI : ssActivewearAPI
 
 ---
 
+## Webhook Integration & Analytics
+
+### Overview
+
+The webhook system enables real-time inventory updates from suppliers (S&S Activewear, SanMar) and provides comprehensive analytics for monitoring reliability and performance.
+
+### Webhook Event Types
+
+```typescript
+type WebhookEventType = 
+  | 'inventory.updated'
+  | 'inventory.low_stock'
+  | 'inventory.out_of_stock'
+  | 'inventory.restocked'
+  | 'product.updated'
+  | 'product.discontinued'
+  | 'pricing.updated'
+```
+
+### Webhook Configuration
+
+**Location**: Settings → Webhooks tab
+
+**Storage**: Webhook configs stored in Spark KV at key `webhook-configs`
+
+```typescript
+interface WebhookConfig {
+  id: string
+  name: string
+  source: 'ssactivewear' | 'sanmar' | 'manual'
+  isActive: boolean
+  endpointUrl?: string
+  secret?: string
+  events: WebhookEventType[]
+  createdAt: string
+  updatedAt: string
+  lastTriggeredAt?: string
+}
+```
+
+### Webhook Events
+
+**Storage**: Events stored in Spark KV at key `webhook-events`
+
+```typescript
+interface WebhookEvent {
+  id: string
+  source: 'ssactivewear' | 'sanmar' | 'manual'
+  eventType: WebhookEventType
+  payload: WebhookPayload
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'retrying'
+  receivedAt: string
+  processedAt?: string
+  retryCount: number
+  error?: string
+}
+```
+
+### Analytics Metrics
+
+The webhook analytics dashboard tracks:
+
+**Overall Metrics**:
+- Total webhook events received
+- Success rate (%)
+- Average response time (ms)
+- Failed events count
+- Retrying events count
+
+**Per-Supplier Metrics**:
+- Event volume by supplier
+- Success rate by supplier
+- Average response time by supplier
+- Uptime percentage
+- Recent failures (24h window)
+- Last event timestamp
+
+**Event Type Breakdown**:
+- Distribution of event types
+- Volume by event category
+- Success rate by event type
+
+### Using the Analytics Dashboard
+
+**Access**: Navigate to Settings → Webhooks → Analytics tab
+
+**Features**:
+1. **Time Range Filter**: Last Hour, 24 Hours, 7 Days, 30 Days, All Time
+2. **Supplier Filter**: Filter by specific supplier or view all
+3. **Real-time Metrics**: Auto-updates as new events are processed
+4. **Reliability Badges**: Excellent (≥99%), Good (≥95%), Fair (≥90%), Poor (<90%)
+
+### Sample Data Generation
+
+For testing and demonstration purposes, the dashboard includes a "Generate Sample Data" button that creates realistic webhook events with:
+- 100-150 events for S&S Activewear (98% success rate)
+- 80-120 events for SanMar (96% success rate)
+- 5-15 manual events (100% success rate)
+- Realistic response times (150-1200ms)
+- Distributed across various event types
+
+```typescript
+import { generateRealisticWebhookScenario } from '@/lib/sample-webhook-data'
+
+// Generate sample events
+const sampleEvents = generateRealisticWebhookScenario()
+// Returns ~200 events across all suppliers
+```
+
+### Webhook Processing
+
+Events are processed asynchronously with automatic retry logic:
+
+```typescript
+import { webhookProcessor } from '@/lib/webhook-processor'
+
+// Process event
+const result = await webhookProcessor.processWebhookEvent(
+  event,
+  onNotification,  // Callback for notifications
+  onAlert          // Callback for alerts
+)
+
+// Returns: { success: boolean, notifications: [], alerts: [] }
+```
+
+### Inventory Alerts
+
+Webhook processing generates inventory alerts for:
+- Low stock warnings (quantity < threshold)
+- Out of stock alerts (quantity = 0)
+- Restocked notifications
+- Product discontinuations
+- Price changes
+
+**Storage**: Alerts stored in Spark KV at key `inventory-alerts`
+
+```typescript
+interface InventoryAlert {
+  id: string
+  sku: string
+  styleName: string
+  colorName: string
+  sizeName: string
+  alertType: 'low_stock' | 'out_of_stock' | 'restocked'
+  currentQuantity: number
+  threshold?: number
+  supplier: 'ssactivewear' | 'sanmar' | 'manual'
+  affectedQuotes?: string[]
+  affectedJobs?: string[]
+  createdAt: string
+  acknowledgedAt?: string
+  acknowledgedBy?: string
+}
+```
+
+### Best Practices
+
+1. **Monitor Success Rates**: Keep supplier success rates above 95%
+2. **Set Up Alerts**: Configure notifications for critical inventory changes
+3. **Review Analytics Weekly**: Check the Analytics tab for trends and issues
+4. **Test Webhooks**: Use the "Test Webhook" feature to verify connectivity
+5. **Retry Failed Events**: Use the retry button on failed events to reprocess
+
+### Code Examples
+
+**Create Webhook Config**:
+
+```typescript
+import { useKV } from '@github/spark/hooks'
+import { generateId } from '@/lib/data'
+
+const [webhookConfigs, setWebhookConfigs] = useKV<WebhookConfig[]>('webhook-configs', [])
+
+const createWebhookConfig = () => {
+  const newConfig: WebhookConfig = {
+    id: generateId('wh'),
+    name: 'S&S Inventory Updates',
+    source: 'ssactivewear',
+    isActive: true,
+    events: ['inventory.updated', 'inventory.low_stock', 'inventory.out_of_stock'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+  
+  setWebhookConfigs((current) => [...current, newConfig])
+}
+```
+
+**Query Analytics Data**:
+
+```typescript
+import { useKV } from '@github/spark/hooks'
+
+const [webhookEvents] = useKV<WebhookEvent[]>('webhook-events', [])
+
+// Calculate success rate for last 24 hours
+const last24Hours = webhookEvents.filter(event => {
+  const eventTime = new Date(event.receivedAt).getTime()
+  return eventTime >= Date.now() - (24 * 60 * 60 * 1000)
+})
+
+const successful = last24Hours.filter(e => e.status === 'completed').length
+const successRate = (successful / last24Hours.length) * 100
+
+console.log(`Success rate (24h): ${successRate.toFixed(1)}%`)
+```
+
+**Handle Inventory Alerts**:
+
+```typescript
+import { useKV } from '@github/spark/hooks'
+
+const [inventoryAlerts, setInventoryAlerts] = useKV<InventoryAlert[]>('inventory-alerts', [])
+
+// Get unacknowledged low stock alerts
+const lowStockAlerts = inventoryAlerts.filter(
+  alert => alert.alertType === 'low_stock' && !alert.acknowledgedAt
+)
+
+// Acknowledge an alert
+const acknowledgeAlert = (alertId: string) => {
+  setInventoryAlerts((current) =>
+    current.map(alert =>
+      alert.id === alertId
+        ? { ...alert, acknowledgedAt: new Date().toISOString(), acknowledgedBy: 'System' }
+        : alert
+    )
+  )
+}
+```
+
+---
+
 **Last Updated**: 2024  
 **Version**: 1.0.0  
 **Maintained By**: Mint Prints Development Team
