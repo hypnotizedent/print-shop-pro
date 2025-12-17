@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerArtworkLibrary } from '@/components/CustomerArtworkLibrary'
 import { CustomerEmailPreferences } from '@/components/CustomerEmailPreferences'
 import { EmailNotificationHistory } from '@/components/EmailNotificationHistory'
+import { TaxCertManager } from '@/components/TaxCertManager'
 import {
   Select,
   SelectContent,
@@ -19,8 +20,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin, CaretDown, Image } from '@phosphor-icons/react'
-import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs, EmailNotification, EmailTemplate } from '@/lib/types'
+import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin, CaretDown, Image, Receipt } from '@phosphor-icons/react'
+import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs, EmailNotification, EmailTemplate, TaxCertificate } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -31,6 +32,7 @@ interface CustomerDetailProps {
   quotes: Quote[]
   jobs: Job[]
   customerArtworkFiles: CustomerArtworkFile[]
+  taxCertificates: TaxCertificate[]
   emailNotifications: EmailNotification[]
   emailTemplates?: EmailTemplate[]
   onBack: () => void
@@ -40,6 +42,9 @@ interface CustomerDetailProps {
   onSaveArtworkFile: (artwork: CustomerArtworkFile) => void
   onDeleteArtworkFile: (artworkId: string) => void
   onUpdateArtworkFile: (artwork: CustomerArtworkFile) => void
+  onSaveTaxCertificate: (certificate: TaxCertificate) => void
+  onDeleteTaxCertificate: (certificateId: string) => void
+  onUpdateTaxCertificate: (certificate: TaxCertificate) => void
   onSendEmail: (notification: EmailNotification) => void
 }
 
@@ -48,6 +53,7 @@ export function CustomerDetail({
   quotes, 
   jobs, 
   customerArtworkFiles,
+  taxCertificates,
   emailNotifications,
   emailTemplates,
   onBack, 
@@ -57,6 +63,9 @@ export function CustomerDetail({
   onSaveArtworkFile,
   onDeleteArtworkFile,
   onUpdateArtworkFile,
+  onSaveTaxCertificate,
+  onDeleteTaxCertificate,
+  onUpdateTaxCertificate,
   onSendEmail,
 }: CustomerDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -64,10 +73,12 @@ export function CustomerDetail({
   const [emailPreferencesOpen, setEmailPreferencesOpen] = useState(false)
   const [emailHistoryOpen, setEmailHistoryOpen] = useState(false)
   const [artworkLibraryOpen, setArtworkLibraryOpen] = useState(false)
+  const [taxCertOpen, setTaxCertOpen] = useState(false)
   
   const customerQuotes = quotes.filter(q => q.customer.id === customer.id)
   const customerJobs = jobs.filter(j => j.customer.id === customer.id)
   const customerEmails = emailNotifications.filter(e => e.customerId === customer.id)
+  const customerTaxCerts = taxCertificates.filter(tc => tc.customerId === customer.id)
   const customerArtwork = customerArtworkFiles.filter(af => af.customerId === customer.id)
   
   const totalRevenue = customerQuotes
@@ -426,6 +437,34 @@ export function CustomerDetail({
                     onDeleteArtworkFile={onDeleteArtworkFile}
                     onUpdateArtworkFile={onUpdateArtworkFile}
                     hideWrapper={true}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+          
+          <Collapsible open={taxCertOpen} onOpenChange={setTaxCertOpen}>
+            <Card className="overflow-hidden">
+              <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Receipt size={20} className="text-primary" />
+                  <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
+                    Tax Certificates ({customerTaxCerts.length})
+                  </h2>
+                </div>
+                <CaretDown 
+                  size={20} 
+                  className={`text-muted-foreground transition-transform ${taxCertOpen ? 'rotate-180' : ''}`}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6 pt-2">
+                  <TaxCertManager
+                    customerId={customer.id}
+                    certificates={customerTaxCerts}
+                    onSaveCertificate={onSaveTaxCertificate}
+                    onDeleteCertificate={onDeleteTaxCertificate}
+                    onUpdateCertificate={onUpdateTaxCertificate}
                   />
                 </div>
               </CollapsibleContent>

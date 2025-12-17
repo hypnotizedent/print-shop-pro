@@ -149,11 +149,18 @@ export function calculateQuoteTotals(quote: Quote): Quote {
     ? (subtotal * quote.discount / 100) 
     : quote.discount
   
-  const total = subtotal - discountAmount
+  const afterDiscount = subtotal - discountAmount
+  
+  // Only apply tax if customer is not tax exempt
+  const taxRate = quote.customer.taxExempt ? 0 : (quote.tax_rate || 0)
+  const taxAmount = afterDiscount * (taxRate / 100)
+  
+  const total = afterDiscount + taxAmount
   
   return {
     ...quote,
     subtotal,
+    tax_amount: taxAmount,
     total,
   }
 }
