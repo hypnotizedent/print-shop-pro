@@ -18,32 +18,51 @@ export function ProductMockupWithSize({
   const [hoveredDecoration, setHoveredDecoration] = useState<Decoration | null>(null)
   
   const decorationsWithArtwork = decorations?.filter(d => d.artwork) || []
+  const decorationsWithMockup = decorations?.filter(d => d.mockup) || []
   const hasDecorations = decorationsWithArtwork.length > 0
   const displayDecoration = hoveredDecoration || (hasDecorations ? decorationsWithArtwork[0] : null)
+  
+  const hasMockup = decorationsWithMockup.length > 0
   
   if (size === 'small') {
     return (
       <div className="relative group">
         <div className="w-12 h-12 flex-shrink-0">
-          <ProductMockup
-            productType={productType}
-            color={color}
-            size="small"
-            showPrintArea={!!displayDecoration}
-          />
+          {hasMockup && decorationsWithMockup[0].mockup ? (
+            <img 
+              src={decorationsWithMockup[0].mockup.dataUrl}
+              alt="Product mockup"
+              className="w-full h-full object-cover rounded"
+            />
+          ) : (
+            <ProductMockup
+              productType={productType}
+              color={color}
+              size="small"
+              showPrintArea={!!displayDecoration}
+            />
+          )}
         </div>
         
-        {hasDecorations && (
+        {(hasDecorations || hasMockup) && (
           <div className="absolute top-0 left-14 hidden group-hover:block z-10 bg-popover border border-border rounded-lg shadow-lg p-3 min-w-[280px]">
             <div className="flex gap-3">
               <div className="flex-shrink-0">
-                <ProductMockup
-                  productType={productType}
-                  color={color}
-                  size="medium"
-                  showPrintArea={!!displayDecoration}
-                  view={displayDecoration?.location.toLowerCase().includes('back') ? 'back' : 'front'}
-                />
+                {hasMockup && decorationsWithMockup[0].mockup ? (
+                  <img 
+                    src={decorationsWithMockup[0].mockup.dataUrl}
+                    alt="Product mockup"
+                    className="w-32 h-32 object-cover rounded"
+                  />
+                ) : (
+                  <ProductMockup
+                    productType={productType}
+                    color={color}
+                    size="medium"
+                    showPrintArea={!!displayDecoration}
+                    view={displayDecoration?.location.toLowerCase().includes('back') ? 'back' : 'front'}
+                  />
+                )}
               </div>
               <div className="flex-1 space-y-2">
                 {decorationsWithArtwork.map((decoration) => (
@@ -87,13 +106,21 @@ export function ProductMockupWithSize({
   return (
     <div className="flex gap-4">
       <div className="flex-shrink-0">
-        <ProductMockup
-          productType={productType}
-          color={color}
-          size={size}
-          showPrintArea={!!displayDecoration}
-          view={displayDecoration?.location.toLowerCase().includes('back') ? 'back' : 'front'}
-        />
+        {hasMockup && decorationsWithMockup[0].mockup ? (
+          <img 
+            src={decorationsWithMockup[0].mockup.dataUrl}
+            alt="Product mockup"
+            className="w-48 h-48 object-cover rounded"
+          />
+        ) : (
+          <ProductMockup
+            productType={productType}
+            color={color}
+            size={size}
+            showPrintArea={!!displayDecoration}
+            view={displayDecoration?.location.toLowerCase().includes('back') ? 'back' : 'front'}
+          />
+        )}
       </div>
       {hasDecorations && (
         <div className="flex-1 space-y-2">

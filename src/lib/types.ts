@@ -139,6 +139,7 @@ export interface Decoration {
   inkThreadColors: string
   imprintSize?: string
   artwork?: ArtworkFile
+  mockup?: ArtworkFile
   setupFee: number
 }
 
@@ -155,6 +156,7 @@ export interface LineItem {
   colors: number
   sizes: Sizes
   quantity: number
+  genericQuantity?: number
   unit_price: number
   setup_fee: number
   line_total: number

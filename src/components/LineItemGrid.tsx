@@ -546,6 +546,23 @@ export function LineItemGrid({
                   />
                 </div>
               ))}
+              <div className="flex flex-col items-center flex-1 min-w-0 ml-2">
+                <label className="text-[10px] text-muted-foreground mb-0.5 font-medium">
+                  Qty
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={item.genericQuantity || ''}
+                  onChange={(e) => updateItem(index, { 
+                    genericQuantity: e.target.value ? Number(e.target.value) : undefined,
+                    quantity: e.target.value ? Number(e.target.value) : calculateSizesTotal(item.sizes)
+                  })}
+                  placeholder="0"
+                  className="h-7 w-full text-center text-xs tabular-nums border-0 bg-transparent hover:bg-background focus:bg-background px-1"
+                  title="Generic quantity field for orders without size breakdown"
+                />
+              </div>
             </div>
           </td>
           <td className="px-3 py-2.5">
