@@ -55,9 +55,9 @@ export function QuoteCard({ quote, onClick, onConvertToJob, onStatusChange, isEx
   
   return (
     <Card 
-      className={`p-4 cursor-pointer hover:border-primary/50 transition-all ${
-        isExpanded ? 'border-primary' : ''
-      } ${isSelected ? 'bg-primary/5 border-primary/30' : ''}`}
+      className={`p-4 cursor-pointer hover:border-border/80 transition-all bg-card border-border/50 ${
+        isExpanded ? 'border-border' : ''
+      } ${isSelected ? 'bg-muted/30 border-border' : ''}`}
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
