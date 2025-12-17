@@ -7,6 +7,7 @@ import type { Quote, Job, Customer, PaymentReminder, EmailNotification } from '@
 import { UnpaidBalancesReport } from '@/components/UnpaidBalancesReport'
 import { EmailStats } from '@/components/EmailStats'
 import { EmailNotificationHistory } from '@/components/EmailNotificationHistory'
+import { ProductStockTrends } from '@/components/ProductStockTrends'
 
 interface ReportsProps {
   quotes: Quote[]
@@ -113,6 +114,7 @@ export function Reports({ quotes, jobs, customers, paymentReminders = [], emailN
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="stock">Product Trends</TabsTrigger>
             <TabsTrigger value="payments">Payment Tracking</TabsTrigger>
             <TabsTrigger value="emails">Email Notifications</TabsTrigger>
           </TabsList>
@@ -222,6 +224,10 @@ export function Reports({ quotes, jobs, customers, paymentReminders = [], emailN
             ))}
           </div>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="stock">
+            <ProductStockTrends quotes={quotes} jobs={jobs} />
           </TabsContent>
 
           <TabsContent value="payments">
