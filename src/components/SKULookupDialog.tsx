@@ -405,7 +405,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                         size="sm" 
                         onClick={() => setColorFilter('')}
                         className="mb-0.5"
-                                const indicator = getStockIndicator(stockInfo.level)
+                      >
                         Clear
                       </Button>
                     )}
