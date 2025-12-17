@@ -2325,3 +2325,6 @@ const acknowledgeAlert = (alertId: string) => {
 **Last Updated**: 2024  
 **Version**: 1.0.0  
 **Maintained By**: Mint Prints Development Team
+**Last Updated**: 2024  
+**Version**: 1.0.0  
+**Maintained By**: Mint Prints Development Team
