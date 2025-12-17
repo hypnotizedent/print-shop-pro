@@ -339,6 +339,7 @@ export function JobsBoard({
           )}
         </div>
 
+        <StatusFilterPills
           type="job"
           activeStatus={statusFilter}
           onStatusChange={(status) => setStatusFilter(status as JobStatus | 'all')}
