@@ -38,6 +38,7 @@ import {
 } from '@/lib/data'
 import { createQuoteApprovalEmail, createQuoteApprovedEmail, createInvoiceEmail } from '@/lib/email-notifications'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
+import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 
 type View = 'home' | 'quotes' | 'jobs' | 'customers' | 'reports' | 'settings'
 type Page = 
@@ -61,6 +62,10 @@ function App() {
     accountNumber: '',
     apiKey: ''
   })
+  const [sanMarCreds] = useKV<SanMarCredentials>('sanmar-credentials', {
+    customerId: '',
+    apiKey: ''
+  })
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'home' })
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
   
@@ -81,6 +86,12 @@ function App() {
       ssActivewearAPI.setCredentials(ssActivewearCreds)
     }
   }, [ssActivewearCreds])
+
+  useEffect(() => {
+    if (sanMarCreds && sanMarCreds.customerId && sanMarCreds.apiKey) {
+      sanMarAPI.setCredentials(sanMarCreds)
+    }
+  }, [sanMarCreds])
 
   useEffect(() => {
     if (customerArtworkFiles && customerArtworkFiles.length > 0) {

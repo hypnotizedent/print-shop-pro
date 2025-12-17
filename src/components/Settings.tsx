@@ -17,6 +17,7 @@ import { CustomerSmsOptOuts } from '@/components/CustomerSmsOptOuts'
 import { EmailTemplatesManager } from '@/components/EmailTemplatesManager'
 import { ScheduledEmailsManager } from '@/components/ScheduledEmailsManager'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
+import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 
 interface SettingsProps {
   quotes: Quote[]
@@ -36,6 +37,10 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
     accountNumber: '',
     apiKey: ''
   })
+  const [sanMarCreds, setSanMarCreds] = useKV<SanMarCredentials>('sanmar-credentials', {
+    customerId: '',
+    apiKey: ''
+  })
   const [smsTemplates, setSmsTemplates] = useKV<SmsTemplate[]>('sms-templates', [])
   const [smsPreferences, setSmsPreferences] = useKV<CustomerSmsPreferences[]>('customer-sms-preferences', [])
   const [emailTemplates, setEmailTemplates] = useKV<EmailTemplate[]>('email-templates', [])
@@ -48,9 +53,12 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
   const [fromNumberInput, setFromNumberInput] = useState(twilioConfig?.fromNumber || '')
   const [ssAccountInput, setSSAccountInput] = useState(ssActivewearCreds?.accountNumber || '')
   const [ssApiKeyInput, setSSApiKeyInput] = useState(ssActivewearCreds?.apiKey || '')
+  const [sanMarCustomerInput, setSanMarCustomerInput] = useState(sanMarCreds?.customerId || '')
+  const [sanMarApiKeyInput, setSanMarApiKeyInput] = useState(sanMarCreds?.apiKey || '')
 
   const isTwilioConfigured = validateTwilioConfig(twilioConfig || {})
   const isSSActivewearConfigured = ssActivewearCreds?.accountNumber && ssActivewearCreds?.apiKey
+  const isSanMarConfigured = sanMarCreds?.customerId && sanMarCreds?.apiKey
 
   const handleSaveTheme = () => {
     setPrimaryColor(primaryInput)
@@ -196,6 +204,22 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
     setSSActivewearCreds(credentials)
     ssActivewearAPI.setCredentials(credentials)
     toast.success('SS Activewear API configured!')
+  }
+
+  const handleSaveSanMarConfig = () => {
+    const credentials: SanMarCredentials = {
+      customerId: sanMarCustomerInput.trim(),
+      apiKey: sanMarApiKeyInput.trim()
+    }
+
+    if (!credentials.customerId || !credentials.apiKey) {
+      toast.error('Please provide both Customer ID and API Key')
+      return
+    }
+
+    setSanMarCreds(credentials)
+    sanMarAPI.setCredentials(credentials)
+    toast.success('SanMar API configured!')
   }
 
   return (
@@ -425,6 +449,86 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
                   <p className="mt-4">
                     <a 
                       href="https://api.ssactivewear.com/V2/Default.aspx" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      View API Documentation →
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <ShoppingBag size={24} className={isSanMarConfigured ? 'text-primary' : 'text-muted-foreground'} />
+                <div>
+                  <h2 className="text-lg font-semibold">SanMar API</h2>
+                  <p className="text-sm text-muted-foreground">Enable style autofill from SanMar catalog</p>
+                </div>
+              </div>
+
+              {isSanMarConfigured ? (
+                <Alert className="mb-4 border-primary/30 bg-primary/5">
+                  <CheckCircle size={18} className="text-primary" />
+                  <AlertDescription className="text-sm ml-2">
+                    SanMar API is configured. SKU lookups will autofill product details.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="mb-4 border-yellow-500/30 bg-yellow-500/5">
+                  <Warning size={18} className="text-yellow-500" />
+                  <AlertDescription className="text-sm ml-2">
+                    Configure your SanMar API credentials to enable product autofill
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="sanmar-customer">Customer ID</Label>
+                  <Input
+                    id="sanmar-customer"
+                    type="text"
+                    value={sanMarCustomerInput}
+                    onChange={(e) => setSanMarCustomerInput(e.target.value)}
+                    placeholder="Your SanMar customer ID"
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="sanmar-apikey">API Key</Label>
+                  <Input
+                    id="sanmar-apikey"
+                    type="password"
+                    value={sanMarApiKeyInput}
+                    onChange={(e) => setSanMarApiKeyInput(e.target.value)}
+                    placeholder="Your SanMar API key"
+                    className="mt-2"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <Button onClick={handleSaveSanMarConfig}>
+                    Save API Configuration
+                  </Button>
+                </div>
+
+                <Separator className="my-4" />
+
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p className="font-medium">How to get your API credentials:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Log in to your SanMar account</li>
+                    <li>Navigate to Account Settings &gt; Electronic Integration</li>
+                    <li>Request API access if not already enabled</li>
+                    <li>Copy your Customer ID and API Key</li>
+                  </ol>
+                  <p className="mt-4">
+                    <a 
+                      href="https://www.sanmar.com/resources/electronicintegration/sanmardatalibrary" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"

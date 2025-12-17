@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MagnifyingGlass, Sparkle, Warning, FunnelSimple, CheckCircle, WarningCircle, XCircle } from '@phosphor-icons/react'
-import { ssActivewearAPI, type SSActivewearProduct, type SSActivewearColor } from '@/lib/ssactivewear-api'
+import { ssActivewearAPI, type SSActivewearProduct, type SSActivewearColor, type SSActivewearSize } from '@/lib/ssactivewear-api'
+import { sanMarAPI, type SanMarProduct, type SanMarColor, type SanMarSize } from '@/lib/sanmar-api'
 import { toast } from 'sonner'
 import type { Sizes } from '@/lib/types'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -28,12 +29,17 @@ interface SKULookupDialogProps {
   onApply: (productName: string, color: string, sizes: Partial<Sizes>) => void
 }
 
+type Supplier = 'ssactivewear' | 'sanmar'
+type UnifiedProduct = SSActivewearProduct | SanMarProduct
+type UnifiedColor = SSActivewearColor | SanMarColor
+
 export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialogProps) {
+  const [supplier, setSupplier] = useState<Supplier>('ssactivewear')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
-  const [searchResults, setSearchResults] = useState<SSActivewearProduct[]>([])
-  const [product, setProduct] = useState<SSActivewearProduct | null>(null)
-  const [selectedColor, setSelectedColor] = useState<SSActivewearColor | null>(null)
+  const [searchResults, setSearchResults] = useState<UnifiedProduct[]>([])
+  const [product, setProduct] = useState<UnifiedProduct | null>(null)
+  const [selectedColor, setSelectedColor] = useState<UnifiedColor | null>(null)
   const [colorFilter, setColorFilter] = useState('')
 
   const handleSearch = async () => {
@@ -48,7 +54,14 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
     setSelectedColor(null)
     
     try {
-      const results = await ssActivewearAPI.searchProducts(searchQuery.trim())
+      let results: UnifiedProduct[] = []
+      
+      if (supplier === 'ssactivewear') {
+        results = await ssActivewearAPI.searchProducts(searchQuery.trim())
+      } else {
+        results = await sanMarAPI.searchProducts(searchQuery.trim())
+      }
+      
       if (results && results.length > 0) {
         setSearchResults(results)
         
@@ -77,7 +90,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
     }
   }
 
-  const handleSelectProduct = (selectedProduct: SSActivewearProduct) => {
+  const handleSelectProduct = (selectedProduct: UnifiedProduct) => {
     setProduct(selectedProduct)
     if (selectedProduct.colors && selectedProduct.colors.length > 0) {
       setSelectedColor(selectedProduct.colors[0])
@@ -96,8 +109,47 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
     )
   }, [product?.colors, colorFilter])
 
-  const getColorStockLevel = (color: SSActivewearColor): { level: 'high' | 'medium' | 'low' | 'out', totalQty: number } => {
-    const totalQty = color.sizes.reduce((sum, size) => sum + size.qty, 0)
+  const isSanMarProduct = (p: UnifiedProduct): p is SanMarProduct => {
+    return supplier === 'sanmar'
+  }
+
+  const isSanMarColor = (c: UnifiedColor): c is SanMarColor => {
+    return supplier === 'sanmar'
+  }
+
+  const getProductName = (p: UnifiedProduct): string => {
+    if (isSanMarProduct(p)) {
+      return p.productName
+    }
+    return (p as SSActivewearProduct).styleName
+  }
+
+  const getProductImage = (p: UnifiedProduct): string | undefined => {
+    if (isSanMarProduct(p)) {
+      return p.productImage
+    }
+    return (p as SSActivewearProduct).styleImage
+  }
+
+  const getColorImage = (c: UnifiedColor): string | undefined => {
+    if (isSanMarColor(c)) {
+      return c.colorImage
+    }
+    return (c as SSActivewearColor).colorFrontImage
+  }
+
+  const getColorCount = (p: UnifiedProduct): number => {
+    return p.colors?.length || 0
+  }
+
+  const getColorStockLevel = (color: UnifiedColor): { level: 'high' | 'medium' | 'low' | 'out', totalQty: number } => {
+    let totalQty = 0
+    
+    if (isSanMarColor(color)) {
+      totalQty = color.sizes.reduce((sum, size) => sum + (size.inventory || 0), 0)
+    } else {
+      totalQty = (color as SSActivewearColor).sizes.reduce((sum, size) => sum + (size.qty || 0), 0)
+    }
     
     if (totalQty === 0) return { level: 'out', totalQty }
     if (totalQty < 50) return { level: 'low', totalQty }
@@ -124,7 +176,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
       return
     }
 
-    const productName = `${product.brandName} ${product.styleName}`
+    const productName = `${product.brandName} ${getProductName(product)}`
     const colorName = selectedColor.colorName
 
     const sizes: Partial<Sizes> = {}
@@ -147,7 +199,12 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
   }
 
   const handleColorChange = (colorId: string) => {
-    const color = product?.colors.find(c => c.colorID.toString() === colorId)
+    const color = product?.colors.find(c => {
+      if (isSanMarColor(c)) {
+        return c.colorID === colorId
+      }
+      return (c as SSActivewearColor).colorID.toString() === colorId
+    })
     if (color) {
       setSelectedColor(color)
     }
@@ -168,7 +225,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkle size={20} className="text-primary" weight="fill" />
-            SS Activewear Product Search
+            Product Search
           </DialogTitle>
           <DialogDescription>
             Search for products by name, SKU, or style number
@@ -176,21 +233,41 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
         </DialogHeader>
 
         <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Label htmlFor="product-search">Product Name or SKU</Label>
-              <Input
-                id="product-search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="e.g., Gildan Softstyle, G500, 18000"
-                className="mt-2"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch()
-                  }
-                }}
-              />
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="supplier">Supplier</Label>
+              <Select value={supplier} onValueChange={(value) => {
+                setSupplier(value as Supplier)
+                setSearchQuery('')
+                setSearchResults([])
+                setProduct(null)
+                setSelectedColor(null)
+              }}>
+                <SelectTrigger id="supplier" className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ssactivewear">SS Activewear</SelectItem>
+                  <SelectItem value="sanmar">SanMar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="product-search">Product Name or SKU</Label>
+                <Input
+                  id="product-search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="e.g., Gildan Softstyle, G500, 18000"
+                  className="mt-2"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch()
+                    }
+                  }}
+                />
             </div>
             <div className="flex items-end">
               <Button onClick={handleSearch} disabled={loading}>
@@ -198,6 +275,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                 {loading ? 'Searching...' : 'Search'}
               </Button>
             </div>
+          </div>
           </div>
 
           {searchResults.length > 0 && (
@@ -214,11 +292,11 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                       className="w-full text-left p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex gap-3">
-                        {result.styleImage && (
+                        {getProductImage(result) && (
                           <div className="w-16 h-16 flex-shrink-0 bg-muted rounded overflow-hidden">
                             <img 
-                              src={result.styleImage} 
-                              alt={`${result.brandName} ${result.styleName}`}
+                              src={getProductImage(result)} 
+                              alt={`${result.brandName} ${getProductName(result)}`}
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none'
@@ -227,9 +305,9 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold">{result.brandName} {result.styleName}</div>
+                          <div className="font-semibold">{result.brandName} {getProductName(result)}</div>
                           <div className="text-sm text-muted-foreground">
-                            SKU: {result.styleID} • {result.colorCount} color{result.colorCount !== 1 ? 's' : ''}
+                            SKU: {result.styleID} • {getColorCount(result)} color{getColorCount(result) !== 1 ? 's' : ''}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">{result.categoryName}</div>
                         </div>
@@ -244,11 +322,11 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
           {product && (
             <div className="border border-border rounded-lg p-4 space-y-4">
               <div className="flex gap-4">
-                {(selectedColor?.colorFrontImage || product.styleImage) && (
+                {(selectedColor ? getColorImage(selectedColor) : getProductImage(product)) && (
                   <div className="w-24 h-24 flex-shrink-0 bg-muted rounded overflow-hidden">
                     <img 
-                      src={selectedColor?.colorFrontImage || product.styleImage} 
-                      alt={`${product.brandName} ${product.styleName}`}
+                      src={selectedColor ? getColorImage(selectedColor) : getProductImage(product)} 
+                      alt={`${product.brandName} ${getProductName(product)}`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none'
@@ -258,7 +336,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                 )}
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-muted-foreground mb-1">PRODUCT</div>
-                  <div className="text-lg font-bold">{product.brandName} {product.styleName}</div>
+                  <div className="text-lg font-bold">{product.brandName} {getProductName(product)}</div>
                   <div className="text-sm text-muted-foreground">{product.categoryName}</div>
                   {selectedColor && (
                     <div className="mt-2 flex items-center gap-2">
@@ -314,7 +392,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                     <Label htmlFor="color-select">
                       Color {colorFilter && `(${filteredColors.length} of ${product.colors.length})`}
                     </Label>
-                    <Select value={selectedColor?.colorID.toString()} onValueChange={handleColorChange}>
+                    <Select value={selectedColor ? (isSanMarColor(selectedColor) ? selectedColor.colorID : selectedColor.colorID.toString()) : undefined} onValueChange={handleColorChange}>
                       <SelectTrigger id="color-select" className="mt-2">
                         <SelectValue placeholder="Select a color">
                           {selectedColor && (
@@ -347,9 +425,10 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                             const stockInfo = getColorStockLevel(color)
                             const indicator = getStockIndicator(stockInfo.level)
                             const Icon = indicator.icon
+                            const colorId = isSanMarColor(color) ? color.colorID : color.colorID.toString()
                             
                             return (
-                              <SelectItem key={color.colorID} value={color.colorID.toString()}>
+                              <SelectItem key={colorId} value={colorId}>
                                 <div className="flex items-center gap-2 w-full">
                                   <div 
                                     className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
@@ -419,7 +498,13 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                 <div className="bg-muted/50 rounded-lg p-3">
                   <div className="text-xs text-muted-foreground mb-1">PRICING INFO</div>
                   <div className="text-sm">
-                    First size: ${selectedColor.sizes[0]?.price?.toFixed(2) || 'N/A'}
+                    {(() => {
+                      const firstSize = selectedColor.sizes[0]
+                      if (isSanMarColor(selectedColor)) {
+                        return `First size: $${(firstSize as SanMarSize).piecePrice?.toFixed(2) || 'N/A'}`
+                      }
+                      return `First size: $${(firstSize as SSActivewearSize).price?.toFixed(2) || 'N/A'}`
+                    })()}
                   </div>
                 </div>
               )}
@@ -435,13 +520,14 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
             </div>
           )}
 
-          {!ssActivewearAPI.hasCredentials() && (
+          {((supplier === 'ssactivewear' && !ssActivewearAPI.hasCredentials()) || 
+            (supplier === 'sanmar' && !sanMarAPI.hasCredentials())) && (
             <div className="border border-yellow-500/30 bg-yellow-500/5 rounded-lg p-4 flex items-start gap-3">
               <Warning size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
                 <div className="font-medium mb-1">API Not Configured</div>
                 <div className="text-muted-foreground">
-                  Please configure your SS Activewear API credentials in Settings &gt; Suppliers to enable SKU lookups.
+                  Please configure your {supplier === 'ssactivewear' ? 'SS Activewear' : 'SanMar'} API credentials in Settings &gt; Suppliers to enable SKU lookups.
                 </div>
               </div>
             </div>
