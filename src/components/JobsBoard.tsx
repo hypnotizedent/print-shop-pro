@@ -150,6 +150,11 @@ export function JobsBoard({
     toast.success(`Job status updated to ${status}`)
   }
 
+  const handleStatusFilter = (status: JobStatus) => {
+    setStatusFilter(status)
+    toast(`Filtering by: ${status}`)
+  }
+
   const hasActiveFilters = statusFilter !== 'all' || dateSort !== 'desc'
   
   const clearAllFilters = () => {
@@ -430,6 +435,7 @@ export function JobsBoard({
                 job={job}
                 onClick={() => handleJobClick(job)}
                 onStatusChange={handleSingleStatusChange}
+                onStatusFilter={handleStatusFilter}
                 isExpanded={expandedJobId === job.id}
                 isSelected={selectedJobIds.has(job.id)}
                 onToggleSelect={toggleJobSelection}

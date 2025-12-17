@@ -4,6 +4,8 @@ import type { QuoteStatus, JobStatus } from '@/lib/types'
 interface StatusBadgeProps {
   status: QuoteStatus | JobStatus
   className?: string
+  onClick?: (status: QuoteStatus | JobStatus) => void
+  clickable?: boolean
 }
 
 const statusConfig: Record<QuoteStatus | JobStatus, { label: string; className: string }> = {
@@ -22,11 +24,22 @@ const statusConfig: Record<QuoteStatus | JobStatus, { label: string; className: 
   delivered: { label: 'Delivered', className: 'bg-primary/10 text-primary border-primary/20' },
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({ status, className, onClick, clickable = false }: StatusBadgeProps) {
   const config = statusConfig[status]
   
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick && clickable) {
+      e.stopPropagation()
+      onClick(status)
+    }
+  }
+  
   return (
-    <Badge variant="outline" className={`${config.className} ${className || ''}`}>
+    <Badge 
+      variant="outline" 
+      className={`${config.className} ${className || ''} ${clickable ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      onClick={handleClick}
+    >
       {config.label}
     </Badge>
   )

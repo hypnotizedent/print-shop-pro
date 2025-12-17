@@ -17,12 +17,13 @@ interface JobCardProps {
   job: Job
   onClick: () => void
   onStatusChange?: (jobId: string, status: JobStatus) => void
+  onStatusFilter?: (status: JobStatus) => void
   isExpanded?: boolean
   isSelected?: boolean
   onToggleSelect?: (jobId: string) => void
 }
 
-export function JobCard({ job, onClick, onStatusChange, isExpanded = false, isSelected, onToggleSelect }: JobCardProps) {
+export function JobCard({ job, onClick, onStatusChange, onStatusFilter, isExpanded = false, isSelected, onToggleSelect }: JobCardProps) {
   const itemCount = job.line_items.reduce((sum, item) => sum + item.quantity, 0)
   const dueDate = new Date(job.due_date)
   const daysUntilDue = Math.ceil((dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -78,7 +79,12 @@ export function JobCard({ job, onClick, onStatusChange, isExpanded = false, isSe
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="inline-flex">
-                    <StatusBadge status={job.status} className="text-xs" />
+                    <StatusBadge 
+                      status={job.status} 
+                      className="text-xs" 
+                      clickable={!!onStatusFilter}
+                      onClick={onStatusFilter}
+                    />
                     <CaretDown size={12} className="ml-1 text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
@@ -110,7 +116,12 @@ export function JobCard({ job, onClick, onStatusChange, isExpanded = false, isSe
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <StatusBadge status={job.status} className="text-xs" />
+              <StatusBadge 
+                status={job.status} 
+                className="text-xs" 
+                clickable={!!onStatusFilter}
+                onClick={onStatusFilter}
+              />
             )}
           </div>
           

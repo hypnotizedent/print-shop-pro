@@ -200,6 +200,11 @@ export function QuotesList({
     }
   }
 
+  const handleStatusFilter = (status: QuoteStatus) => {
+    setStatusFilter(status)
+    toast(`Filtering by: ${status}`)
+  }
+
   const hasActiveFilters = statusFilter !== 'all' || dateSort !== 'desc'
   
   const clearAllFilters = () => {
@@ -482,6 +487,7 @@ export function QuotesList({
                     onClick={() => onSelectQuote(quote)}
                     onConvertToJob={onConvertToJob}
                     onStatusChange={handleSingleStatusChange}
+                    onStatusFilter={handleStatusFilter}
                     isSelected={selectedQuoteIds.has(quote.id)}
                     onToggleSelect={toggleQuoteSelection}
                   />
@@ -503,6 +509,7 @@ export function QuotesList({
                     onClick={() => onSelectQuote(quote)}
                     onConvertToJob={onConvertToJob}
                     onStatusChange={handleSingleStatusChange}
+                    onStatusFilter={handleStatusFilter}
                     isSelected={selectedQuoteIds.has(quote.id)}
                     onToggleSelect={toggleQuoteSelection}
                   />
@@ -524,6 +531,7 @@ export function QuotesList({
                     onClick={() => onSelectQuote(quote)}
                     onConvertToJob={onConvertToJob}
                     onStatusChange={handleSingleStatusChange}
+                    onStatusFilter={handleStatusFilter}
                     isSelected={selectedQuoteIds.has(quote.id)}
                     onToggleSelect={toggleQuoteSelection}
                   />

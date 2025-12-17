@@ -21,12 +21,13 @@ interface QuoteCardProps {
   onClick: () => void
   onConvertToJob?: (quote: Quote) => void
   onStatusChange?: (quoteId: string, status: QuoteStatus) => void
+  onStatusFilter?: (status: QuoteStatus) => void
   isExpanded?: boolean
   isSelected?: boolean
   onToggleSelect?: (quoteId: string) => void
 }
 
-export function QuoteCard({ quote, onClick, onConvertToJob, onStatusChange, isExpanded, isSelected, onToggleSelect }: QuoteCardProps) {
+export function QuoteCard({ quote, onClick, onConvertToJob, onStatusChange, onStatusFilter, isExpanded, isSelected, onToggleSelect }: QuoteCardProps) {
   const itemCount = quote.line_items.reduce((sum, item) => sum + item.quantity, 0)
   const createdAgo = formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })
   
@@ -80,7 +81,11 @@ export function QuoteCard({ quote, onClick, onConvertToJob, onStatusChange, isEx
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="inline-flex">
-                          <StatusBadge status={quote.status} />
+                          <StatusBadge 
+                            status={quote.status} 
+                            clickable={!!onStatusFilter}
+                            onClick={onStatusFilter}
+                          />
                           <CaretDown size={12} className="ml-1 text-muted-foreground" />
                         </button>
                       </DropdownMenuTrigger>
@@ -103,7 +108,11 @@ export function QuoteCard({ quote, onClick, onConvertToJob, onStatusChange, isEx
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : (
-                    <StatusBadge status={quote.status} />
+                    <StatusBadge 
+                      status={quote.status} 
+                      clickable={!!onStatusFilter}
+                      onClick={onStatusFilter}
+                    />
                   )}
                 </div>
               </div>
