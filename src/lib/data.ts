@@ -82,16 +82,17 @@ export const sampleCustomers: Customer[] = [
 export const createEmptyLineItem = (): LineItem => ({
   id: generateId('li'),
   product_type: 'tshirt',
-  product_name: 'Gildan G500',
-  product_color: '#000000',
+  product_sku: '',
+  product_name: '',
+  product_color: '',
   decoration: 'screen-print',
   print_locations: ['front'],
   decorations: [],
   colors: 1,
   sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, '2XL': 0, '3XL': 0 },
   quantity: 0,
-  unit_price: 12.00,
-  setup_fee: 50.00,
+  unit_price: 0,
+  setup_fee: 0,
   line_total: 0,
 })
 

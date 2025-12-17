@@ -184,7 +184,7 @@ export function LineItemGrid({
     onChange(newItems)
   }
 
-  const handleApplySKUData = (index: number, productName: string, color: string, sizes: Partial<Sizes>) => {
+  const handleApplySKUData = (index: number, productName: string, color: string, sizes: Partial<Sizes>, sku?: string) => {
     const fullSizes: Sizes = {
       XS: 0,
       S: 0,
@@ -198,6 +198,7 @@ export function LineItemGrid({
 
     updateItem(index, {
       product_name: productName,
+      product_sku: sku,
       product_color: color,
       sizes: fullSizes
     })
@@ -508,9 +509,17 @@ export function LineItemGrid({
           </td>
           <td className="px-3 py-2.5">
             <InlineSKUSearch
+              value={item.product_sku || ''}
+              onApply={(productName, color, sizes, sku) => handleApplySKUData(index, productName, color, sizes, sku)}
+              onInputChange={(value) => updateItem(index, { product_sku: value })}
+            />
+          </td>
+          <td className="px-3 py-2.5">
+            <Input
               value={item.product_name}
-              onApply={(productName, color, sizes) => handleApplySKUData(index, productName, color, sizes)}
-              onInputChange={(value) => updateItem(index, { product_name: value })}
+              onChange={(e) => updateItem(index, { product_name: e.target.value })}
+              placeholder="e.g., Gildan 5000"
+              className="h-8 border-0 bg-transparent hover:bg-background focus:bg-background px-2"
             />
           </td>
           <td className="px-3 py-2.5">
@@ -632,7 +641,7 @@ export function LineItemGrid({
           </td>
         </tr>
         <tr className="border-b border-border bg-muted/10">
-          <td colSpan={7} className="px-3 py-0">
+          <td colSpan={8} className="px-3 py-0">
             <div className="py-2">
               <button
                 onClick={() => toggleLocationsSection(item.id)}
@@ -858,19 +867,22 @@ export function LineItemGrid({
           <thead>
             <tr className="bg-muted/50 border-b border-border">
               <th className="w-8"></th>
-              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[28%]">
+              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[15%]">
+                PRODUCT SKU
+              </th>
+              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[20%]">
                 PRODUCT STYLE
               </th>
-              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[12%]">
+              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[10%]">
                 COLOR
               </th>
-              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[33%]">
+              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[28%]">
                 SIZES
               </th>
-              <th className="text-right text-xs font-semibold text-muted-foreground px-3 py-2 w-[15%]">
+              <th className="text-right text-xs font-semibold text-muted-foreground px-3 py-2 w-[12%]">
                 PRICE
               </th>
-              <th className="text-center text-xs font-semibold text-muted-foreground px-3 py-2 w-[8%]">
+              <th className="text-center text-xs font-semibold text-muted-foreground px-3 py-2 w-[7%]">
                 PREVIEW
               </th>
               <th className="w-10"></th>
@@ -898,7 +910,7 @@ export function LineItemGrid({
                     onDrop={(e) => onGroupsChange && handleDropGroup(e, groupIndex)}
                     onDragEnd={() => onGroupsChange && handleDragGroupEnd()}
                   >
-                    <td colSpan={7} className="px-3 py-2">
+                    <td colSpan={8} className="px-3 py-2">
                       <div className="flex items-center gap-3">
                         {onGroupsChange && (
                           <div 
@@ -998,7 +1010,7 @@ export function LineItemGrid({
                   
                   {!isGroupCollapsed && expandedLocations.has(`group-${group.id}`) && (
                     <tr className="border-b border-border bg-primary/5">
-                      <td colSpan={7} className="px-6 py-4">
+                      <td colSpan={8} className="px-6 py-4">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between mb-3">
                             <div className="text-sm font-semibold text-primary">

@@ -145,6 +145,7 @@ export interface Decoration {
 export interface LineItem {
   id: string
   product_type: ProductType
+  product_sku?: string
   product_name: string
   product_color?: string
   decoration: DecorationType

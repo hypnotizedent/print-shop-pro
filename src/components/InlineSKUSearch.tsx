@@ -23,7 +23,7 @@ import type { Sizes } from '@/lib/types'
 
 interface InlineSKUSearchProps {
   value: string
-  onApply: (productName: string, color: string, sizes: Partial<Sizes>) => void
+  onApply: (productName: string, color: string, sizes: Partial<Sizes>, sku?: string) => void
   onInputChange: (value: string) => void
 }
 
@@ -123,6 +123,7 @@ export function InlineSKUSearch({ value, onApply, onInputChange }: InlineSKUSear
 
     const productName = `${selectedProduct.brandName} ${getProductName(selectedProduct)}`
     const colorName = selectedColor.colorName
+    const sku = selectedProduct.styleID
 
     const sizes: Partial<Sizes> = {}
     selectedColor.sizes.forEach(size => {
@@ -132,7 +133,7 @@ export function InlineSKUSearch({ value, onApply, onInputChange }: InlineSKUSear
       }
     })
 
-    onApply(productName, colorName, sizes)
+    onApply(productName, colorName, sizes, sku)
     
     setSelectedProduct(null)
     setSelectedColor(null)
