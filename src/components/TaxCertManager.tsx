@@ -5,6 +5,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { 
   Dialog,
   DialogContent,
   DialogDescription,
@@ -24,6 +34,7 @@ import { Plus, FileText, Trash, CheckCircle, XCircle } from '@phosphor-icons/rea
 import type { TaxCertificate } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
+import { generateId } from '@/lib/data'
 
 interface TaxCertManagerProps {
   customerId: string
@@ -49,6 +60,8 @@ export function TaxCertManager({
   onUpdateCertificate,
 }: TaxCertManagerProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [certToDelete, setCertToDelete] = useState<string | null>(null)
   const [editingCert, setEditingCert] = useState<TaxCertificate | null>(null)
   const [certificateNumber, setCertificateNumber] = useState('')
   const [state, setState] = useState('')
@@ -82,7 +95,7 @@ export function TaxCertManager({
     }
 
     const certificate: TaxCertificate = {
-      id: editingCert?.id || `tc-${Date.now()}`,
+      id: editingCert?.id || generateId('tc'),
       customerId,
       certificateNumber,
       state,
@@ -106,10 +119,17 @@ export function TaxCertManager({
   }
 
   const handleDelete = (certId: string) => {
-    if (confirm('Are you sure you want to delete this tax certificate?')) {
-      onDeleteCertificate(certId)
+    setCertToDelete(certId)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (certToDelete) {
+      onDeleteCertificate(certToDelete)
       toast.success('Tax certificate deleted')
+      setCertToDelete(null)
     }
+    setDeleteDialogOpen(false)
   }
 
   const handleToggleActive = (cert: TaxCertificate) => {
@@ -326,6 +346,21 @@ export function TaxCertManager({
           })}
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tax Certificate</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this tax certificate? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
