@@ -91,9 +91,10 @@ export const createEmptyLineItem = (): LineItem => ({
   colors: 1,
   sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, '2XL': 0, '3XL': 0 },
   quantity: 0,
+  unit_price: 0,
   setup_fee: 0,
   line_total: 0,
-  line_total: 0,
+})
 
 export const createEmptyQuote = (customer?: Customer): Quote => ({
   id: generateId('q'),
