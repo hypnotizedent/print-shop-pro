@@ -1,12 +1,13 @@
 import * as React from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { ProductMockupWithSize } from './ProductMockupWithSize'
 import { DecorationManager } from './DecorationManager'
 import { CopyDecorationsDialog } from './CopyDecorationsDialog'
 import { BulkCopyDecorationsDialog } from './BulkCopyDecorationsDialog'
 import { InlineSKUSearch } from './InlineSKUSearch'
-import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple, DotsSixVertical, FolderOpen, Folder, Plus, ArrowsOutCardinal, ArrowsInCardinal } from '@phosphor-icons/react'
+import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple, DotsSixVertical, FolderOpen, Folder, Plus, ArrowsOutCardinal, ArrowsInCardinal, DotsThree } from '@phosphor-icons/react'
 import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate, CustomerArtworkFile, LineItemGroup } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { generateId } from '@/lib/data'
@@ -466,6 +467,14 @@ export function LineItemGrid({
   
   const renderLineItem = (item: LineItem, index: number, isInGroup = false, groupId?: string) => {
     const group = groupId ? groups.find(g => g.id === groupId) : undefined
+    const hasGroupImprints = group && group.decorations.length > 0 && item.decorations && 
+      item.decorations.length >= group.decorations.length &&
+      group.decorations.every((groupDec) => 
+        item.decorations?.some(itemDec => 
+          itemDec.location === groupDec.location &&
+          itemDec.method === groupDec.method
+        )
+      )
     
     return (
       <>
@@ -569,22 +578,25 @@ export function LineItemGrid({
                 {isInGroup && groupId && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => removeFromGroup(item.id)}>
-                      <ArrowsOutCardinal size={14} className="mr-2" />
-                      Remove from Group
-                    </DropdownMenuItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-primary">
+                      Group Actions
+                    </div>
+                    {item.decorations && item.decorations.length > 0 && (
+                      <DropdownMenuItem onClick={() => updateGroupDecorationsFromItem(item.id, groupId)}>
+                        <ArrowsInCardinal size={14} className="mr-2" />
+                        Save as Group Imprints
+                      </DropdownMenuItem>
+                    )}
                     {group && group.decorations.length > 0 && (
                       <DropdownMenuItem onClick={() => applyGroupDecorationsToItem(item.id, groupId)}>
                         <CopySimple size={14} className="mr-2" />
                         Apply Group Imprints
                       </DropdownMenuItem>
                     )}
-                    {item.decorations && item.decorations.length > 0 && (
-                      <DropdownMenuItem onClick={() => updateGroupDecorationsFromItem(item.id, groupId)}>
-                        <ArrowsInCardinal size={14} className="mr-2" />
-                        Update Group Imprints
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem onClick={() => removeFromGroup(item.id)}>
+                      <ArrowsOutCardinal size={14} className="mr-2" />
+                      Remove from Group
+                    </DropdownMenuItem>
                   </>
                 )}
                 
@@ -633,6 +645,12 @@ export function LineItemGrid({
                 <span className="text-xs">
                   ({getTotalDecorations(item)} imprint{getTotalDecorations(item) !== 1 ? 's' : ''})
                 </span>
+                {hasGroupImprints && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                    <Folder size={10} className="mr-1" weight="fill" />
+                    Group Imprints
+                  </Badge>
+                )}
                 {getTotalSetupFees(item) > 0 && (
                   <span className="text-xs text-muted-foreground">
                     • Setup: ${getTotalSetupFees(item).toFixed(2)}
@@ -771,22 +789,61 @@ export function LineItemGrid({
         />
       )}
 
-      {onGroupsChange && ungroupedItems.length > 1 && (
-        <div className="mb-4 p-3 bg-muted/20 border border-border rounded-lg flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Create groups to organize SKUs and manage imprints together
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const selectedIds = ungroupedItems.slice(0, 2).map(i => i.id)
-              createGroup(selectedIds)
-            }}
-          >
-            <FolderOpen size={14} className="mr-1.5" />
-            Create Group
-          </Button>
+      {onGroupsChange && (
+        <div className="mb-4 space-y-3">
+          {ungroupedItems.length > 1 && (
+            <div className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg flex items-center justify-between">
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-foreground mb-1">
+                  Organize Items into Groups
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Group similar SKUs together to manage imprints centrally. Define decorations once and apply to all items in the group.
+                </div>
+              </div>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  const selectedIds = ungroupedItems.slice(0, Math.min(2, ungroupedItems.length)).map(i => i.id)
+                  createGroup(selectedIds)
+                }}
+                className="ml-4"
+              >
+                <FolderOpen size={16} className="mr-2" />
+                Create New Group
+              </Button>
+            </div>
+          )}
+          
+          {groups.length > 0 && ungroupedItems.length > 0 && (
+            <div className="p-3 bg-muted/20 border border-border rounded-lg">
+              <div className="text-xs font-semibold text-muted-foreground mb-2">
+                QUICK ACTIONS
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {groups.map(g => {
+                  const groupItems = items.filter(item => item.groupId === g.id)
+                  return (
+                    <Button
+                      key={g.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (ungroupedItems.length > 0) {
+                          addItemToGroup(ungroupedItems[0].id, g.id)
+                        }
+                      }}
+                      className="h-8 text-xs"
+                    >
+                      <Folder size={12} className="mr-1.5" weight="fill" />
+                      Add to "{g.name}" ({groupItems.length})
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
       
@@ -869,34 +926,145 @@ export function LineItemGrid({
                           {groupItems.length} SKU{groupItems.length !== 1 ? 's' : ''}
                         </div>
                         
+                        {group.decorations.length > 0 && (
+                          <div className="flex items-center gap-2 px-3 py-1 bg-primary/20 border border-primary/30 rounded-md">
+                            <span className="text-xs font-medium text-primary">
+                              {group.decorations.length} Group Imprint{group.decorations.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+                        
                         <div className="ml-auto flex items-center gap-2">
                           {onGroupsChange && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs text-muted-foreground"
-                                >
-                                  <Plus size={14} className="mr-1" />
-                                  Actions
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => deleteGroup(group.id)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash size={14} className="mr-2" />
-                                  Delete Group
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleLocationsSection(`group-${group.id}`)}
+                                className="h-7 text-xs"
+                              >
+                                <Plus size={14} className="mr-1" />
+                                {expandedLocations.has(`group-${group.id}`) ? 'Hide' : 'Manage'} Imprints
+                              </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs text-muted-foreground"
+                                  >
+                                    <DotsThree size={14} weight="bold" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {group.decorations.length > 0 && (
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          groupItems.forEach(item => {
+                                            applyGroupDecorationsToItem(item.id, group.id)
+                                          })
+                                          toast.success(`Applied to all ${groupItems.length} items in group`)
+                                        }}
+                                      >
+                                        <CopySimple size={14} className="mr-2" />
+                                        Apply to All Items
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                    </>
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={() => deleteGroup(group.id)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash size={14} className="mr-2" />
+                                    Delete Group
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </>
                           )}
                         </div>
                       </div>
                     </td>
                   </tr>
+                  
+                  {!isGroupCollapsed && expandedLocations.has(`group-${group.id}`) && (
+                    <tr className="border-b border-border bg-primary/5">
+                      <td colSpan={7} className="px-6 py-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="text-sm font-semibold text-primary">
+                              Group Imprints
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Define imprints once, then apply to all {groupItems.length} items in this group
+                            </div>
+                          </div>
+                          
+                          <DecorationManager
+                            decorations={group.decorations || []}
+                            onChange={(decorations) => updateGroup(group.id, { decorations })}
+                            productType="tshirt"
+                            customerId={customerId}
+                            customerName={customerName}
+                            customerTemplates={customerTemplatesForCustomer}
+                            customerArtworkFiles={customerArtworkFiles}
+                            onSaveTemplate={onSaveTemplate}
+                          />
+                          
+                          {group.decorations.length > 0 && (
+                            <div className="mt-4 p-3 bg-muted/50 border border-border rounded-lg">
+                              <div className="text-xs font-semibold text-muted-foreground mb-2">
+                                APPLY TO ITEMS
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => {
+                                    groupItems.forEach(item => {
+                                      applyGroupDecorationsToItem(item.id, group.id)
+                                    })
+                                    toast.success(`Applied to all ${groupItems.length} items in group`)
+                                  }}
+                                  className="h-8 text-xs"
+                                >
+                                  <CopySimple size={14} className="mr-1.5" />
+                                  Apply to All {groupItems.length} Items
+                                </Button>
+                                
+                                {groupItems.map((item, idx) => {
+                                  const actualIndex = items.findIndex(i => i.id === item.id)
+                                  const hasGroupImprints = item.decorations && 
+                                    item.decorations.length === group.decorations.length &&
+                                    item.decorations.every((dec, i) => 
+                                      group.decorations[i] && 
+                                      dec.location === group.decorations[i].location &&
+                                      dec.method === group.decorations[i].method
+                                    )
+                                  
+                                  return (
+                                    <Button
+                                      key={item.id}
+                                      variant={hasGroupImprints ? "secondary" : "outline"}
+                                      size="sm"
+                                      onClick={() => applyGroupDecorationsToItem(item.id, group.id)}
+                                      className="h-8 text-xs"
+                                    >
+                                      {hasGroupImprints && <span className="mr-1.5">✓</span>}
+                                      Item #{actualIndex + 1}
+                                    </Button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                   
                   {!isGroupCollapsed && groupItems.map((item, itemIndexInAll) => {
                     const actualIndex = items.findIndex(i => i.id === item.id)
