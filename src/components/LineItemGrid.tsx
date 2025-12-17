@@ -5,7 +5,7 @@ import { DecorationManager } from './DecorationManager'
 import { CopyDecorationsDialog } from './CopyDecorationsDialog'
 import { BulkCopyDecorationsDialog } from './BulkCopyDecorationsDialog'
 import { InlineSKUSearch } from './InlineSKUSearch'
-import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple } from '@phosphor-icons/react'
+import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple, DotsSixVertical } from '@phosphor-icons/react'
 import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate, CustomerArtworkFile } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { generateId } from '@/lib/data'
@@ -46,6 +46,8 @@ export function LineItemGrid({
   const [copyDialogOpen, setCopyDialogOpen] = useState(false)
   const [bulkCopyDialogOpen, setBulkCopyDialogOpen] = useState(false)
   const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null)
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   const updateItem = (index: number, updates: Partial<LineItem>) => {
     const newItems = [...items]
@@ -189,6 +191,46 @@ export function LineItemGrid({
     })
   }
 
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+
+    const newItems = [...items]
+    const [draggedItem] = newItems.splice(draggedIndex, 1)
+    newItems.splice(dropIndex, 0, draggedItem)
+    
+    onChange(newItems)
+    toast.success('Line item reordered')
+    
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
   const customerQuotes = previousQuotes?.filter(q => q.customer.id === customerId && q.id !== items[0]?.id) || []
   
   const customerTemplatesForCustomer = customerTemplates.filter(t => t.customerId === customerId)
@@ -218,13 +260,14 @@ export function LineItemGrid({
         <table className="w-full">
           <thead>
             <tr className="bg-muted/50 border-b border-border">
-              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[30%]">
+              <th className="w-8"></th>
+              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[28%]">
                 PRODUCT STYLE
               </th>
               <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[12%]">
                 COLOR
               </th>
-              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[35%]">
+              <th className="text-left text-xs font-semibold text-muted-foreground px-3 py-2 w-[33%]">
                 SIZES
               </th>
               <th className="text-right text-xs font-semibold text-muted-foreground px-3 py-2 w-[15%]">
@@ -239,7 +282,30 @@ export function LineItemGrid({
           <tbody>
             {items.map((item, index) => (
               <>
-                <tr key={item.id} className="border-b border-border hover:bg-muted/20 transition-colors">
+                <tr 
+                  key={item.id} 
+                  className={`border-b border-border transition-colors ${
+                    draggedIndex === index 
+                      ? 'opacity-40' 
+                      : dragOverIndex === index
+                      ? 'bg-primary/10'
+                      : 'hover:bg-muted/20'
+                  }`}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <td className="px-2 py-2.5">
+                    <div 
+                      className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+                      title="Drag to reorder"
+                    >
+                      <DotsSixVertical size={16} weight="bold" />
+                    </div>
+                  </td>
                   <td className="px-3 py-2.5">
                     <InlineSKUSearch
                       value={item.product_name}
@@ -325,7 +391,7 @@ export function LineItemGrid({
                   </td>
                 </tr>
                 <tr className="border-b border-border bg-muted/10">
-                  <td colSpan={6} className="px-3 py-0">
+                  <td colSpan={7} className="px-3 py-0">
                     <div className="py-2">
                       <button
                         onClick={() => toggleLocationsSection(item.id)}
