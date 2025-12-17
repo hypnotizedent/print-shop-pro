@@ -18,25 +18,9 @@ import {
   Pencil,
   Image as ImageIcon
 } from '@phosphor-icons/react'
-import type { LegacyArtworkFile, Job, CustomerArtworkFile } from '@/lib/types'
+import type { LegacyArtworkFile, Job } from '@/lib/types'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
-
-interface ArtworkApprovalWorkflowProps {
-  artwork: CustomerArtworkFile
-  onUpdateArtwork: (artwork: CustomerArtworkFile) => void
-  onSendNotification: (email: string, stage: string) => void
-}
-
-export function ArtworkApprovalWorkflow({ artwork, onUpdateArtwork, onSendNotification }: ArtworkApprovalWorkflowProps) {
-  return (
-    <Card className="p-4">
-      <div className="text-sm text-muted-foreground">
-        Customer Artwork Workflow Component
-      </div>
-    </Card>
-  )
-}
 
 interface ArtworkReview {
   artworkLocation: string

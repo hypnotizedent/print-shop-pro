@@ -6,6 +6,7 @@ import { ProductMockup } from '@/components/ProductMockup'
 import { ArtworkUpload } from '@/components/ArtworkUpload'
 import { JobDepartmentNotification } from '@/components/JobDepartmentNotification'
 import { JobHistory } from '@/components/JobHistory'
+import { JobArtworkReview } from '@/components/JobArtworkReview'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import { useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { ExpenseTracker } from '@/components/ExpenseTracker'
 import { sendArtworkNotificationEmail, sendBulkArtworkApprovalEmail } from '@/lib/artwork-email'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface JobDetailProps {
   job: Job
@@ -47,6 +49,7 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
   const [productionNotesValue, setProductionNotesValue] = useState(job.production_notes || '')
   const [showDepartmentNotification, setShowDepartmentNotification] = useState(false)
   const [showExpenseTracker, setShowExpenseTracker] = useState(false)
+  const [activeJobTab, setActiveJobTab] = useState<'details' | 'artwork-review'>('details')
   const primaryItem = job.line_items[0]
   const bulkUploadRef = useRef<HTMLInputElement>(null)
 
@@ -161,6 +164,7 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
   const approvedArtworkFiles = job.line_items.reduce((sum, item) => 
     sum + (item.artwork || []).filter(a => a.approved).length, 0
   )
+  const pendingCount = totalArtworkFiles - approvedArtworkFiles
   
   return (
     <div className="h-full overflow-auto">
@@ -526,96 +530,129 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
         
         <JobHistory job={job} />
         
-        <div>
-          <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
-            Line Items
-          </div>
-          <div className="space-y-3">
-            {job.line_items.map((item) => (
-              <Card key={item.id} className="p-4">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 w-12 h-12">
-                    <ProductMockup
-                      productType={item.product_type}
-                      color={item.product_color || '#94a3b8'}
-                      size="small"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-lg mb-1">
-                      {item.quantity}× {item.product_name} ({item.product_type})
-                    </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <div>
-                        <span className="capitalize">{item.decoration.replace('-', ' ')}</span>
-                        {item.print_locations.length > 0 && (
-                          <span> - {item.print_locations.map(l => l.replace('-', ' ')).join(', ')}</span>
-                        )}
-                      </div>
-                      <div>
-                        {item.colors} {item.colors === 1 ? 'color' : 'colors'}
-                      </div>
-                      <div className="flex gap-3 mt-2">
-                        {Object.entries(item.sizes)
-                          .filter(([, qty]) => qty > 0)
-                          .map(([size, qty]) => (
-                            <span key={size} className="text-xs">
-                              {size}: <span className="font-semibold">{qty}</span>
-                            </span>
-                          ))
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        <Tabs value={activeJobTab} onValueChange={(v) => setActiveJobTab(v as any)}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="details">
+              Line Items & Details
+            </TabsTrigger>
+            <TabsTrigger value="artwork-review">
+              Artwork Review Workflow
+              {totalArtworkFiles > 0 && pendingCount > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-yellow-500 text-white text-xs rounded-full">
+                  {approvedArtworkFiles}/{totalArtworkFiles}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-                {item.print_locations.length > 0 && (
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm font-semibold">Artwork Files</div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const input = document.createElement('input')
-                          input.type = 'file'
-                          input.multiple = true
-                          input.accept = 'image/*'
-                          input.onchange = (e) => {
-                            const files = (e.target as HTMLInputElement).files
-                            if (files) {
-                              handleBulkUpload(item.id, files)
+          <TabsContent value="details">
+            <div>
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
+                Line Items
+              </div>
+              <div className="space-y-3">
+                {job.line_items.map((item) => (
+                  <Card key={item.id} className="p-4">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="flex-shrink-0 w-12 h-12">
+                        <ProductMockup
+                          productType={item.product_type}
+                          color={item.product_color || '#94a3b8'}
+                          size="small"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-lg mb-1">
+                          {item.quantity}× {item.product_name} ({item.product_type})
+                        </div>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div>
+                            <span className="capitalize">{item.decoration.replace('-', ' ')}</span>
+                            {item.print_locations.length > 0 && (
+                              <span> - {item.print_locations.map(l => l.replace('-', ' ')).join(', ')}</span>
+                            )}
+                          </div>
+                          <div>
+                            {item.colors} {item.colors === 1 ? 'color' : 'colors'}
+                          </div>
+                          <div className="flex gap-3 mt-2">
+                            {Object.entries(item.sizes)
+                              .filter(([, qty]) => qty > 0)
+                              .map(([size, qty]) => (
+                                <span key={size} className="text-xs">
+                                  {size}: <span className="font-semibold">{qty}</span>
+                                </span>
+                              ))
                             }
-                          }
-                          input.click()
-                        }}
-                      >
-                        <Images size={16} className="mr-2" />
-                        Upload Multiple Files
-                      </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-3">
-                      {item.print_locations.map(location => {
-                        const artwork = (item.artwork || []).find(a => a.location === location)
-                        return (
-                          <ArtworkUpload
-                            key={location}
-                            location={location}
-                            artwork={artwork}
-                            onUpload={() => {}}
-                            onRemove={() => {}}
-                            canApprove={true}
-                            onApprove={(approved) => handleArtworkApproval(item.id, location, approved)}
-                          />
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
-        </div>
+
+                    {item.print_locations.length > 0 && (
+                      <div className="pt-4 border-t border-border">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-sm font-semibold">Artwork Files</div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const input = document.createElement('input')
+                              input.type = 'file'
+                              input.multiple = true
+                              input.accept = 'image/*'
+                              input.onchange = (e) => {
+                                const files = (e.target as HTMLInputElement).files
+                                if (files) {
+                                  handleBulkUpload(item.id, files)
+                                }
+                              }
+                              input.click()
+                            }}
+                          >
+                            <Images size={16} className="mr-2" />
+                            Upload Multiple Files
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-3">
+                          {item.print_locations.map(location => {
+                            const artwork = (item.artwork || []).find(a => a.location === location)
+                            return (
+                              <ArtworkUpload
+                                key={location}
+                                location={location}
+                                artwork={artwork}
+                                onUpload={() => {}}
+                                onRemove={() => {}}
+                                canApprove={true}
+                                onApprove={(approved) => handleArtworkApproval(item.id, location, approved)}
+                              />
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="artwork-review">
+            <JobArtworkReview
+              job={job}
+              onApproveArtwork={(itemId, location, approved) => {
+                handleArtworkApproval(itemId, location, approved)
+              }}
+              onRequestRevision={(itemId, location, notes) => {
+                toast.info('Revision request sent', {
+                  description: notes,
+                  duration: 4000,
+                })
+              }}
+            />
+          </TabsContent>
+        </Tabs>
         
         {job.assigned_to.length > 0 && (
           <div>
