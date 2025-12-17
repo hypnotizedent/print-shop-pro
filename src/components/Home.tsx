@@ -52,7 +52,14 @@ export function Home({
   onNewJob
 }: HomeProps) {
   const stats = useMemo(() => {
-    const activeQuotes = quotes.filter(q => q.status === 'sent' || q.status === 'draft')
+    const oneMonthAgo = new Date()
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+    
+    const quotesNeedingFollowUp = quotes.filter(q => {
+      const createdDate = new Date(q.created_at)
+      return createdDate >= oneMonthAgo && q.status !== 'approved' && q.status !== 'rejected'
+    })
+    
     const approvedQuotes = quotes.filter(q => q.status === 'approved')
     const expiredQuotes = quotes.filter(q => q.status === 'expired')
     
@@ -81,8 +88,11 @@ export function Home({
     
     const readyForPickup = jobs.filter(j => j.status === 'ready')
     
+    const followUpValue = quotesNeedingFollowUp.reduce((sum, q) => sum + q.total, 0)
+    
     return {
-      activeQuotes: activeQuotes.length,
+      quotesNeedingFollowUp: quotesNeedingFollowUp.length,
+      followUpValue,
       approvedQuotes: approvedQuotes.length,
       expiredQuotes: expiredQuotes.length,
       activeJobs: activeJobs.length,
@@ -170,16 +180,13 @@ export function Home({
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
               <Sparkle size={32} weight="fill" className="text-primary" />
-              Dashboard Overview
+              {format(new Date(), 'EEEE, MMMM d, yyyy')}
             </h1>
             <p className="text-muted-foreground mt-1">
               Your print shop at a glance
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-sm text-muted-foreground hidden md:block">
-              {format(new Date(), 'EEEE, MMMM d, yyyy')}
-            </div>
             <Button onClick={onNewQuote} size="default" className="gap-2">
               <Plus size={18} weight="bold" />
               New Quote
@@ -194,16 +201,16 @@ export function Home({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToQuotes}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Quotes</CardTitle>
+              <CardTitle className="text-sm font-medium">Follow-Up Needed</CardTitle>
               <FileText size={20} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.activeQuotes}</div>
+              <div className="text-2xl font-bold">{stats.quotesNeedingFollowUp}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats.approvedQuotes} approved • {stats.expiredQuotes} expired
+                Created this month • Not approved
               </p>
               <div className="mt-2 text-sm font-medium text-primary">
-                {formatCurrency(stats.totalQuoteValue)} total value
+                {formatCurrency(stats.followUpValue)} potential value
               </div>
             </CardContent>
           </Card>
