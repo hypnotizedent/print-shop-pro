@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin, CaretDown } from '@phosphor-icons/react'
+import { ArrowLeft, EnvelopeSimple, Phone, Buildings, Pencil, Check, X, MapPin, CaretDown, Image } from '@phosphor-icons/react'
 import type { Customer, Quote, Job, CustomerTier, CustomerArtworkFile, CustomerEmailPreferences as EmailPrefs, EmailNotification, EmailTemplate } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
@@ -63,10 +63,12 @@ export function CustomerDetail({
   const [editedCustomer, setEditedCustomer] = useState(customer)
   const [emailPreferencesOpen, setEmailPreferencesOpen] = useState(false)
   const [emailHistoryOpen, setEmailHistoryOpen] = useState(false)
+  const [artworkLibraryOpen, setArtworkLibraryOpen] = useState(false)
   
   const customerQuotes = quotes.filter(q => q.customer.id === customer.id)
   const customerJobs = jobs.filter(j => j.customer.id === customer.id)
   const customerEmails = emailNotifications.filter(e => e.customerId === customer.id)
+  const customerArtwork = customerArtworkFiles.filter(af => af.customerId === customer.id)
   
   const totalRevenue = customerQuotes
     .filter(q => q.status === 'approved')
@@ -401,13 +403,34 @@ export function CustomerDetail({
             </Card>
           </Collapsible>
           
-          <CustomerArtworkLibrary
-            customerId={customer.id}
-            artworkFiles={customerArtworkFiles.filter(af => af.customerId === customer.id)}
-            onSaveArtworkFile={onSaveArtworkFile}
-            onDeleteArtworkFile={onDeleteArtworkFile}
-            onUpdateArtworkFile={onUpdateArtworkFile}
-          />
+          <Collapsible open={artworkLibraryOpen} onOpenChange={setArtworkLibraryOpen}>
+            <Card className="overflow-hidden">
+              <CollapsibleTrigger className="w-full p-6 flex items-center justify-between hover:bg-accent/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Image size={20} className="text-primary" />
+                  <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
+                    Artwork Library ({customerArtwork.length})
+                  </h2>
+                </div>
+                <CaretDown 
+                  size={20} 
+                  className={`text-muted-foreground transition-transform ${artworkLibraryOpen ? 'rotate-180' : ''}`}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6 pt-2">
+                  <CustomerArtworkLibrary
+                    customerId={customer.id}
+                    artworkFiles={customerArtwork}
+                    onSaveArtworkFile={onSaveArtworkFile}
+                    onDeleteArtworkFile={onDeleteArtworkFile}
+                    onUpdateArtworkFile={onUpdateArtworkFile}
+                    hideWrapper={true}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
           
           <Card className="p-6">
             <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">

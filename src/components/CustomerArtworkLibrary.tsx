@@ -29,6 +29,7 @@ interface CustomerArtworkLibraryProps {
   onSaveArtworkFile: (artwork: CustomerArtworkFile) => void
   onDeleteArtworkFile: (artworkId: string) => void
   onUpdateArtworkFile: (artwork: CustomerArtworkFile) => void
+  hideWrapper?: boolean
 }
 
 export function CustomerArtworkLibrary({
@@ -37,6 +38,7 @@ export function CustomerArtworkLibrary({
   onSaveArtworkFile,
   onDeleteArtworkFile,
   onUpdateArtworkFile,
+  hideWrapper = false,
 }: CustomerArtworkLibraryProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingArtwork, setEditingArtwork] = useState<CustomerArtworkFile | null>(null)
@@ -307,13 +309,27 @@ export function CustomerArtworkLibrary({
     ? artworkFiles.filter((artwork) => artwork.productionReady)
     : artworkFiles
 
-  return (
-    <Card className="p-6">
+  const content = (
+    <>
       <div className="flex items-center justify-between mb-4 gap-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
-            Artwork Library ({filteredArtworkFiles.length})
-          </h2>
+        {!hideWrapper && (
+          <div className="flex items-center gap-4">
+            <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">
+              Artwork Library ({filteredArtworkFiles.length})
+            </h2>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="filter-production-ready"
+                checked={filterProductionReady}
+                onCheckedChange={setFilterProductionReady}
+              />
+              <Label htmlFor="filter-production-ready" className="text-xs text-muted-foreground cursor-pointer">
+                Production Ready Only
+              </Label>
+            </div>
+          </div>
+        )}
+        {hideWrapper && (
           <div className="flex items-center gap-2">
             <Switch
               id="filter-production-ready"
@@ -324,7 +340,7 @@ export function CustomerArtworkLibrary({
               Production Ready Only
             </Label>
           </div>
-        </div>
+        )}
         <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
           <Plus size={18} className="mr-2" />
           Add Artwork
@@ -808,6 +824,12 @@ export function CustomerArtworkLibrary({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </>
   )
+
+  if (hideWrapper) {
+    return content
+  }
+
+  return <Card className="p-6">{content}</Card>
 }
