@@ -215,6 +215,24 @@ export interface CustomerDecorationTemplate {
   createdAt: string
 }
 
+export type ImprintTemplateCategory = 'screen-print' | 'embroidery' | 'dtg' | 'vinyl' | 'specialty' | 'custom'
+
+export interface ImprintTemplate {
+  id: string
+  name: string
+  description?: string
+  category: ImprintTemplateCategory
+  customCategory?: string
+  decoration: Omit<Decoration, 'id'>
+  tags?: string[]
+  previewImageUrl?: string
+  isActive: boolean
+  usageCount: number
+  lastUsed?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type PaymentMethod = 'cash' | 'check' | 'venmo' | 'zelle' | 'paypal' | 'bank-transfer' | 'other'
 
 export interface Payment {

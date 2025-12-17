@@ -8,7 +8,7 @@ import { CopyDecorationsDialog } from './CopyDecorationsDialog'
 import { BulkCopyDecorationsDialog } from './BulkCopyDecorationsDialog'
 import { InlineSKUSearch } from './InlineSKUSearch'
 import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple, DotsSixVertical, FolderOpen, Folder, Plus, ArrowsOutCardinal, ArrowsInCardinal, DotsThree } from '@phosphor-icons/react'
-import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate, CustomerArtworkFile, LineItemGroup } from '@/lib/types'
+import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate, CustomerArtworkFile, LineItemGroup, ImprintTemplate } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { generateId } from '@/lib/data'
 import {
@@ -30,7 +30,9 @@ interface LineItemGridProps {
   previousQuotes?: Quote[]
   customerTemplates?: CustomerDecorationTemplate[]
   customerArtworkFiles?: CustomerArtworkFile[]
+  imprintTemplates?: ImprintTemplate[]
   onSaveTemplate?: (template: CustomerDecorationTemplate) => void
+  onUpdateImprintTemplate?: (template: ImprintTemplate) => void
   onAddImprint?: (itemId: string) => void
 }
 
@@ -44,7 +46,9 @@ export function LineItemGrid({
   previousQuotes,
   customerTemplates = [],
   customerArtworkFiles = [],
+  imprintTemplates = [],
   onSaveTemplate,
+  onUpdateImprintTemplate,
   onAddImprint,
 }: LineItemGridProps) {
   const [expandedLocations, setExpandedLocations] = React.useState<Set<string>>(new Set())
@@ -751,7 +755,9 @@ export function LineItemGrid({
                       customerName={customerName}
                       customerTemplates={customerTemplatesForCustomer}
                       customerArtworkFiles={customerArtworkFiles}
+                      imprintTemplates={imprintTemplates}
                       onSaveTemplate={onSaveTemplate}
+                      onUpdateImprintTemplate={onUpdateImprintTemplate}
                       lineItems={items}
                       currentItemIndex={index}
                       onDuplicateImprint={(decorationIndex) => duplicateImprint(index, decorationIndex)}

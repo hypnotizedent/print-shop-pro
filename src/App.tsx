@@ -27,7 +27,7 @@ import {
   Keyboard,
   Package,
 } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate, CustomerPricingRule, QuoteTemplate, TaxCertificate, PurchaseOrder } from '@/lib/types'
+import type { Quote, Job, Customer, JobStatus, QuoteStatus, LegacyArtworkFile, CustomerDecorationTemplate, Expense, PaymentReminder, CustomerArtworkFile, EmailNotification, FilterPreset, RecentSearch, FavoriteProduct, ProductTemplate, CustomerPricingRule, QuoteTemplate, TaxCertificate, PurchaseOrder, ImprintTemplate } from '@/lib/types'
 import { 
   sampleCustomers, 
   sampleQuotes, 
@@ -68,6 +68,7 @@ function App() {
   const [quoteTemplates, setQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
   const [taxCertificates, setTaxCertificates] = useKV<TaxCertificate[]>('tax-certificates', [])
   const [purchaseOrders, setPurchaseOrders] = useKV<PurchaseOrder[]>('purchase-orders', generateSamplePurchaseOrders())
+  const [imprintTemplates, setImprintTemplates] = useKV<ImprintTemplate[]>('imprint-templates', [])
   const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
     accountNumber: '',
     apiKey: ''
@@ -672,6 +673,13 @@ function App() {
     })
   }
 
+  const handleUpdateImprintTemplate = (template: ImprintTemplate) => {
+    setImprintTemplates((current) => {
+      const existing = current || []
+      return existing.map(t => t.id === template.id ? { ...t, ...template } : t)
+    })
+  }
+
 
   useKeyboardShortcuts([
     {
@@ -1038,6 +1046,7 @@ function App() {
               favoriteProducts={favoriteProducts || []}
               productTemplates={productTemplates || []}
               pricingRules={pricingRules || []}
+              imprintTemplates={imprintTemplates || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {
@@ -1057,6 +1066,7 @@ function App() {
               onSendEmail={addEmailNotification}
               onUpdateFavoriteProduct={handleUpdateFavoriteProduct}
               onUpdateProductTemplate={handleUpdateProductTemplate}
+              onUpdateImprintTemplate={handleUpdateImprintTemplate}
               onNavigateToCustomer={currentPage.quote.customer.id ? () => {
                 const customer = customers?.find(c => c.id === currentPage.quote.customer.id)
                 if (customer) {

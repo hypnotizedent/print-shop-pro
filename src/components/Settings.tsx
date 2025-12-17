@@ -9,8 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent, ChartLine, Plugs, MagnifyingGlass, X } from '@phosphor-icons/react'
-import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate, PurchaseOrder } from '@/lib/types'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent, ChartLine, Plugs, MagnifyingGlass, X, Sparkle } from '@phosphor-icons/react'
+import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate, PurchaseOrder, ImprintTemplate } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
 import { SmsTemplates } from '@/components/SmsTemplates'
@@ -22,6 +22,7 @@ import { QuoteTemplateManager } from '@/components/QuoteTemplateManager'
 import { PurchaseOrderManager } from '@/components/PurchaseOrderManager'
 import { SupplierPerformance } from '@/components/SupplierPerformance'
 import { WebhookDashboard } from '@/components/WebhookDashboard'
+import { ImprintTemplateManager } from '@/components/ImprintTemplateManager'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 import { sanMarAPI, type SanMarCredentials } from '@/lib/sanmar-api'
 import { WebhookConfig, WebhookEvent, InventoryAlert, WebhookNotification } from '@/lib/webhook-types'
@@ -81,6 +82,7 @@ export function Settings({
   const [webhookEvents, setWebhookEvents] = useKV<WebhookEvent[]>('webhook-events', [])
   const [inventoryAlerts, setInventoryAlerts] = useKV<InventoryAlert[]>('inventory-alerts', [])
   const [webhookNotifications, setWebhookNotifications] = useKV<WebhookNotification[]>('webhook-notifications', [])
+  const [imprintTemplates, setImprintTemplates] = useKV<ImprintTemplate[]>('imprint-templates', [])
   
   const quoteTemplates = externalQuoteTemplates || internalQuoteTemplates
   const purchaseOrders = externalPurchaseOrders || internalPurchaseOrders
@@ -443,6 +445,24 @@ export function Settings({
     setWebhookNotifications((current) => [notification, ...(current || [])])
   }
 
+  const handleSaveImprintTemplate = (template: ImprintTemplate) => {
+    setImprintTemplates((current) => [...(current || []), template])
+  }
+
+  const handleUpdateImprintTemplate = (template: ImprintTemplate) => {
+    setImprintTemplates((current) => {
+      const existing = current || []
+      return existing.map((t) => (t.id === template.id ? template : t))
+    })
+  }
+
+  const handleDeleteImprintTemplate = (templateId: string) => {
+    setImprintTemplates((current) => {
+      const existing = current || []
+      return existing.filter((t) => t.id !== templateId)
+    })
+  }
+
   const settingsTabs = useMemo(() => [
     {
       value: 'general',
@@ -492,6 +512,13 @@ export function Settings({
       icon: Tag,
       keywords: ['quote', 'template', 'presets', 'defaults', 'categories'],
       description: 'Quote templates'
+    },
+    {
+      value: 'imprint-templates',
+      label: 'Imprints',
+      icon: Sparkle,
+      keywords: ['imprint', 'decoration', 'template', 'screen print', 'embroidery', 'dtg', 'setup'],
+      description: 'Imprint decoration templates'
     },
     {
       value: 'email-templates',
@@ -947,6 +974,17 @@ export function Settings({
                 onUpdateTemplate={handleUpdateQuoteTemplate}
                 onDeleteTemplate={handleDeleteQuoteTemplate}
                 onUseTemplate={handleUseQuoteTemplate}
+              />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="imprint-templates" className="space-y-6">
+            <Card className="p-6">
+              <ImprintTemplateManager
+                templates={imprintTemplates || []}
+                onSaveTemplate={handleSaveImprintTemplate}
+                onUpdateTemplate={handleUpdateImprintTemplate}
+                onDeleteTemplate={handleDeleteImprintTemplate}
               />
             </Card>
           </TabsContent>

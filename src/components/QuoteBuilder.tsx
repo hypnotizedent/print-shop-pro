@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy, CurrencyDollar, Bell, ClockCounterClockwise, Envelope, Sparkle } from '@phosphor-icons/react'
-import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder, CustomerArtworkFile, FavoriteProduct, LineItem } from '@/lib/types'
+import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder, CustomerArtworkFile, FavoriteProduct, LineItem, ImprintTemplate } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
 import { PaymentTracker } from '@/components/PaymentTracker'
@@ -47,6 +47,7 @@ interface QuoteBuilderProps {
   favoriteProducts?: FavoriteProduct[]
   productTemplates?: import('@/lib/types').ProductTemplate[]
   pricingRules?: import('@/lib/types').CustomerPricingRule[]
+  imprintTemplates?: ImprintTemplate[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
@@ -57,6 +58,7 @@ interface QuoteBuilderProps {
   onSendEmail?: (notification: import('@/lib/types').EmailNotification) => void
   onUpdateFavoriteProduct?: (product: FavoriteProduct) => void
   onUpdateProductTemplate?: (template: import('@/lib/types').ProductTemplate) => void
+  onUpdateImprintTemplate?: (template: ImprintTemplate) => void
   isInline?: boolean
 }
 
@@ -71,6 +73,7 @@ export function QuoteBuilder({
   favoriteProducts = [],
   productTemplates = [],
   pricingRules = [],
+  imprintTemplates = [],
   onSave, 
   onBack, 
   onCreateCustomer,
@@ -81,6 +84,7 @@ export function QuoteBuilder({
   onSendEmail,
   onUpdateFavoriteProduct,
   onUpdateProductTemplate,
+  onUpdateImprintTemplate,
   isInline = false
 }: QuoteBuilderProps) {
   const [quote, setQuote] = useState(initialQuote)
@@ -416,7 +420,9 @@ export function QuoteBuilder({
                 previousQuotes={quotes}
                 customerTemplates={customerTemplates}
                 customerArtworkFiles={customerArtworkFiles}
+                imprintTemplates={imprintTemplates}
                 onSaveTemplate={onSaveDecorationTemplate}
+                onUpdateImprintTemplate={onUpdateImprintTemplate}
               />
             )}
           </div>

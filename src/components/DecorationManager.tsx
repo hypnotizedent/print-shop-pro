@@ -16,11 +16,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle, Warning, BookmarkSimple, Info, Image as ImageIcon, ArrowsOutCardinal } from '@phosphor-icons/react'
-import type { Decoration, DecorationType, ProductType, CustomerDecorationTemplate, CustomerArtworkFile } from '@/lib/types'
+import type { Decoration, DecorationType, ProductType, CustomerDecorationTemplate, CustomerArtworkFile, ImprintTemplate } from '@/lib/types'
 import { generateId } from '@/lib/data'
 import { toast } from 'sonner'
 import { getProductTemplate, validateImprintSize, createCustomerTemplate } from '@/lib/decoration-templates'
 import { SaveDecorationTemplateDialog } from '@/components/SaveDecorationTemplateDialog'
+import { ImprintTemplateQuickAdd } from '@/components/ImprintTemplateQuickAdd'
 import { Badge } from '@/components/ui/badge'
 
 interface DecorationManagerProps {
@@ -31,7 +32,9 @@ interface DecorationManagerProps {
   customerName?: string
   customerTemplates?: CustomerDecorationTemplate[]
   customerArtworkFiles?: CustomerArtworkFile[]
+  imprintTemplates?: ImprintTemplate[]
   onSaveTemplate?: (template: CustomerDecorationTemplate) => void
+  onUpdateImprintTemplate?: (template: ImprintTemplate) => void
   lineItems?: import('@/lib/types').LineItem[]
   currentItemIndex?: number
   onDuplicateImprint?: (decorationIndex: number) => void
@@ -341,7 +344,9 @@ export function DecorationManager({
   customerName,
   customerTemplates = [],
   customerArtworkFiles = [],
+  imprintTemplates = [],
   onSaveTemplate,
+  onUpdateImprintTemplate,
   lineItems = [],
   currentItemIndex,
   onDuplicateImprint,
@@ -1039,6 +1044,36 @@ export function DecorationManager({
           <Plus size={14} className="mr-1.5" />
           Add Decoration
         </Button>
+        
+        {imprintTemplates.length > 0 && (
+          <ImprintTemplateQuickAdd
+            templates={imprintTemplates}
+            onApplyTemplate={(decoration) => {
+              onChange([...decorations, decoration])
+              toast.success('Template applied')
+              
+              if (onUpdateImprintTemplate) {
+                const template = imprintTemplates.find(t => 
+                  t.decoration.method === decoration.method &&
+                  t.decoration.location === decoration.location &&
+                  t.decoration.inkThreadColors === decoration.inkThreadColors
+                )
+                if (template) {
+                  onUpdateImprintTemplate({
+                    ...template,
+                    usageCount: template.usageCount + 1,
+                    lastUsed: new Date().toISOString(),
+                  })
+                }
+              }
+            }}
+          >
+            <Button variant="outline" className="h-8 text-xs px-3">
+              <Sparkle size={14} className="mr-1.5" weight="fill" />
+              Imprints
+            </Button>
+          </ImprintTemplateQuickAdd>
+        )}
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
