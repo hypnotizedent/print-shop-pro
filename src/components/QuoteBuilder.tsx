@@ -94,7 +94,7 @@ export function QuoteBuilder({
     if (JSON.stringify(updated) !== JSON.stringify(quote)) {
       setQuote(updated)
     }
-  }, [quote.line_items, quote.discount, quote.discount_type, quote.tax_rate])
+  }, [quote.line_items, quote.discount, quote.discount_type])
   
   useEffect(() => {
     const autoSave = setInterval(() => {
@@ -439,8 +439,6 @@ export function QuoteBuilder({
                     subtotal={quote.subtotal}
                     discount={quote.discount}
                     discountType={quote.discount_type}
-                    taxRate={quote.tax_rate}
-                    taxAmount={quote.tax_amount}
                     total={quote.total}
                     onDiscountChange={(value) => setQuote({ ...quote, discount: value })}
                     onDiscountTypeChange={(type: DiscountType) => setQuote({ ...quote, discount_type: type })}
@@ -566,11 +564,6 @@ export function QuoteBuilder({
                 <div className="flex flex-col items-end">
                   <span className="text-xs text-muted-foreground">Subtotal</span>
                   <span className="font-semibold text-foreground">${quote.subtotal.toFixed(2)}</span>
-                </div>
-                <Separator orientation="vertical" className="h-8" />
-                <div className="flex flex-col items-end">
-                  <span className="text-xs text-muted-foreground">Tax</span>
-                  <span className="font-semibold text-foreground">${quote.tax_amount.toFixed(2)}</span>
                 </div>
                 <Separator orientation="vertical" className="h-8" />
                 <div className="flex flex-col items-end">

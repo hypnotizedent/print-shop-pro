@@ -153,8 +153,6 @@ export interface Quote {
   subtotal: number
   discount: number
   discount_type: DiscountType
-  tax_rate: number
-  tax_amount: number
   total: number
   notes_customer: string
   notes_internal: string

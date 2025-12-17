@@ -361,10 +361,6 @@ export function generateInvoiceHTML(quote: Quote): string {
         <span>-${formatCurrency(quote.discount_type === 'percent' ? (quote.subtotal * quote.discount / 100) : quote.discount)}</span>
       </div>
     ` : ''}
-    <div class="totals-row tax">
-      <span>Tax (${quote.tax_rate}%)</span>
-      <span>${formatCurrency(quote.tax_amount)}</span>
-    </div>
     <div class="totals-row total">
       <span>TOTAL</span>
       <span>${formatCurrency(quote.total)}</span>

@@ -7,8 +7,6 @@ interface PricingSummaryProps {
   subtotal: number
   discount: number
   discountType: DiscountType
-  taxRate: number
-  taxAmount: number
   total: number
   onDiscountChange: (value: number) => void
   onDiscountTypeChange: (type: DiscountType) => void
@@ -18,8 +16,6 @@ export function PricingSummary({
   subtotal,
   discount,
   discountType,
-  taxRate,
-  taxAmount,
   total,
   onDiscountChange,
   onDiscountTypeChange,
@@ -58,11 +54,6 @@ export function PricingSummary({
             -${discountAmount.toFixed(2)}
           </span>
         </div>
-      </div>
-      
-      <div className="flex justify-between items-center text-sm">
-        <span className="text-muted-foreground">Tax ({taxRate}%)</span>
-        <span className="font-medium tabular-nums">+${taxAmount.toFixed(2)}</span>
       </div>
       
       <Separator className="my-2" />

@@ -108,8 +108,6 @@ export const createEmptyQuote = (customer?: Customer): Quote => ({
   subtotal: 0,
   discount: 0,
   discount_type: 'percent',
-  tax_rate: 8.25,
-  tax_amount: 0,
   total: 0,
   notes_customer: '',
   notes_internal: '',
@@ -151,14 +149,11 @@ export function calculateQuoteTotals(quote: Quote): Quote {
     ? (subtotal * quote.discount / 100) 
     : quote.discount
   
-  const afterDiscount = subtotal - discountAmount
-  const taxAmount = afterDiscount * (quote.tax_rate / 100)
-  const total = afterDiscount + taxAmount
+  const total = subtotal - discountAmount
   
   return {
     ...quote,
     subtotal,
-    tax_amount: taxAmount,
     total,
   }
 }
@@ -188,9 +183,7 @@ export const sampleQuotes: Quote[] = [
     subtotal: 2340.00,
     discount: 0,
     discount_type: 'percent',
-    tax_rate: 8.25,
-    tax_amount: 193.05,
-    total: 2533.05,
+    total: 2340.00,
     notes_customer: 'Rush order needed for company event',
     notes_internal: 'VIP customer - priority production',
     due_date: '2025-12-20',
@@ -221,9 +214,7 @@ export const sampleQuotes: Quote[] = [
     subtotal: 650.00,
     discount: 10,
     discount_type: 'percent',
-    tax_rate: 8.25,
-    tax_amount: 48.26,
-    total: 633.26,
+    total: 585.00,
     notes_customer: 'Family reunion shirts',
     notes_internal: '',
     due_date: '2025-12-25',
@@ -254,9 +245,7 @@ export const sampleQuotes: Quote[] = [
     subtotal: 1425.00,
     discount: 50,
     discount_type: 'fixed',
-    tax_rate: 8.25,
-    tax_amount: 113.44,
-    total: 1488.44,
+    total: 1375.00,
     notes_customer: 'Company logo embroidery',
     notes_internal: 'Approved - ready to convert to job',
     due_date: '2025-12-18',
