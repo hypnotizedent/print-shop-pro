@@ -728,7 +728,7 @@ export function LineItemGrid({
                         )}
 
                         {customerId && customerQuotes.length > 0 && (
-                          <Button
+                            onClick={() => handleCopyFromPreviousQuotes(index)}
                             variant="outline"
                             size="sm"
                             onClick={() => handleCopyFromPreviousQuotes(index)}
