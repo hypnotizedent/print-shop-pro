@@ -150,6 +150,21 @@ export interface PrintavoTransaction {
   }
 }
 
+export interface PrintavoExpense {
+  id: string
+  amount?: number
+  description?: string
+  category?: string
+  vendor?: string
+  invoiceNumber?: string
+  expenseDate?: string
+  notes?: string
+  timestamps?: {
+    createdAt?: string
+    updatedAt?: string
+  }
+}
+
 export interface PrintavoQuote {
   id: string
   visualId?: string
@@ -221,13 +236,7 @@ export interface PrintavoInvoice extends PrintavoQuote {
       email?: string
     }
   }>
-  expenses?: Array<{
-    id: string
-    amount?: number
-    description?: string
-    category?: string
-    vendor?: string
-  }>
+  expenses?: PrintavoExpense[]
 }
 
 // ============================================================================
@@ -527,7 +536,7 @@ export function transformPayment(
  * Transform Printavo Expense to Mint Prints Expense
  */
 export function transformExpense(
-  printavoExpense: PrintavoInvoice['expenses'][0],
+  printavoExpense: PrintavoExpense,
   jobId: string,
   options?: { preserveId?: boolean }
 ): Expense {

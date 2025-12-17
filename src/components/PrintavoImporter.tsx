@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Upload, FileJson, AlertCircle, CheckCircle2, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Quote, Job, Customer } from '@/lib/types'
@@ -328,12 +329,10 @@ export function PrintavoImporter() {
 
           {/* Preserve IDs Option */}
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+            <Checkbox
               id="preserve-ids"
               checked={preserveIds}
-              onChange={(e) => setPreserveIds(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              onCheckedChange={(checked) => setPreserveIds(checked as boolean)}
             />
             <Label htmlFor="preserve-ids" className="text-sm font-normal">
               Preserve original Printavo IDs (useful for syncing)
