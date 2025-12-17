@@ -37,6 +37,7 @@ import {
   generateId
 } from '@/lib/data'
 import { createQuoteApprovalEmail, createQuoteApprovedEmail, createInvoiceEmail } from '@/lib/email-notifications'
+import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 
 type View = 'home' | 'quotes' | 'jobs' | 'customers' | 'reports' | 'settings'
 type Page = 
@@ -56,6 +57,10 @@ function App() {
   const [emailTemplates, setEmailTemplates] = useKV<import('@/lib/types').EmailTemplate[]>('email-templates', sampleEmailTemplates)
   const [filterPresets, setFilterPresets] = useKV<FilterPreset[]>('filter-presets', [])
   const [recentSearches, setRecentSearches] = useKV<RecentSearch[]>('recent-searches', [])
+  const [ssActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
+    accountNumber: '',
+    apiKey: ''
+  })
   const [currentPage, setCurrentPage] = useState<Page>({ type: 'list', view: 'home' })
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false)
   
@@ -70,6 +75,12 @@ function App() {
       document.documentElement.style.setProperty('--accent', accentColor)
     }
   }, [])
+
+  useEffect(() => {
+    if (ssActivewearCreds && ssActivewearCreds.accountNumber && ssActivewearCreds.apiKey) {
+      ssActivewearAPI.setCredentials(ssActivewearCreds)
+    }
+  }, [ssActivewearCreds])
 
   useEffect(() => {
     if (customerArtworkFiles && customerArtworkFiles.length > 0) {

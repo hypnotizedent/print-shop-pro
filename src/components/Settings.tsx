@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock } from '@phosphor-icons/react'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
@@ -16,6 +16,7 @@ import { SmsTemplates } from '@/components/SmsTemplates'
 import { CustomerSmsOptOuts } from '@/components/CustomerSmsOptOuts'
 import { EmailTemplatesManager } from '@/components/EmailTemplatesManager'
 import { ScheduledEmailsManager } from '@/components/ScheduledEmailsManager'
+import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
 
 interface SettingsProps {
   quotes: Quote[]
@@ -31,6 +32,10 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
     authToken: '',
     fromNumber: ''
   })
+  const [ssActivewearCreds, setSSActivewearCreds] = useKV<SSActivewearCredentials>('ssactivewear-credentials', {
+    accountNumber: '',
+    apiKey: ''
+  })
   const [smsTemplates, setSmsTemplates] = useKV<SmsTemplate[]>('sms-templates', [])
   const [smsPreferences, setSmsPreferences] = useKV<CustomerSmsPreferences[]>('customer-sms-preferences', [])
   const [emailTemplates, setEmailTemplates] = useKV<EmailTemplate[]>('email-templates', [])
@@ -41,8 +46,11 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
   const [accountSidInput, setAccountSidInput] = useState(twilioConfig?.accountSid || '')
   const [authTokenInput, setAuthTokenInput] = useState(twilioConfig?.authToken || '')
   const [fromNumberInput, setFromNumberInput] = useState(twilioConfig?.fromNumber || '')
+  const [ssAccountInput, setSSAccountInput] = useState(ssActivewearCreds?.accountNumber || '')
+  const [ssApiKeyInput, setSSApiKeyInput] = useState(ssActivewearCreds?.apiKey || '')
 
   const isTwilioConfigured = validateTwilioConfig(twilioConfig || {})
+  const isSSActivewearConfigured = ssActivewearCreds?.accountNumber && ssActivewearCreds?.apiKey
 
   const handleSaveTheme = () => {
     setPrimaryColor(primaryInput)
@@ -174,16 +182,36 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
     })
   }
 
+  const handleSaveSSActivewearConfig = () => {
+    const credentials: SSActivewearCredentials = {
+      accountNumber: ssAccountInput.trim(),
+      apiKey: ssApiKeyInput.trim()
+    }
+
+    if (!credentials.accountNumber || !credentials.apiKey) {
+      toast.error('Please provide both Account Number and API Key')
+      return
+    }
+
+    setSSActivewearCreds(credentials)
+    ssActivewearAPI.setCredentials(credentials)
+    toast.success('SS Activewear API configured!')
+  }
+
   return (
     <div className="h-full overflow-auto p-8">
       <div className="max-w-4xl">
         <h1 className="text-2xl font-bold mb-8">Settings</h1>
         
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="general">
               <Palette size={16} className="mr-2" />
               General
+            </TabsTrigger>
+            <TabsTrigger value="api">
+              <ShoppingBag size={16} className="mr-2" />
+              Suppliers
             </TabsTrigger>
             <TabsTrigger value="email-templates">
               <Envelope size={16} className="mr-2" />
@@ -325,6 +353,88 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
               </p>
             </div>
           </Card>
+          </TabsContent>
+
+          <TabsContent value="api" className="space-y-6">
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <ShoppingBag size={24} className={isSSActivewearConfigured ? 'text-primary' : 'text-muted-foreground'} />
+                <div>
+                  <h2 className="text-lg font-semibold">SS Activewear API</h2>
+                  <p className="text-sm text-muted-foreground">Enable style autofill from SS Activewear catalog</p>
+                </div>
+              </div>
+
+              {isSSActivewearConfigured ? (
+                <Alert className="mb-4 border-primary/30 bg-primary/5">
+                  <CheckCircle size={18} className="text-primary" />
+                  <AlertDescription className="text-sm ml-2">
+                    SS Activewear API is configured. SKU lookups will autofill product details.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="mb-4 border-yellow-500/30 bg-yellow-500/5">
+                  <Warning size={18} className="text-yellow-500" />
+                  <AlertDescription className="text-sm ml-2">
+                    Configure your SS Activewear API credentials to enable product autofill
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="ss-account">Account Number</Label>
+                  <Input
+                    id="ss-account"
+                    type="text"
+                    value={ssAccountInput}
+                    onChange={(e) => setSSAccountInput(e.target.value)}
+                    placeholder="Your SS Activewear account number"
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="ss-apikey">API Key</Label>
+                  <Input
+                    id="ss-apikey"
+                    type="password"
+                    value={ssApiKeyInput}
+                    onChange={(e) => setSSApiKeyInput(e.target.value)}
+                    placeholder="Your SS Activewear API key"
+                    className="mt-2"
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <Button onClick={handleSaveSSActivewearConfig}>
+                    Save API Configuration
+                  </Button>
+                </div>
+
+                <Separator className="my-4" />
+
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p className="font-medium">How to get your API credentials:</p>
+                  <ol className="list-decimal list-inside space-y-1 ml-2">
+                    <li>Log in to your SS Activewear account</li>
+                    <li>Navigate to Account Settings &gt; API Access</li>
+                    <li>Generate or copy your API Key</li>
+                    <li>Your Account Number is your login username</li>
+                  </ol>
+                  <p className="mt-4">
+                    <a 
+                      href="https://api.ssactivewear.com/V2/Default.aspx" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      View API Documentation →
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </Card>
           </TabsContent>
 
           <TabsContent value="email-templates" className="space-y-6">

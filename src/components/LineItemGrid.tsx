@@ -4,7 +4,8 @@ import { ProductMockupWithSize } from './ProductMockupWithSize'
 import { DecorationManager } from './DecorationManager'
 import { CopyDecorationsDialog } from './CopyDecorationsDialog'
 import { BulkCopyDecorationsDialog } from './BulkCopyDecorationsDialog'
-import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple } from '@phosphor-icons/react'
+import { SKULookupDialog } from './SKULookupDialog'
+import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple, Sparkle } from '@phosphor-icons/react'
 import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate, CustomerArtworkFile } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { generateId } from '@/lib/data'
@@ -42,6 +43,7 @@ export function LineItemGrid({
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
   const [copyDialogOpen, setCopyDialogOpen] = useState(false)
   const [bulkCopyDialogOpen, setBulkCopyDialogOpen] = useState(false)
+  const [skuLookupOpen, setSKULookupOpen] = useState(false)
   const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null)
 
   const updateItem = (index: number, updates: Partial<LineItem>) => {
@@ -151,6 +153,32 @@ export function LineItemGrid({
     onChange(newItems)
   }
 
+  const handleSKULookup = (itemIndex: number) => {
+    setCurrentItemIndex(itemIndex)
+    setSKULookupOpen(true)
+  }
+
+  const handleApplySKUData = (productName: string, color: string, sizes: Partial<Sizes>) => {
+    if (currentItemIndex === null) return
+
+    const fullSizes: Sizes = {
+      XS: 0,
+      S: 0,
+      M: 0,
+      L: 0,
+      XL: 0,
+      '2XL': 0,
+      '3XL': 0,
+      ...sizes
+    }
+
+    updateItem(currentItemIndex, {
+      product_name: productName,
+      product_color: color,
+      sizes: fullSizes
+    })
+  }
+
   const customerQuotes = previousQuotes?.filter(q => q.customer.id === customerId && q.id !== items[0]?.id) || []
   
   const customerTemplatesForCustomer = customerTemplates.filter(t => t.customerId === customerId)
@@ -167,13 +195,21 @@ export function LineItemGrid({
       />
 
       {currentItemIndex !== null && (
-        <BulkCopyDecorationsDialog
-          open={bulkCopyDialogOpen}
-          onOpenChange={setBulkCopyDialogOpen}
-          sourceLineItem={items[currentItemIndex]}
-          allLineItems={items}
-          onCopy={handleBulkCopyDecorations}
-        />
+        <>
+          <BulkCopyDecorationsDialog
+            open={bulkCopyDialogOpen}
+            onOpenChange={setBulkCopyDialogOpen}
+            sourceLineItem={items[currentItemIndex]}
+            allLineItems={items}
+            onCopy={handleBulkCopyDecorations}
+          />
+          
+          <SKULookupDialog
+            open={skuLookupOpen}
+            onOpenChange={setSKULookupOpen}
+            onApply={handleApplySKUData}
+          />
+        </>
       )}
       
       <div className="border border-border rounded-lg overflow-hidden">
@@ -298,75 +334,87 @@ export function LineItemGrid({
                         </div>
                       </button>
                       
-                      {items.length > 1 && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs mt-2 text-muted-foreground hover:text-primary"
-                            >
-                              <Copy size={14} className="mr-1.5" />
-                              Copy Decorations From...
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-64">
-                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                              Copy from line item
-                            </div>
-                            <DropdownMenuSeparator />
-                            {items.map((sourceItem, sourceIndex) => {
-                              if (sourceIndex === index) return null
-                              const decorationCount = getTotalDecorations(sourceItem)
-                              if (decorationCount === 0) return null
-                              
-                              return (
-                                <DropdownMenuItem
-                                  key={sourceItem.id}
-                                  onClick={() => copyDecorationsFromItem(index, sourceIndex)}
-                                  className="flex flex-col items-start gap-0.5 py-2"
-                                >
-                                  <div className="font-medium text-xs">
-                                    #{sourceIndex + 1}: {sourceItem.product_name || 'Untitled'} 
-                                    {sourceItem.product_color && ` - ${sourceItem.product_color}`}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {decorationCount} decoration{decorationCount !== 1 ? 's' : ''}
-                                  </div>
-                                </DropdownMenuItem>
-                              )
-                            }).filter(Boolean).length === 0 && (
-                              <div className="px-2 py-3 text-xs text-muted-foreground text-center">
-                                No other line items with decorations
+                      <div className="flex gap-2 flex-wrap mt-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-muted-foreground hover:text-primary"
+                          onClick={() => handleSKULookup(index)}
+                        >
+                          <Sparkle size={14} className="mr-1.5" weight="fill" />
+                          SKU Lookup
+                        </Button>
+
+                        {items.length > 1 && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-muted-foreground hover:text-primary"
+                              >
+                                <Copy size={14} className="mr-1.5" />
+                                Copy Decorations From...
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-64">
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                Copy from line item
                               </div>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                              <DropdownMenuSeparator />
+                              {items.map((sourceItem, sourceIndex) => {
+                                if (sourceIndex === index) return null
+                                const decorationCount = getTotalDecorations(sourceItem)
+                                if (decorationCount === 0) return null
+                                
+                                return (
+                                  <DropdownMenuItem
+                                    key={sourceItem.id}
+                                    onClick={() => copyDecorationsFromItem(index, sourceIndex)}
+                                    className="flex flex-col items-start gap-0.5 py-2"
+                                  >
+                                    <div className="font-medium text-xs">
+                                      #{sourceIndex + 1}: {sourceItem.product_name || 'Untitled'} 
+                                      {sourceItem.product_color && ` - ${sourceItem.product_color}`}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {decorationCount} decoration{decorationCount !== 1 ? 's' : ''}
+                                    </div>
+                                  </DropdownMenuItem>
+                                )
+                              }).filter(Boolean).length === 0 && (
+                                <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+                                  No other line items with decorations
+                                </div>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
 
-                      {customerId && customerQuotes.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyFromPreviousQuotes(index)}
-                          className="h-7 text-xs mt-2 text-muted-foreground hover:text-emerald-500"
-                        >
-                          <Clock size={14} className="mr-1.5" />
-                          Copy from Previous Quotes ({customerQuotes.length})
-                        </Button>
-                      )}
+                        {customerId && customerQuotes.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCopyFromPreviousQuotes(index)}
+                            className="h-7 text-xs text-muted-foreground hover:text-emerald-500"
+                          >
+                            <Clock size={14} className="mr-1.5" />
+                            Copy from Previous Quotes ({customerQuotes.length})
+                          </Button>
+                        )}
 
-                      {items.length > 1 && (item.decorations || []).length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleBulkCopyToAllItems(index)}
-                          className="h-7 text-xs mt-2 ml-2 text-muted-foreground hover:text-primary"
-                        >
-                          <CopySimple size={14} className="mr-1.5" />
-                          Copy to All Line Items
-                        </Button>
-                      )}
+                        {items.length > 1 && (item.decorations || []).length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleBulkCopyToAllItems(index)}
+                            className="h-7 text-xs text-muted-foreground hover:text-primary"
+                          >
+                            <CopySimple size={14} className="mr-1.5" />
+                            Copy to All Line Items
+                          </Button>
+                        )}
+                      </div>
                       
                       {expandedLocations.has(item.id) && (
                         <div className="mt-3 pb-3">
