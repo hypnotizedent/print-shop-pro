@@ -186,6 +186,32 @@ function App() {
     setCurrentPage({ type: 'quote-builder', quote: newQuote })
   }
   
+  const handleNewJob = () => {
+    const newJob: Job = {
+      id: generateId('j'),
+      job_number: generateJobNumber(),
+      quote_id: '',
+      status: 'pending',
+      customer: {
+        id: '',
+        name: '',
+        email: '',
+      },
+      line_items: [],
+      due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ship_date: '',
+      production_notes: '',
+      artwork_approved: false,
+      assigned_to: [],
+      progress: 0,
+      nickname: '',
+    }
+    
+    setJobs((current) => [...(current || []), newJob])
+    toast.success('New job created')
+    setCurrentPage({ type: 'list', view: 'jobs' })
+  }
+  
   const handleSelectQuote = (quote: Quote) => {
     setCurrentPage({ type: 'quote-builder', quote, fromCustomerId: undefined })
   }
@@ -557,6 +583,8 @@ function App() {
                 })
               }}
               onUpdateJobStatus={handleUpdateJobStatus}
+              onNewQuote={handleNewQuote}
+              onNewJob={handleNewJob}
             />
           )}
           

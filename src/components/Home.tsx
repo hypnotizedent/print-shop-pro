@@ -16,7 +16,8 @@ import {
   Calendar,
   Package,
   Printer,
-  Sparkle
+  Sparkle,
+  Plus
 } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, QuoteStatus, JobStatus } from '@/lib/types'
 import { format } from 'date-fns'
@@ -32,6 +33,8 @@ interface HomeProps {
   onSelectJob: (job: Job) => void
   onUpdateQuoteStatus: (quoteId: string, status: QuoteStatus) => void
   onUpdateJobStatus: (jobId: string, status: JobStatus) => void
+  onNewQuote: () => void
+  onNewJob: () => void
 }
 
 export function Home({ 
@@ -44,7 +47,9 @@ export function Home({
   onSelectQuote,
   onSelectJob,
   onUpdateQuoteStatus,
-  onUpdateJobStatus
+  onUpdateJobStatus,
+  onNewQuote,
+  onNewJob
 }: HomeProps) {
   const stats = useMemo(() => {
     const activeQuotes = quotes.filter(q => q.status === 'sent' || q.status === 'draft')
@@ -171,8 +176,18 @@ export function Home({
               Your print shop at a glance
             </p>
           </div>
-          <div className="text-sm text-muted-foreground">
-            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-muted-foreground hidden md:block">
+              {format(new Date(), 'EEEE, MMMM d, yyyy')}
+            </div>
+            <Button onClick={onNewQuote} size="default" className="gap-2">
+              <Plus size={18} weight="bold" />
+              New Quote
+            </Button>
+            <Button onClick={onNewJob} variant="secondary" size="default" className="gap-2">
+              <Plus size={18} weight="bold" />
+              New Job
+            </Button>
           </div>
         </div>
 
@@ -259,8 +274,13 @@ export function Home({
             <CardContent>
               <div className="space-y-3">
                 {recentQuotes.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No quotes yet
+                  <div className="text-center py-8">
+                    <FileText size={48} className="mx-auto mb-3 text-muted-foreground/50" />
+                    <p className="text-muted-foreground mb-4">No quotes yet</p>
+                    <Button onClick={onNewQuote} variant="outline" size="sm" className="gap-2">
+                      <Plus size={16} />
+                      Create First Quote
+                    </Button>
                   </div>
                 ) : (
                   recentQuotes.map(quote => (
