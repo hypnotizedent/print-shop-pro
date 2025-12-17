@@ -282,6 +282,34 @@ export interface CustomerSmsPreferences {
 
 export type ArtworkCategory = 'neck-tag' | 'private-label' | 'logo' | 'graphic' | 'other'
 
+export type ArtworkReviewStage = 'uploaded' | 'internal-review' | 'customer-review' | 'final-approval' | 'approved' | 'rejected'
+
+export interface ArtworkReviewer {
+  id: string
+  name: string
+  email?: string
+  role: 'internal' | 'customer' | 'manager'
+}
+
+export interface ArtworkReviewComment {
+  id: string
+  reviewerId: string
+  reviewerName: string
+  comment: string
+  timestamp: string
+  stage: ArtworkReviewStage
+}
+
+export interface ArtworkApproval {
+  stage: ArtworkReviewStage
+  approvedBy?: string
+  approvedAt?: string
+  rejectedBy?: string
+  rejectedAt?: string
+  rejectionReason?: string
+  comments?: ArtworkReviewComment[]
+}
+
 export interface ArtworkVersion {
   versionNumber: number
   file: {
@@ -296,6 +324,10 @@ export interface ArtworkVersion {
   productionReady?: boolean
   productionReadyDate?: string
   productionReadyBy?: string
+  reviewStage?: ArtworkReviewStage
+  approvalHistory?: ArtworkApproval[]
+  assignedReviewers?: ArtworkReviewer[]
+  currentReviewer?: string
 }
 
 export interface CustomerArtworkFile {
@@ -318,6 +350,10 @@ export interface CustomerArtworkFile {
   productionReady?: boolean
   productionReadyDate?: string
   productionReadyBy?: string
+  reviewStage?: ArtworkReviewStage
+  approvalHistory?: ArtworkApproval[]
+  assignedReviewers?: ArtworkReviewer[]
+  currentReviewer?: string
 }
 
 export type EmailNotificationType = 

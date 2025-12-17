@@ -18,10 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Trash, DotsThree, Pencil, Copy, Image as ImageIcon, ClockCounterClockwise, Upload, CheckCircle, Circle } from '@phosphor-icons/react'
+import { Plus, Trash, DotsThree, Pencil, Copy, Image as ImageIcon, ClockCounterClockwise, Upload, CheckCircle, Circle, FlowArrow } from '@phosphor-icons/react'
 import type { CustomerArtworkFile, ArtworkVersion } from '@/lib/types'
 import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
+import { ArtworkApprovalWorkflow } from '@/components/ArtworkApprovalWorkflow'
 
 interface CustomerArtworkLibraryProps {
   customerId: string
@@ -43,6 +44,7 @@ export function CustomerArtworkLibrary({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingArtwork, setEditingArtwork] = useState<CustomerArtworkFile | null>(null)
   const [viewingVersionHistory, setViewingVersionHistory] = useState<CustomerArtworkFile | null>(null)
+  const [viewingWorkflow, setViewingWorkflow] = useState<CustomerArtworkFile | null>(null)
   const [filterProductionReady, setFilterProductionReady] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -381,6 +383,10 @@ export function CustomerArtworkLibrary({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setViewingWorkflow(artwork)}>
+                      <FlowArrow size={16} className="mr-2" />
+                      Approval Workflow
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleToggleProductionReady(artwork)}>
                       {artwork.productionReady ? (
                         <>
@@ -819,6 +825,60 @@ export function CustomerArtworkLibrary({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewingVersionHistory(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingWorkflow} onOpenChange={(open) => !open && setViewingWorkflow(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlowArrow size={20} />
+              Approval Workflow - {viewingWorkflow?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          {viewingWorkflow && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <img
+                  src={viewingWorkflow.file.dataUrl}
+                  alt={viewingWorkflow.name}
+                  className="w-24 h-24 object-contain rounded border border-border bg-background"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold">{viewingWorkflow.name}</h3>
+                  {viewingWorkflow.description && (
+                    <p className="text-sm text-muted-foreground">{viewingWorkflow.description}</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="outline">{getCategoryLabel(viewingWorkflow.category)}</Badge>
+                    {viewingWorkflow.imprintSize && (
+                      <Badge variant="outline">{viewingWorkflow.imprintSize}</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <ArtworkApprovalWorkflow
+                artwork={viewingWorkflow}
+                onUpdateArtwork={(updatedArtwork) => {
+                  onUpdateArtworkFile(updatedArtwork)
+                  setViewingWorkflow(updatedArtwork)
+                }}
+                onSendNotification={(email, stage) => {
+                  toast.success(`Notification sent to ${email}`, {
+                    description: `Review requested for ${stage} stage`
+                  })
+                }}
+              />
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingWorkflow(null)}>
               Close
             </Button>
           </DialogFooter>
