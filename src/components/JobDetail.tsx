@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { ProductMockup } from '@/components/ProductMockup'
 import { ArtworkUpload } from '@/components/ArtworkUpload'
 import { JobDepartmentNotification } from '@/components/JobDepartmentNotification'
+import { JobHistory } from '@/components/JobHistory'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   DropdownMenu,
@@ -522,6 +523,8 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
             </Card>
           )
         )}
+        
+        <JobHistory job={job} />
         
         <div>
           <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">

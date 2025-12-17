@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StatusBadge } from '@/components/StatusBadge'
 import { CustomerSearch } from '@/components/CustomerSearch'
 import { LineItemGrid } from '@/components/LineItemGrid'
 import { PricingSummary } from '@/components/PricingSummary'
+import { QuoteHistory } from '@/components/QuoteHistory'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy } from '@phosphor-icons/react'
+import { ArrowLeft, Plus, FloppyDisk, X, DotsThree, UserCircle, Tag, Truck, Copy, CurrencyDollar, Bell, ClockCounterClockwise } from '@phosphor-icons/react'
 import type { Quote, Customer, DiscountType, CustomerDecorationTemplate, Payment, PaymentReminder, CustomerArtworkFile } from '@/lib/types'
 import { createEmptyLineItem, calculateQuoteTotals, generateId, generateQuoteNumber } from '@/lib/data'
 import { toast } from 'sonner'
@@ -378,59 +380,76 @@ export function QuoteBuilder({
 
           <Separator />
 
-          <div>
-            <PaymentTracker
-              quoteId={quote.id}
-              quoteTotal={quote.total}
-              payments={quote.payments || []}
-              onAddPayment={(payment: Payment) => {
-                setQuote({
-                  ...quote,
-                  payments: [...(quote.payments || []), payment]
-                })
-              }}
-              onDeletePayment={(paymentId: string) => {
-                setQuote({
-                  ...quote,
-                  payments: (quote.payments || []).filter(p => p.id !== paymentId)
-                })
-              }}
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <QuoteHistory quote={quote} />
+            </div>
 
-          <Separator />
-
-          <div>
-            <PaymentReminders
-              quote={quote}
-              reminder={paymentReminders.find(r => r.quoteId === quote.id)}
-              onUpdateReminder={(reminder) => {
-                if (onUpdateReminder) {
-                  onUpdateReminder(reminder)
-                }
-              }}
-              onSendManualReminder={() => {
-                const totalPaid = (quote.payments || []).reduce((sum, p) => sum + p.amount, 0)
-                const balance = quote.total - totalPaid
-                console.log(`Sending payment reminder for quote ${quote.quote_number}`)
-                console.log(`Customer: ${quote.customer.email}`)
-                console.log(`Balance: $${balance.toFixed(2)}`)
-              }}
-            />
-          </div>
-
-          {onSendEmail && (
-            <>
-              <Separator />
-              <div>
-                <QuoteReminderScheduler
-                  quote={quote}
-                  emailTemplates={emailTemplates}
-                  onSendEmail={onSendEmail}
-                />
+            <div>
+              <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-4">
+                Payments & Messages
               </div>
-            </>
-          )}
+              <Tabs defaultValue="payments" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="payments" className="text-xs">
+                    <CurrencyDollar size={14} className="mr-1.5" />
+                    Payments
+                  </TabsTrigger>
+                  <TabsTrigger value="messages" className="text-xs">
+                    <Bell size={14} className="mr-1.5" />
+                    Messages
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="payments" className="space-y-4 mt-4">
+                  <PaymentTracker
+                    quoteId={quote.id}
+                    quoteTotal={quote.total}
+                    payments={quote.payments || []}
+                    onAddPayment={(payment: Payment) => {
+                      setQuote({
+                        ...quote,
+                        payments: [...(quote.payments || []), payment]
+                      })
+                    }}
+                    onDeletePayment={(paymentId: string) => {
+                      setQuote({
+                        ...quote,
+                        payments: (quote.payments || []).filter(p => p.id !== paymentId)
+                      })
+                    }}
+                  />
+                  
+                  <PaymentReminders
+                    quote={quote}
+                    reminder={paymentReminders.find(r => r.quoteId === quote.id)}
+                    onUpdateReminder={(reminder) => {
+                      if (onUpdateReminder) {
+                        onUpdateReminder(reminder)
+                      }
+                    }}
+                    onSendManualReminder={() => {
+                      const totalPaid = (quote.payments || []).reduce((sum, p) => sum + p.amount, 0)
+                      const balance = quote.total - totalPaid
+                      console.log(`Sending payment reminder for quote ${quote.quote_number}`)
+                      console.log(`Customer: ${quote.customer.email}`)
+                      console.log(`Balance: $${balance.toFixed(2)}`)
+                    }}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="messages" className="mt-4">
+                  {onSendEmail && (
+                    <QuoteReminderScheduler
+                      quote={quote}
+                      emailTemplates={emailTemplates}
+                      onSendEmail={onSendEmail}
+                    />
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
         </div>
       </div>
     </div>
