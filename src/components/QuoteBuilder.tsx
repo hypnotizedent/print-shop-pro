@@ -9,6 +9,7 @@ import { CustomerSearch } from '@/components/CustomerSearch'
 import { LineItemGrid } from '@/components/LineItemGrid'
 import { PricingSummary } from '@/components/PricingSummary'
 import { QuoteHistory } from '@/components/QuoteHistory'
+import { PricingRulesSuggestions } from '@/components/PricingRulesSuggestions'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ interface QuoteBuilderProps {
   emailTemplates?: import('@/lib/types').EmailTemplate[]
   favoriteProducts?: FavoriteProduct[]
   productTemplates?: import('@/lib/types').ProductTemplate[]
+  pricingRules?: import('@/lib/types').CustomerPricingRule[]
   onSave: (quote: Quote) => void
   onBack: () => void
   onCreateCustomer: (customer: Customer) => void
@@ -59,6 +61,7 @@ export function QuoteBuilder({
   emailTemplates = [],
   favoriteProducts = [],
   productTemplates = [],
+  pricingRules = [],
   onSave, 
   onBack, 
   onCreateCustomer,
@@ -402,17 +405,29 @@ export function QuoteBuilder({
               <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
                 Pricing
               </div>
-              <div className="bg-card border border-border rounded-lg p-6">
-                <PricingSummary
-                  subtotal={quote.subtotal}
-                  discount={quote.discount}
-                  discountType={quote.discount_type}
-                  taxRate={quote.tax_rate}
-                  taxAmount={quote.tax_amount}
-                  total={quote.total}
-                  onDiscountChange={(value) => setQuote({ ...quote, discount: value })}
-                  onDiscountTypeChange={(type: DiscountType) => setQuote({ ...quote, discount_type: type })}
-                />
+              <div className="space-y-4">
+                {pricingRules && pricingRules.length > 0 && (
+                  <PricingRulesSuggestions
+                    quote={quote}
+                    pricingRules={pricingRules}
+                    onApplyDiscount={(value, type) => {
+                      setQuote({ ...quote, discount: value, discount_type: type })
+                      toast.success('Discount applied from pricing rule')
+                    }}
+                  />
+                )}
+                <div className="bg-card border border-border rounded-lg p-6">
+                  <PricingSummary
+                    subtotal={quote.subtotal}
+                    discount={quote.discount}
+                    discountType={quote.discount_type}
+                    taxRate={quote.tax_rate}
+                    taxAmount={quote.tax_amount}
+                    total={quote.total}
+                    onDiscountChange={(value) => setQuote({ ...quote, discount: value })}
+                    onDiscountTypeChange={(type: DiscountType) => setQuote({ ...quote, discount_type: type })}
+                  />
+                </div>
               </div>
             </div>
           </div>

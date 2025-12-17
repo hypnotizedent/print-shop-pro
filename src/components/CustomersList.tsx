@@ -37,6 +37,7 @@ interface CustomersListProps {
 
 type SortOption = 'alphabetical' | 'revenue-high' | 'revenue-low' | 'recent-orders' | 'oldest-orders'
 type GroupByOption = 'none' | 'tier'
+type TierFilterOption = 'all' | CustomerTier
 
 export function CustomersList({ 
   customers, 
@@ -57,6 +58,7 @@ export function CustomersList({
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('alphabetical')
   const [groupBy, setGroupBy] = useState<GroupByOption>('none')
+  const [tierFilter, setTierFilter] = useState<TierFilterOption>('all')
   
   const { recordSearch } = useRecentSearches('customers', recentSearches, onAddRecentSearch || (() => {}))
   
@@ -92,11 +94,15 @@ export function CustomersList({
   }, [customers, quotes, jobs])
   
   const filteredAndSortedCustomers = useMemo(() => {
-    let filtered = customersWithStats.filter(c =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.company?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    let filtered = customersWithStats.filter(c => {
+      const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.company?.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesTier = tierFilter === 'all' || c.tier === tierFilter || (tierFilter === 'bronze' && !c.tier)
+      
+      return matchesSearch && matchesTier
+    })
     
     switch (sortBy) {
       case 'alphabetical':
@@ -117,7 +123,7 @@ export function CustomersList({
     }
     
     return filtered
-  }, [customersWithStats, searchQuery, sortBy])
+  }, [customersWithStats, searchQuery, sortBy, tierFilter])
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -156,11 +162,12 @@ export function CustomersList({
     toast.success('Customers exported to CSV')
   }
 
-  const hasActiveFilters = sortBy !== 'alphabetical' || groupBy !== 'none'
+  const hasActiveFilters = sortBy !== 'alphabetical' || groupBy !== 'none' || tierFilter !== 'all'
   
   const clearAllFilters = () => {
     setSortBy('alphabetical')
     setGroupBy('none')
+    setTierFilter('all')
   }
   
   const groupedCustomers = useMemo(() => {
@@ -297,6 +304,22 @@ export function CustomersList({
                       <SelectContent>
                         <SelectItem value="none">No Grouping</SelectItem>
                         <SelectItem value="tier">Group by Tier</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">Filter by Tier</label>
+                    <Select value={tierFilter} onValueChange={(value) => setTierFilter(value as TierFilterOption)}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Tiers</SelectItem>
+                        <SelectItem value="platinum">Platinum</SelectItem>
+                        <SelectItem value="gold">Gold</SelectItem>
+                        <SelectItem value="silver">Silver</SelectItem>
+                        <SelectItem value="bronze">Bronze / No Tier</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

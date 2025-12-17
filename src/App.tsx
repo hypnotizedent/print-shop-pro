@@ -36,7 +36,8 @@ import {
   sampleEmailTemplates,
   createEmptyQuote,
   generateJobNumber,
-  generateId
+  generateId,
+  calculateQuoteTotals
 } from '@/lib/data'
 import { createQuoteApprovalEmail, createQuoteApprovedEmail, createInvoiceEmail } from '@/lib/email-notifications'
 import { ssActivewearAPI, type SSActivewearCredentials } from '@/lib/ssactivewear-api'
@@ -573,6 +574,56 @@ function App() {
     })
   }
 
+  const handleSaveQuoteTemplate = (template: QuoteTemplate) => {
+    setQuoteTemplates((current) => [...(current || []), template])
+  }
+
+  const handleUpdateQuoteTemplate = (template: QuoteTemplate) => {
+    setQuoteTemplates((current) => {
+      const existing = current || []
+      return existing.map((t) => t.id === template.id ? template : t)
+    })
+  }
+
+  const handleDeleteQuoteTemplate = (templateId: string) => {
+    setQuoteTemplates((current) => {
+      const existing = current || []
+      return existing.filter((t) => t.id !== templateId)
+    })
+  }
+
+  const handleUseQuoteTemplate = (template: QuoteTemplate) => {
+    const newQuote = createEmptyQuote(template.defaultCustomer as Customer)
+    
+    const lineItemsWithIds = template.lineItems.map(item => ({
+      ...item,
+      id: generateId('li'),
+    }))
+    
+    const quoteFromTemplate: Quote = {
+      ...newQuote,
+      line_items: lineItemsWithIds,
+      discount: template.defaultDiscount?.value || 0,
+      discount_type: template.defaultDiscount?.type || 'percent',
+      notes_customer: template.defaultNotes?.customer || '',
+      notes_internal: template.defaultNotes?.internal || '',
+    }
+    
+    const calculated = calculateQuoteTotals(quoteFromTemplate)
+    
+    setQuoteTemplates((current) => {
+      const existing = current || []
+      return existing.map(t => 
+        t.id === template.id 
+          ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date().toISOString() }
+          : t
+      )
+    })
+    
+    setCurrentPage({ type: 'quote-builder', quote: calculated })
+    toast.success(`Quote created from template: ${template.name}`)
+  }
+
 
   useKeyboardShortcuts([
     {
@@ -915,6 +966,11 @@ function App() {
               quotes={quotes || []}
               jobs={jobs || []}
               customers={customers || []}
+              quoteTemplates={quoteTemplates || []}
+              onSaveQuoteTemplate={handleSaveQuoteTemplate}
+              onUpdateQuoteTemplate={handleUpdateQuoteTemplate}
+              onDeleteQuoteTemplate={handleDeleteQuoteTemplate}
+              onUseQuoteTemplate={handleUseQuoteTemplate}
             />
           )}
           
@@ -929,6 +985,7 @@ function App() {
               emailTemplates={emailTemplates || []}
               favoriteProducts={favoriteProducts || []}
               productTemplates={productTemplates || []}
+              pricingRules={pricingRules || []}
               onSave={handleSaveQuote}
               onBack={() => {
                 if (currentPage.fromCustomerId) {

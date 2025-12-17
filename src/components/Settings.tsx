@@ -25,9 +25,23 @@ interface SettingsProps {
   quotes: Quote[]
   jobs: Job[]
   customers: Customer[]
+  quoteTemplates?: QuoteTemplate[]
+  onSaveQuoteTemplate?: (template: QuoteTemplate) => void
+  onUpdateQuoteTemplate?: (template: QuoteTemplate) => void
+  onDeleteQuoteTemplate?: (templateId: string) => void
+  onUseQuoteTemplate?: (template: QuoteTemplate) => void
 }
 
-export function Settings({ quotes, jobs, customers }: SettingsProps) {
+export function Settings({ 
+  quotes, 
+  jobs, 
+  customers,
+  quoteTemplates: externalQuoteTemplates,
+  onSaveQuoteTemplate: externalSaveQuoteTemplate,
+  onUpdateQuoteTemplate: externalUpdateQuoteTemplate,
+  onDeleteQuoteTemplate: externalDeleteQuoteTemplate,
+  onUseQuoteTemplate: externalUseQuoteTemplate,
+}: SettingsProps) {
   const [primaryColor, setPrimaryColor] = useKV<string>('theme-primary-color', 'oklch(0.7 0.17 166)')
   const [accentColor, setAccentColor] = useKV<string>('theme-accent-color', 'oklch(0.78 0.15 166)')
   const [twilioConfig, setTwilioConfig] = useKV<TwilioConfig>('twilio-config', {
@@ -48,7 +62,9 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
   const [emailTemplates, setEmailTemplates] = useKV<EmailTemplate[]>('email-templates', [])
   const [scheduledEmails, setScheduledEmails] = useKV<ScheduledEmail[]>('scheduled-emails', [])
   const [pricingRules, setPricingRules] = useKV<CustomerPricingRule[]>('customer-pricing-rules', [])
-  const [quoteTemplates, setQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
+  const [internalQuoteTemplates, setInternalQuoteTemplates] = useKV<QuoteTemplate[]>('quote-templates', [])
+  
+  const quoteTemplates = externalQuoteTemplates || internalQuoteTemplates
   
   const [primaryInput, setPrimaryInput] = useState(primaryColor || 'oklch(0.7 0.17 166)')
   const [accentInput, setAccentInput] = useState(accentColor || 'oklch(0.78 0.15 166)')
@@ -245,25 +261,41 @@ export function Settings({ quotes, jobs, customers }: SettingsProps) {
   }
 
   const handleSaveQuoteTemplate = (template: QuoteTemplate) => {
-    setQuoteTemplates((current) => [...(current || []), template])
+    if (externalSaveQuoteTemplate) {
+      externalSaveQuoteTemplate(template)
+    } else {
+      setInternalQuoteTemplates((current) => [...(current || []), template])
+    }
   }
 
   const handleUpdateQuoteTemplate = (template: QuoteTemplate) => {
-    setQuoteTemplates((current) => {
-      const existing = current || []
-      return existing.map((t) => t.id === template.id ? template : t)
-    })
+    if (externalUpdateQuoteTemplate) {
+      externalUpdateQuoteTemplate(template)
+    } else {
+      setInternalQuoteTemplates((current) => {
+        const existing = current || []
+        return existing.map((t) => t.id === template.id ? template : t)
+      })
+    }
   }
 
   const handleDeleteQuoteTemplate = (templateId: string) => {
-    setQuoteTemplates((current) => {
-      const existing = current || []
-      return existing.filter((t) => t.id !== templateId)
-    })
+    if (externalDeleteQuoteTemplate) {
+      externalDeleteQuoteTemplate(templateId)
+    } else {
+      setInternalQuoteTemplates((current) => {
+        const existing = current || []
+        return existing.filter((t) => t.id !== templateId)
+      })
+    }
   }
 
   const handleUseQuoteTemplate = (template: QuoteTemplate) => {
-    toast.info('Template integration coming soon')
+    if (externalUseQuoteTemplate) {
+      externalUseQuoteTemplate(template)
+    } else {
+      toast.info('Template integration coming soon')
+    }
   }
 
   return (
