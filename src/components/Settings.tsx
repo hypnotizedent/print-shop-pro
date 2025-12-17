@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent, ChartLine, Plugs } from '@phosphor-icons/react'
+import { Download, Palette, DeviceMobile, CheckCircle, Warning, ChatCircle, BellSlash, Envelope, Clock, ShoppingBag, Tag, Percent, ChartLine, Plugs, MagnifyingGlass, X } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, SmsTemplate, CustomerSmsPreferences, EmailTemplate, ScheduledEmail, CustomerPricingRule, QuoteTemplate, PurchaseOrder } from '@/lib/types'
 import { exportQuotesToCSV, exportJobsToCSV, exportCustomersToCSV } from '@/lib/csv-export'
 import { validateTwilioConfig, type TwilioConfig } from '@/lib/twilio-sms'
@@ -94,9 +95,31 @@ export function Settings({
   const [sanMarCustomerInput, setSanMarCustomerInput] = useState(sanMarCreds?.customerId || '')
   const [sanMarApiKeyInput, setSanMarApiKeyInput] = useState(sanMarCreds?.apiKey || '')
 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState('general')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
   const isTwilioConfigured = validateTwilioConfig(twilioConfig || {})
   const isSSActivewearConfigured = ssActivewearCreds?.accountNumber && ssActivewearCreds?.apiKey
   const isSanMarConfigured = sanMarCreds?.customerId && sanMarCreds?.apiKey
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+      
+      if (e.key === 'Escape' && searchQuery) {
+        e.preventDefault()
+        setSearchQuery('')
+        searchInputRef.current?.blur()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [searchQuery])
 
   const handleSaveTheme = () => {
     setPrimaryColor(primaryInput)
@@ -420,61 +443,172 @@ export function Settings({
     setWebhookNotifications((current) => [notification, ...(current || [])])
   }
 
+  const settingsTabs = useMemo(() => [
+    {
+      value: 'general',
+      label: 'General',
+      icon: Palette,
+      keywords: ['theme', 'color', 'export', 'csv', 'data', 'primary', 'accent', 'customization'],
+      description: 'Theme colors and data export'
+    },
+    {
+      value: 'api',
+      label: 'Suppliers',
+      icon: ShoppingBag,
+      keywords: ['ss activewear', 'sanmar', 'api', 'supplier', 'credentials', 'autofill', 'sku', 'products'],
+      description: 'Supplier API integrations'
+    },
+    {
+      value: 'webhooks',
+      label: 'Webhooks',
+      icon: Plugs,
+      keywords: ['webhook', 'integration', 'events', 'inventory', 'alerts', 'notifications', 'real-time'],
+      description: 'Webhook configurations and monitoring'
+    },
+    {
+      value: 'purchase-orders',
+      label: 'Orders',
+      icon: ShoppingBag,
+      keywords: ['purchase order', 'po', 'receiving', 'inventory', 'supplier orders'],
+      description: 'Purchase order management'
+    },
+    {
+      value: 'supplier-performance',
+      label: 'Performance',
+      icon: ChartLine,
+      keywords: ['supplier', 'performance', 'metrics', 'delivery', 'accuracy', 'trends', 'analytics'],
+      description: 'Supplier performance analytics'
+    },
+    {
+      value: 'pricing',
+      label: 'Pricing',
+      icon: Percent,
+      keywords: ['pricing', 'rules', 'discount', 'tier', 'customer', 'volume'],
+      description: 'Customer pricing rules'
+    },
+    {
+      value: 'quote-templates',
+      label: 'Templates',
+      icon: Tag,
+      keywords: ['quote', 'template', 'presets', 'defaults', 'categories'],
+      description: 'Quote templates'
+    },
+    {
+      value: 'email-templates',
+      label: 'Emails',
+      icon: Envelope,
+      keywords: ['email', 'template', 'notification', 'message'],
+      description: 'Email templates'
+    },
+    {
+      value: 'scheduled-emails',
+      label: 'Scheduled',
+      icon: Clock,
+      keywords: ['scheduled', 'email', 'queue', 'delayed', 'planned'],
+      description: 'Scheduled emails'
+    },
+    {
+      value: 'sms',
+      label: 'SMS',
+      icon: DeviceMobile,
+      keywords: ['sms', 'twilio', 'text', 'message', 'phone', 'reminders'],
+      description: 'SMS configuration'
+    },
+    {
+      value: 'templates',
+      label: 'SMS Templates',
+      icon: ChatCircle,
+      keywords: ['sms', 'template', 'text message'],
+      description: 'SMS message templates'
+    },
+    {
+      value: 'opt-outs',
+      label: 'Opt-Outs',
+      icon: BellSlash,
+      keywords: ['opt out', 'unsubscribe', 'sms', 'preferences'],
+      description: 'SMS opt-out management'
+    }
+  ], [])
+
+  const filteredTabs = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return settingsTabs
+    }
+
+    const query = searchQuery.toLowerCase().trim()
+    return settingsTabs.filter(tab => {
+      const matchesLabel = tab.label.toLowerCase().includes(query)
+      const matchesKeywords = tab.keywords.some(keyword => keyword.toLowerCase().includes(query))
+      const matchesDescription = tab.description.toLowerCase().includes(query)
+      return matchesLabel || matchesKeywords || matchesDescription
+    })
+  }, [searchQuery, settingsTabs])
+
+  const hasSearchResults = filteredTabs.length > 0
+
+  useEffect(() => {
+    if (searchQuery && filteredTabs.length > 0 && !filteredTabs.find(tab => tab.value === activeTab)) {
+      setActiveTab(filteredTabs[0].value)
+    }
+  }, [searchQuery, filteredTabs, activeTab])
+
   return (
     <div className="h-full overflow-auto p-8">
       <div className="max-w-4xl">
-        <h1 className="text-2xl font-bold mb-8">Settings</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-4">Settings</h1>
+          
+          <div className="relative">
+            <MagnifyingGlass size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search settings... (⌘F)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setSearchQuery('')}
+              >
+                <X size={16} />
+              </Button>
+            )}
+          </div>
+
+          {searchQuery && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              {hasSearchResults ? (
+                <>
+                  <span>Found {filteredTabs.length} matching section{filteredTabs.length !== 1 ? 's' : ''}</span>
+                  {filteredTabs.length < settingsTabs.length && (
+                    <Badge variant="secondary" className="text-xs">
+                      {settingsTabs.length - filteredTabs.length} hidden
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <span className="text-destructive">No settings found matching &quot;{searchQuery}&quot;</span>
+              )}
+            </div>
+          )}
+        </div>
         
-        <Tabs defaultValue="general" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="inline-flex w-full justify-start overflow-x-auto flex-wrap gap-1">
-            <TabsTrigger value="general" className="flex-shrink-0">
-              <Palette size={16} className="mr-2" />
-              General
-            </TabsTrigger>
-            <TabsTrigger value="api" className="flex-shrink-0">
-              <ShoppingBag size={16} className="mr-2" />
-              Suppliers
-            </TabsTrigger>
-            <TabsTrigger value="webhooks" className="flex-shrink-0">
-              <Plugs size={16} className="mr-2" />
-              Webhooks
-            </TabsTrigger>
-            <TabsTrigger value="purchase-orders" className="flex-shrink-0">
-              <ShoppingBag size={16} className="mr-2" />
-              Orders
-            </TabsTrigger>
-            <TabsTrigger value="supplier-performance" className="flex-shrink-0">
-              <ChartLine size={16} className="mr-2" />
-              Performance
-            </TabsTrigger>
-            <TabsTrigger value="pricing" className="flex-shrink-0">
-              <Percent size={16} className="mr-2" />
-              Pricing
-            </TabsTrigger>
-            <TabsTrigger value="quote-templates" className="flex-shrink-0">
-              <Tag size={16} className="mr-2" />
-              Templates
-            </TabsTrigger>
-            <TabsTrigger value="email-templates" className="flex-shrink-0">
-              <Envelope size={16} className="mr-2" />
-              Emails
-            </TabsTrigger>
-            <TabsTrigger value="scheduled-emails" className="flex-shrink-0">
-              <Clock size={16} className="mr-2" />
-              Scheduled
-            </TabsTrigger>
-            <TabsTrigger value="sms" className="flex-shrink-0">
-              <DeviceMobile size={16} className="mr-2" />
-              SMS
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="flex-shrink-0">
-              <ChatCircle size={16} className="mr-2" />
-              SMS Templates
-            </TabsTrigger>
-            <TabsTrigger value="opt-outs" className="flex-shrink-0">
-              <BellSlash size={16} className="mr-2" />
-              Opt-Outs
-            </TabsTrigger>
+            {filteredTabs.map((tab) => {
+              const Icon = tab.icon
+              return (
+                <TabsTrigger key={tab.value} value={tab.value} className="flex-shrink-0">
+                  <Icon size={16} className="mr-2" />
+                  {tab.label}
+                </TabsTrigger>
+              )
+            })}
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
