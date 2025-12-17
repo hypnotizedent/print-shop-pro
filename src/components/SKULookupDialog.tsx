@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MagnifyingGlass, Sparkle, Warning, FunnelSimple } from '@phosphor-icons/react'
+import { MagnifyingGlass, Sparkle, Warning, FunnelSimple, CheckCircle, WarningCircle, XCircle } from '@phosphor-icons/react'
 import { ssActivewearAPI, type SSActivewearProduct, type SSActivewearColor } from '@/lib/ssactivewear-api'
 import { toast } from 'sonner'
 import type { Sizes } from '@/lib/types'
@@ -95,6 +95,28 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
       color.colorName.toLowerCase().includes(filterLower)
     )
   }, [product?.colors, colorFilter])
+
+  const getColorStockLevel = (color: SSActivewearColor): { level: 'high' | 'medium' | 'low' | 'out', totalQty: number } => {
+    const totalQty = color.sizes.reduce((sum, size) => sum + size.qty, 0)
+    
+    if (totalQty === 0) return { level: 'out', totalQty }
+    if (totalQty < 50) return { level: 'low', totalQty }
+    if (totalQty < 200) return { level: 'medium', totalQty }
+    return { level: 'high', totalQty }
+  }
+
+  const getStockIndicator = (level: 'high' | 'medium' | 'low' | 'out') => {
+    switch (level) {
+      case 'high':
+        return { icon: CheckCircle, color: 'text-green-500', label: 'In Stock', bg: 'bg-green-500/10' }
+      case 'medium':
+        return { icon: WarningCircle, color: 'text-yellow-500', label: 'Limited', bg: 'bg-yellow-500/10' }
+      case 'low':
+        return { icon: WarningCircle, color: 'text-orange-500', label: 'Low Stock', bg: 'bg-orange-500/10' }
+      case 'out':
+        return { icon: XCircle, color: 'text-red-500', label: 'Out of Stock', bg: 'bg-red-500/10' }
+    }
+  }
 
   const handleApply = () => {
     if (!product || !selectedColor) {
@@ -238,6 +260,22 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                   <div className="text-sm font-semibold text-muted-foreground mb-1">PRODUCT</div>
                   <div className="text-lg font-bold">{product.brandName} {product.styleName}</div>
                   <div className="text-sm text-muted-foreground">{product.categoryName}</div>
+                  {selectedColor && (
+                    <div className="mt-2 flex items-center gap-2">
+                      {(() => {
+                        const stockInfo = getColorStockLevel(selectedColor)
+                        const indicator = getStockIndicator(stockInfo.level)
+                        const Icon = indicator.icon
+                        return (
+                          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${indicator.bg} ${indicator.color}`}>
+                            <Icon size={14} weight="fill" />
+                            <span>{indicator.label}</span>
+                            <span>({stockInfo.totalQty})</span>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -285,24 +323,49 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
                                 className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
                                 style={{ backgroundColor: `#${selectedColor.colorCode}` }}
                               />
-                              <span>{selectedColor.colorName}</span>
+                              <span className="flex-1">{selectedColor.colorName}</span>
+                              {(() => {
+                                const stockInfo = getColorStockLevel(selectedColor)
+                                const indicator = getStockIndicator(stockInfo.level)
+                                const Icon = indicator.icon
+                                return (
+                                  <div className="flex items-center gap-1.5">
+                                    <Icon size={14} className={indicator.color} weight="fill" />
+                                    <span className={`text-xs ${indicator.color}`}>
+                                      {stockInfo.totalQty}
+                                    </span>
+                                  </div>
+                                )
+                              })()}
                             </div>
                           )}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {filteredColors.length > 0 ? (
-                          filteredColors.map(color => (
-                            <SelectItem key={color.colorID} value={color.colorID.toString()}>
-                              <div className="flex items-center gap-2">
-                                <div 
-                                  className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
-                                  style={{ backgroundColor: `#${color.colorCode}` }}
-                                />
-                                <span>{color.colorName}</span>
-                              </div>
-                            </SelectItem>
-                          ))
+                          filteredColors.map(color => {
+                            const stockInfo = getColorStockLevel(color)
+                            const indicator = getStockIndicator(stockInfo.level)
+                            const Icon = indicator.icon
+                            
+                            return (
+                              <SelectItem key={color.colorID} value={color.colorID.toString()}>
+                                <div className="flex items-center gap-2 w-full">
+                                  <div 
+                                    className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                                    style={{ backgroundColor: `#${color.colorCode}` }}
+                                  />
+                                  <span className="flex-1">{color.colorName}</span>
+                                  <div className="flex items-center gap-1.5 ml-2">
+                                    <Icon size={14} className={indicator.color} weight="fill" />
+                                    <span className={`text-xs font-medium ${indicator.color} min-w-[2rem] text-right`}>
+                                      {stockInfo.totalQty}
+                                    </span>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                            )
+                          })
                         ) : (
                           <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                             No colors match "{colorFilter}"
@@ -316,14 +379,39 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
 
               {selectedColor && selectedColor.sizes && selectedColor.sizes.length > 0 && (
                 <div>
-                  <div className="text-sm font-semibold text-muted-foreground mb-2">AVAILABLE SIZES</div>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedColor.sizes.map(size => (
-                      <div key={size.sizeID} className="px-3 py-1 bg-muted rounded text-sm">
-                        {size.sizeName}
-                      </div>
-                    ))}
+                  <div className="text-sm font-semibold text-muted-foreground mb-2">AVAILABLE SIZES & STOCK</div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {selectedColor.sizes.map(size => {
+                      const stockLevel = size.qty === 0 ? 'out' : size.qty < 10 ? 'low' : size.qty < 50 ? 'medium' : 'high'
+                      const indicator = getStockIndicator(stockLevel)
+                      const Icon = indicator.icon
+                      
+                      return (
+                        <div 
+                          key={size.sizeID} 
+                          className={`px-3 py-2 rounded border ${indicator.bg} ${
+                            size.qty === 0 ? 'border-red-200 opacity-60' : 'border-border'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium">{size.sizeName}</span>
+                            <div className="flex items-center gap-1">
+                              <Icon size={12} className={indicator.color} weight="fill" />
+                              <span className={`text-xs font-semibold ${indicator.color}`}>
+                                {size.qty}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
+                  {selectedColor.sizes.some(s => s.qty === 0) && (
+                    <div className="mt-2 flex items-start gap-2 text-xs text-orange-600 bg-orange-50 dark:bg-orange-950/20 p-2 rounded">
+                      <WarningCircle size={14} className="flex-shrink-0 mt-0.5" weight="fill" />
+                      <span>Some sizes are out of stock</span>
+                    </div>
+                  )}
                 </div>
               )}
 
