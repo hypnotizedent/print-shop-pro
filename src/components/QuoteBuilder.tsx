@@ -404,8 +404,12 @@ export function QuoteBuilder({
             ) : (
               <LineItemGrid
                 items={quote.line_items}
+                groups={quote.line_item_groups}
                 onChange={(items) => {
                   setQuote({ ...quote, line_items: items })
+                }}
+                onGroupsChange={(groups) => {
+                  setQuote({ ...quote, line_item_groups: groups })
                 }}
                 customerId={quote.customer.id}
                 customerName={quote.customer.name}

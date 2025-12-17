@@ -157,6 +157,14 @@ export interface LineItem {
   unit_price: number
   setup_fee: number
   line_total: number
+  groupId?: string
+}
+
+export interface LineItemGroup {
+  id: string
+  name: string
+  decorations: Decoration[]
+  collapsed?: boolean
 }
 
 export interface Quote {
@@ -166,6 +174,7 @@ export interface Quote {
   status: QuoteStatus
   customer: Customer
   line_items: LineItem[]
+  line_item_groups?: LineItemGroup[]
   subtotal: number
   discount: number
   discount_type: DiscountType

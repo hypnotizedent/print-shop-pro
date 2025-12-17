@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle, Warning, BookmarkSimple, Info, Image as ImageIcon } from '@phosphor-icons/react'
+import { Plus, Trash, Upload, CheckCircle, PencilSimple, CaretDown, CaretRight, Check, X, Copy, DotsSixVertical, Sparkle, Warning, BookmarkSimple, Info, Image as ImageIcon, ArrowsOutCardinal } from '@phosphor-icons/react'
 import type { Decoration, DecorationType, ProductType, CustomerDecorationTemplate, CustomerArtworkFile } from '@/lib/types'
 import { generateId } from '@/lib/data'
 import { toast } from 'sonner'
@@ -32,6 +32,11 @@ interface DecorationManagerProps {
   customerTemplates?: CustomerDecorationTemplate[]
   customerArtworkFiles?: CustomerArtworkFile[]
   onSaveTemplate?: (template: CustomerDecorationTemplate) => void
+  lineItems?: import('@/lib/types').LineItem[]
+  currentItemIndex?: number
+  onDuplicateImprint?: (decorationIndex: number) => void
+  onMoveImprintToItem?: (decorationIndex: number, toItemIndex: number) => void
+  onCopyImprintToItem?: (decorationIndex: number, toItemIndex: number) => void
 }
 
 const DEFAULT_LOCATIONS = ['Front', 'Back', 'Left Sleeve', 'Right Sleeve', 'Hood']
@@ -337,6 +342,11 @@ export function DecorationManager({
   customerTemplates = [],
   customerArtworkFiles = [],
   onSaveTemplate,
+  lineItems = [],
+  currentItemIndex,
+  onDuplicateImprint,
+  onMoveImprintToItem,
+  onCopyImprintToItem,
 }: DecorationManagerProps) {
   const [customInputs, setCustomInputs] = useState<Record<string, { location: boolean; method: boolean }>>({})
   const [collapsedDecorations, setCollapsedDecorations] = useState<Set<string>>(new Set())
@@ -717,18 +727,80 @@ export function DecorationManager({
               )}
 
               <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    duplicateDecoration(decoration)
-                  }}
-                  className="h-7 w-7 text-muted-foreground hover:text-primary"
-                  title="Duplicate decoration"
-                >
-                  <Copy size={14} />
-                </Button>
+                {onDuplicateImprint && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDuplicateImprint(index)
+                    }}
+                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                    title="Duplicate imprint"
+                  >
+                    <Copy size={14} />
+                  </Button>
+                )}
+                
+                {!onDuplicateImprint && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      duplicateDecoration(decoration)
+                    }}
+                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                    title="Duplicate decoration"
+                  >
+                    <Copy size={14} />
+                  </Button>
+                )}
+                
+                {(onMoveImprintToItem || onCopyImprintToItem) && lineItems.length > 1 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        title="Move/Copy to another item"
+                      >
+                        <CaretDown size={14} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64">
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        Move or copy to another SKU
+                      </div>
+                      <DropdownMenuSeparator />
+                      {lineItems.map((item, itemIndex) => {
+                        if (itemIndex === currentItemIndex) return null
+                        return (
+                          <div key={item.id}>
+                            <div className="px-2 py-1 text-xs text-muted-foreground font-medium">
+                              #{itemIndex + 1}: {item.product_name || 'Untitled'}
+                            </div>
+                            {onCopyImprintToItem && (
+                              <DropdownMenuItem onClick={() => onCopyImprintToItem(index, itemIndex)}>
+                                <Copy size={14} className="mr-2" />
+                                Copy to this item
+                              </DropdownMenuItem>
+                            )}
+                            {onMoveImprintToItem && (
+                              <DropdownMenuItem onClick={() => onMoveImprintToItem(index, itemIndex)}>
+                                <ArrowsOutCardinal size={14} className="mr-2" />
+                                Move to this item
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                          </div>
+                        )
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                
                 <Button
                   variant="ghost"
                   size="icon"

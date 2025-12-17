@@ -105,6 +105,7 @@ export const createEmptyQuote = (customer?: Customer): Quote => ({
     email: '',
   },
   line_items: [],
+  line_item_groups: [],
   subtotal: 0,
   discount: 0,
   discount_type: 'percent',
