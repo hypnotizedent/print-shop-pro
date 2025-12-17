@@ -339,7 +339,6 @@ export function JobsBoard({
           )}
         </div>
 
-        <StatusFilterPills
           type="job"
           activeStatus={statusFilter}
           onStatusChange={(status) => setStatusFilter(status as JobStatus | 'all')}
@@ -355,6 +354,7 @@ export function JobsBoard({
             delivered: jobs.filter(j => j.status === 'delivered').length,
           }}
         />
+        
         
         {hasSelection && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-primary/10 border border-primary/20 rounded-lg">
@@ -373,7 +373,6 @@ export function JobsBoard({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => handleBulkStatusChange('pending')}>
-                    Mark as Pending
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleBulkStatusChange('art-approval')}>
                     Mark as Art Approval
