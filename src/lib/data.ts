@@ -149,11 +149,17 @@ export function calculateQuoteTotals(quote: Quote): Quote {
     ? (subtotal * quote.discount / 100) 
     : quote.discount
   
-  const total = subtotal - discountAmount
+  const afterDiscount = subtotal - discountAmount
+  
+  const taxRate = quote.tax_rate || 0
+  const taxAmount = afterDiscount * (taxRate / 100)
+  
+  const total = afterDiscount + taxAmount
   
   return {
     ...quote,
     subtotal,
+    tax_amount: taxAmount,
     total,
   }
 }
