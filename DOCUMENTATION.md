@@ -961,59 +961,58 @@ useEffect(() => {
 
 ## API Integrations
 
-### S&S Activewear API
+**Documentation:**
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference with endpoints, authentication, and code examples
+- **[API_SETUP_GUIDE.md](API_SETUP_GUIDE.md)** - Step-by-step setup instructions for external APIs
+- **[API_QUICK_REFERENCE.md](API_QUICK_REFERENCE.md)** - Developer cheat sheet
 
-**Configuration**: Settings → API tab → S&S Activewear section
-- Account Number
-- API Key
+### Quick Reference
 
-**Endpoints**:
-- `/V2/products/` - Product search and details
-- `/V2/styles/` - Style information
-- `/V2/categories/` - Product categories
+#### S&S Activewear API
+- **Base URL**: `https://api.ssactivewear.com`
+- **Authentication**: HTTP Basic (Account Number + API Key)
+- **Client**: `/src/lib/ssactivewear-api.ts`
+- **Methods**: `getProductByStyle()`, `searchProducts()`, `hasCredentials()`, `setCredentials()`
 
-**Features**:
-- Product search by name or SKU
-- Color availability and swatches
-- Stock level indicators
-- Historical stock trends
-- Image URLs for product previews
+#### SanMar API
+- **Base URL**: `https://www.sanmar.com/api/v2`
+- **Authentication**: HTTP Basic (Customer ID + API Key)
+- **Client**: `/src/lib/sanmar-api.ts`
+- **Methods**: `getProductByStyle()`, `searchProducts()`, `hasCredentials()`, `setCredentials()`
 
-**Client**: `/src/lib/ssactivewear-api.ts`
+#### Spark Runtime API
+- **KV Store**: `useKV()` hook for persistent state
+- **LLM**: `spark.llm()` for AI-powered features
+- **User**: `spark.user()` for GitHub user info
 
-### SanMar API
+#### Twilio SMS (Optional)
+- **Authentication**: Account SID + Auth Token
+- **Client**: `/src/lib/twilio-sms.ts`
+- **Use Case**: High-priority payment reminders
 
-**Configuration**: Settings → API tab → SanMar section
-- Customer ID
-- API Key
+### Integration Examples
 
-**Endpoints**:
-- Product catalog access
-- Style and color information
-- Inventory availability
+**Product Search**:
+```typescript
+import { ssActivewearAPI } from '@/lib/ssactivewear-api'
 
-**Features**:
-- Product search
-- Stock levels
-- Product images
-- Pricing information
+const product = await ssActivewearAPI.getProductByStyle('PC54')
+const results = await ssActivewearAPI.searchProducts('Gildan')
+```
 
-**Client**: `/src/lib/sanmar-api.ts`
+**Persistent Data**:
+```typescript
+import { useKV } from '@github/spark/hooks'
 
-### Twilio SMS (Future Integration)
+const [quotes, setQuotes] = useKV<Quote[]>('quotes', [])
+setQuotes((current) => [...current, newQuote])  // Always use functional updates
+```
 
-**Configuration**: Settings → SMS tab
-- Account SID
-- Auth Token
-- From Phone Number
-
-**Features**:
-- Send payment reminder SMS for high-priority overdue quotes
-- Customer opt-out management
-- SMS template customization
-- Character count and segment tracking
-
-**Client**: `/src/lib/twilio-sms.ts`
+**AI Features**:
+```typescript
+const prompt = spark.llmPrompt`Generate quote notes for ${product}`
+const notes = await spark.llm(prompt, 'gpt-4o-mini')
+```
 
 ---
 
