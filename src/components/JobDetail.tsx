@@ -668,3 +668,68 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
     </div>
   )
 }
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </div>
+        </div>
+        
+        {job.assigned_to.length > 0 && (
+          <div>
+            <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
+              Assigned To
+            </div>
+            <div className="flex gap-2">
+              {job.assigned_to.map((person) => (
+                <div key={person} className="px-3 py-1 bg-secondary rounded-full text-sm">
+                  {person}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <JobDepartmentNotification
+        open={showDepartmentNotification}
+        onOpenChange={setShowDepartmentNotification}
+        job={job}
+      />
+      
+      {showExpenseTracker && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Job Expenses</h2>
+                <Button variant="ghost" size="icon" onClick={() => setShowExpenseTracker(false)}>
+                  <Check size={20} />
+                </Button>
+              </div>
+              <ExpenseTracker
+                jobId={job.id}
+                jobTotal={job.line_items.reduce((sum, item) => sum + item.line_total, 0)}
+                expenses={job.expenses || []}
+                onAddExpense={(expense: Expense) => {
+                  if (onUpdateExpenses) {
+                    onUpdateExpenses([...(job.expenses || []), expense])
+                  }
+                }}
+                onDeleteExpense={(expenseId: string) => {
+                  if (onUpdateExpenses) {
+                    onUpdateExpenses((job.expenses || []).filter(e => e.id !== expenseId))
+                  }
+                }}
+              />
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
