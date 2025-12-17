@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck, Bell, EnvelopeSimple } from '@phosphor-icons/react'
+import { ArrowLeft, Check, Images, UploadSimple, DotsThree, UserCircle, Tag, Truck, Bell, EnvelopeSimple, CurrencyDollar } from '@phosphor-icons/react'
 import type { Job, JobStatus, LegacyArtworkFile, Expense } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { useState, useRef } from 'react'
@@ -42,6 +42,7 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
   const [isEditingNickname, setIsEditingNickname] = useState(false)
   const [nicknameValue, setNicknameValue] = useState(job.nickname || '')
   const [showDepartmentNotification, setShowDepartmentNotification] = useState(false)
+  const [showExpenseTracker, setShowExpenseTracker] = useState(false)
   const primaryItem = job.line_items[0]
   const bulkUploadRef = useRef<HTMLInputElement>(null)
 
@@ -252,6 +253,11 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem onClick={() => setShowExpenseTracker(true)}>
+                  <CurrencyDollar size={18} className="mr-2" />
+                  Job Expenses
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowDepartmentNotification(true)}>
                   <Bell size={18} className="mr-2" />
                   Notify Departments
@@ -421,6 +427,15 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
                 </div>
               </Card>
             )}
+            
+            {job.production_notes && (
+              <Card className="p-4">
+                <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-2">
+                  Production Notes
+                </div>
+                <p className="text-sm leading-relaxed">{job.production_notes}</p>
+              </Card>
+            )}
           </div>
         </div>
         
@@ -515,17 +530,6 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
           </div>
         </div>
         
-        {job.production_notes && (
-          <div>
-            <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
-              Production Notes
-            </div>
-            <Card className="p-4">
-              <p className="text-sm">{job.production_notes}</p>
-            </Card>
-          </div>
-        )}
-        
         {job.assigned_to.length > 0 && (
           <div>
             <div className="text-xs font-semibold text-muted-foreground tracking-wider uppercase mb-3">
@@ -540,24 +544,6 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
             </div>
           </div>
         )}
-
-        <div>
-          <ExpenseTracker
-            jobId={job.id}
-            jobTotal={job.line_items.reduce((sum, item) => sum + item.line_total, 0)}
-            expenses={job.expenses || []}
-            onAddExpense={(expense: Expense) => {
-              if (onUpdateExpenses) {
-                onUpdateExpenses([...(job.expenses || []), expense])
-              }
-            }}
-            onDeleteExpense={(expenseId: string) => {
-              if (onUpdateExpenses) {
-                onUpdateExpenses((job.expenses || []).filter(e => e.id !== expenseId))
-              }
-            }}
-          />
-        </div>
       </div>
 
       <JobDepartmentNotification
@@ -565,6 +551,36 @@ export function JobDetail({ job, onBack, onUpdateStatus, onUpdateArtwork, onNavi
         onOpenChange={setShowDepartmentNotification}
         job={job}
       />
+      
+      {showExpenseTracker && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">Job Expenses</h2>
+                <Button variant="ghost" size="icon" onClick={() => setShowExpenseTracker(false)}>
+                  <Check size={20} />
+                </Button>
+              </div>
+              <ExpenseTracker
+                jobId={job.id}
+                jobTotal={job.line_items.reduce((sum, item) => sum + item.line_total, 0)}
+                expenses={job.expenses || []}
+                onAddExpense={(expense: Expense) => {
+                  if (onUpdateExpenses) {
+                    onUpdateExpenses([...(job.expenses || []), expense])
+                  }
+                }}
+                onDeleteExpense={(expenseId: string) => {
+                  if (onUpdateExpenses) {
+                    onUpdateExpenses((job.expenses || []).filter(e => e.id !== expenseId))
+                  }
+                }}
+              />
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
