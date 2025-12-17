@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MagnifyingGlass, Sparkle, Warning } from '@phosphor-icons/react'
+import { MagnifyingGlass, Sparkle, Warning, FunnelSimple } from '@phosphor-icons/react'
 import { ssActivewearAPI, type SSActivewearProduct, type SSActivewearColor } from '@/lib/ssactivewear-api'
 import { toast } from 'sonner'
 import type { Sizes } from '@/lib/types'
@@ -34,6 +34,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
   const [searchResults, setSearchResults] = useState<SSActivewearProduct[]>([])
   const [product, setProduct] = useState<SSActivewearProduct | null>(null)
   const [selectedColor, setSelectedColor] = useState<SSActivewearColor | null>(null)
+  const [colorFilter, setColorFilter] = useState('')
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -82,7 +83,18 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
       setSelectedColor(selectedProduct.colors[0])
     }
     setSearchResults([])
+    setColorFilter('')
   }
+
+  const filteredColors = useMemo(() => {
+    if (!product?.colors) return []
+    if (!colorFilter.trim()) return product.colors
+    
+    const filterLower = colorFilter.toLowerCase().trim()
+    return product.colors.filter(color => 
+      color.colorName.toLowerCase().includes(filterLower)
+    )
+  }, [product?.colors, colorFilter])
 
   const handleApply = () => {
     if (!product || !selectedColor) {
@@ -124,6 +136,7 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
     setSearchResults([])
     setProduct(null)
     setSelectedColor(null)
+    setColorFilter('')
     onOpenChange(false)
   }
 
@@ -229,36 +242,75 @@ export function SKULookupDialog({ open, onOpenChange, onApply }: SKULookupDialog
               </div>
 
               {product.colors && product.colors.length > 0 && (
-                <div>
-                  <Label htmlFor="color-select">Color</Label>
-                  <Select value={selectedColor?.colorID.toString()} onValueChange={handleColorChange}>
-                    <SelectTrigger id="color-select" className="mt-2">
-                      <SelectValue placeholder="Select a color">
-                        {selectedColor && (
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
-                              style={{ backgroundColor: `#${selectedColor.colorCode}` }}
-                            />
-                            <span>{selectedColor.colorName}</span>
+                <div className="space-y-3">
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="color-filter">Filter Colors</Label>
+                      <div className="relative mt-2">
+                        <FunnelSimple 
+                          size={16} 
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" 
+                        />
+                        <Input
+                          id="color-filter"
+                          value={colorFilter}
+                          onChange={(e) => setColorFilter(e.target.value)}
+                          placeholder="e.g., Black, Navy, Red..."
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+                    {colorFilter && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setColorFilter('')}
+                        className="mb-0.5"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="color-select">
+                      Color {colorFilter && `(${filteredColors.length} of ${product.colors.length})`}
+                    </Label>
+                    <Select value={selectedColor?.colorID.toString()} onValueChange={handleColorChange}>
+                      <SelectTrigger id="color-select" className="mt-2">
+                        <SelectValue placeholder="Select a color">
+                          {selectedColor && (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                                style={{ backgroundColor: `#${selectedColor.colorCode}` }}
+                              />
+                              <span>{selectedColor.colorName}</span>
+                            </div>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredColors.length > 0 ? (
+                          filteredColors.map(color => (
+                            <SelectItem key={color.colorID} value={color.colorID.toString()}>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                                  style={{ backgroundColor: `#${color.colorCode}` }}
+                                />
+                                <span>{color.colorName}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                            No colors match "{colorFilter}"
                           </div>
                         )}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {product.colors.map(color => (
-                        <SelectItem key={color.colorID} value={color.colorID.toString()}>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
-                              style={{ backgroundColor: `#${color.colorCode}` }}
-                            />
-                            <span>{color.colorName}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
 
