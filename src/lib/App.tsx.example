@@ -1,0 +1,290 @@
+/**
+ * App.tsx - Modified for mintprints-api Integration
+ * 
+ * This shows the key changes needed to connect to your real API.
+ * Only the relevant changes are shown - keep everything else from your original App.tsx
+ */
+
+import { useState, useEffect } from 'react'
+import { useKV } from '@github/spark/hooks'
+import { Toaster, toast } from 'sonner'
+
+// ... other imports remain the same ...
+
+// ADD: Import API hooks
+import { 
+  useAPIQuotes, 
+  useAPIJobs, 
+  useAPICustomers,
+  useHybridData 
+} from '@/lib/api-hooks'
+import { apiClient } from '@/lib/api-adapter'
+
+// ... type imports remain the same ...
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useKV<boolean>('is-logged-in', true)
+  
+  // =========================================================================
+  // OPTION 1: Full API Mode (recommended for production)
+  // =========================================================================
+  
+  // Replace:
+  // const [quotes, setQuotes] = useKV<Quote[]>('quotes', sampleQuotes)
+  // const [jobs, setJobs] = useKV<Job[]>('jobs', sampleJobs)
+  // const [customers, setCustomers] = useKV<Customer[]>('customers', sampleCustomers)
+  
+  // With:
+  const { 
+    data: quotes, 
+    isLoading: quotesLoading, 
+    error: quotesError,
+    refetch: refetchQuotes 
+  } = useAPIQuotes()
+  
+  const { 
+    data: jobs, 
+    isLoading: jobsLoading, 
+    error: jobsError,
+    refetch: refetchJobs 
+  } = useAPIJobs()
+  
+  const { 
+    data: customers, 
+    isLoading: customersLoading, 
+    error: customersError,
+    refetch: refetchCustomers 
+  } = useAPICustomers()
+
+  // For local state that needs updates (quotes in builder, etc.)
+  const [localQuotes, setLocalQuotes] = useState<Quote[]>([])
+  const [localJobs, setLocalJobs] = useState<Job[]>([])
+  const [localCustomers, setLocalCustomers] = useState<Customer[]>([])
+
+  // Sync API data to local state
+  useEffect(() => {
+    if (quotes.length > 0) setLocalQuotes(quotes)
+  }, [quotes])
+  
+  useEffect(() => {
+    if (jobs.length > 0) setLocalJobs(jobs)
+  }, [jobs])
+  
+  useEffect(() => {
+    if (customers.length > 0) setLocalCustomers(customers)
+  }, [customers])
+
+  // =========================================================================
+  // OPTION 2: Hybrid Mode (API + Local modifications)
+  // =========================================================================
+  
+  // Alternatively, use the hybrid hook for each:
+  /*
+  const {
+    data: quotes,
+    setData: setQuotes,
+    isLoading: quotesLoading,
+    refetch: refetchQuotes,
+    updateItem: updateLocalQuote,
+  } = useHybridData(() => apiClient.getQuotes(), sampleQuotes)
+  */
+
+  // =========================================================================
+  // Keep all other KV stores the same (these are local-only features)
+  // =========================================================================
+  const [customerTemplates, setCustomerTemplates] = useKV<CustomerDecorationTemplate[]>('customer-decoration-templates', [])
+  const [paymentReminders, setPaymentReminders] = useKV<PaymentReminder[]>('payment-reminders', [])
+  const [customerArtworkFiles, setCustomerArtworkFiles] = useKV<CustomerArtworkFile[]>('customer-artwork-files', [])
+  const [emailNotifications, setEmailNotifications] = useKV<EmailNotification[]>('email-notifications', sampleEmailNotifications)
+  // ... rest of KV stores remain unchanged ...
+
+  // =========================================================================
+  // Loading State
+  // =========================================================================
+  const isLoading = quotesLoading || jobsLoading || customersLoading
+  const hasError = quotesError || jobsError || customersError
+
+  // =========================================================================
+  // Modified handlers to work with API data
+  // =========================================================================
+  
+  const handleSaveQuote = async (quote: Quote) => {
+    // Update local state immediately for responsiveness
+    setLocalQuotes(current => {
+      const index = current.findIndex(q => q.id === quote.id)
+      if (index >= 0) {
+        const updated = [...current]
+        updated[index] = quote
+        return updated
+      }
+      return [...current, quote]
+    })
+
+    // TODO: Sync to API
+    // try {
+    //   if (quote.id.startsWith('q-new-')) {
+    //     await apiClient.createQuote(quote)
+    //   } else {
+    //     await apiClient.updateQuote(quote.id, quote)
+    //   }
+    //   refetchQuotes()
+    // } catch (error) {
+    //   toast.error('Failed to save quote')
+    // }
+  }
+
+  // ... other handlers similar pattern ...
+
+  // =========================================================================
+  // Render with Loading/Error States
+  // =========================================================================
+  
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />
+  }
+
+  // Show loading state while fetching initial data
+  if (isLoading) {
+    return (
+      <div className="h-screen flex flex-col bg-background text-foreground">
+        <Toaster position="top-right" />
+        
+        <header className="border-b border-border px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkle size={28} weight="fill" className="text-primary" />
+            <h1 className="text-xl font-bold tracking-tight">MINT PRINTS</h1>
+          </div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </header>
+        
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+            <p className="text-muted-foreground">Connecting to Mint Prints API...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state if API failed
+  if (hasError) {
+    return (
+      <div className="h-screen flex flex-col bg-background text-foreground">
+        <Toaster position="top-right" />
+        
+        <header className="border-b border-border px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkle size={28} weight="fill" className="text-primary" />
+            <h1 className="text-xl font-bold tracking-tight">MINT PRINTS</h1>
+          </div>
+        </header>
+        
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="max-w-md text-center space-y-4">
+            <div className="text-destructive text-6xl">⚠️</div>
+            <h2 className="text-xl font-semibold">Connection Error</h2>
+            <p className="text-muted-foreground">
+              Unable to connect to the Mint Prints API. 
+              Please check your connection and try again.
+            </p>
+            {quotesError && (
+              <p className="text-sm text-destructive">{quotesError.message}</p>
+            )}
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => {
+                refetchQuotes()
+                refetchJobs()
+                refetchCustomers()
+              }}>
+                Retry Connection
+              </Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Rest of your App component remains the same...
+  // Just use `localQuotes`, `localJobs`, `localCustomers` instead of 
+  // the original `quotes`, `jobs`, `customers` from useKV
+
+  return (
+    <div className="h-screen flex flex-col bg-background text-foreground">
+      {/* ... rest of JSX unchanged, but use localQuotes/localJobs/localCustomers ... */}
+      
+      {/* Example: */}
+      {currentPage.type === 'list' && currentPage.view === 'quotes' && (
+        <QuotesList
+          quotes={localQuotes || []}  {/* Changed from quotes */}
+          customers={localCustomers || []}  {/* Changed from customers */}
+          // ... rest of props unchanged ...
+        />
+      )}
+      
+      {/* ... rest of components ... */}
+    </div>
+  )
+}
+
+export default App
+
+
+// ============================================================================
+// Alternative: Data Provider Pattern (cleaner for larger apps)
+// ============================================================================
+
+/*
+// Create a context provider for API data
+
+// src/contexts/DataContext.tsx
+import { createContext, useContext, ReactNode } from 'react'
+import { useAPIQuotes, useAPIJobs, useAPICustomers } from '@/lib/api-hooks'
+
+interface DataContextValue {
+  quotes: Quote[]
+  jobs: Job[]
+  customers: Customer[]
+  isLoading: boolean
+  refetchAll: () => void
+}
+
+const DataContext = createContext<DataContextValue | null>(null)
+
+export function DataProvider({ children }: { children: ReactNode }) {
+  const quotesQuery = useAPIQuotes()
+  const jobsQuery = useAPIJobs()
+  const customersQuery = useAPICustomers()
+
+  const value: DataContextValue = {
+    quotes: quotesQuery.data,
+    jobs: jobsQuery.data,
+    customers: customersQuery.data,
+    isLoading: quotesQuery.isLoading || jobsQuery.isLoading || customersQuery.isLoading,
+    refetchAll: () => {
+      quotesQuery.refetch()
+      jobsQuery.refetch()
+      customersQuery.refetch()
+    },
+  }
+
+  return (
+    <DataContext.Provider value={value}>
+      {children}
+    </DataContext.Provider>
+  )
+}
+
+export function useData() {
+  const context = useContext(DataContext)
+  if (!context) throw new Error('useData must be used within DataProvider')
+  return context
+}
+
+// Then in App.tsx:
+// Wrap your app with <DataProvider> and use useData() hook in components
+*/
