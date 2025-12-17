@@ -878,6 +878,73 @@ export function DecorationManager({
                     </div>
                   </div>
                 )}
+                
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
+                    Preview
+                  </label>
+                  {!decoration.mockup ? (
+                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg px-3 py-4 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        Upload product mockup
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleMockupUpload(decoration.id, e)}
+                        className="hidden"
+                      />
+                    </label>
+                  ) : (
+                    <div className="border border-border rounded-lg p-2 bg-background">
+                      <div className="flex items-start gap-2">
+                        <img
+                          src={decoration.mockup.dataUrl}
+                          alt={decoration.mockup.fileName}
+                          className="w-20 h-20 object-cover bg-muted rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-xs truncate">{decoration.mockup.fileName}</div>
+                          {decoration.mockup.fileSize && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {(decoration.mockup.fileSize / 1024).toFixed(1)} KB
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <label className="cursor-pointer">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              asChild
+                            >
+                              <div>
+                                <Upload size={12} />
+                              </div>
+                            </Button>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleMockupUpload(decoration.id, e)}
+                              className="hidden"
+                            />
+                          </label>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => updateDecoration(decoration.id, { mockup: undefined })}
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                          >
+                            <Trash size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
@@ -1064,72 +1131,6 @@ export function DecorationManager({
                             variant="ghost"
                             size="icon"
                             onClick={() => updateDecoration(decoration.id, { artwork: undefined, imprintSize: undefined })}
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash size={12} />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1.5 block font-medium">
-                    Mockup Preview
-                  </label>
-                  {!decoration.mockup ? (
-                    <label className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-lg px-3 py-4 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
-                      <Upload size={16} className="text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        Upload product mockup
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleMockupUpload(decoration.id, e)}
-                        className="hidden"
-                      />
-                    </label>
-                  ) : (
-                    <div className="border border-border rounded-lg p-2 bg-background">
-                      <div className="flex items-start gap-2">
-                        <img
-                          src={decoration.mockup.dataUrl}
-                          alt={decoration.mockup.fileName}
-                          className="w-20 h-20 object-cover bg-muted rounded"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-xs truncate">{decoration.mockup.fileName}</div>
-                          {decoration.mockup.fileSize && (
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {(decoration.mockup.fileSize / 1024).toFixed(1)} KB
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          <label className="cursor-pointer">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                              asChild
-                            >
-                              <div>
-                                <Upload size={12} />
-                              </div>
-                            </Button>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => handleMockupUpload(decoration.id, e)}
-                              className="hidden"
-                            />
-                          </label>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => updateDecoration(decoration.id, { mockup: undefined })}
                             className="h-6 w-6 text-muted-foreground hover:text-destructive"
                           >
                             <Trash size={12} />
