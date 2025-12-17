@@ -4,8 +4,8 @@ import { ProductMockupWithSize } from './ProductMockupWithSize'
 import { DecorationManager } from './DecorationManager'
 import { CopyDecorationsDialog } from './CopyDecorationsDialog'
 import { BulkCopyDecorationsDialog } from './BulkCopyDecorationsDialog'
-import { SKULookupDialog } from './SKULookupDialog'
-import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple, Sparkle } from '@phosphor-icons/react'
+import { InlineSKUSearch } from './InlineSKUSearch'
+import { Trash, CaretDown, CaretRight, Copy, Clock, CopySimple } from '@phosphor-icons/react'
 import type { LineItem, Sizes, Decoration, Quote, CustomerDecorationTemplate, CustomerArtworkFile } from '@/lib/types'
 import { calculateSizesTotal, calculateLineItemTotal } from '@/lib/data'
 import { generateId } from '@/lib/data'
@@ -43,7 +43,6 @@ export function LineItemGrid({
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set())
   const [copyDialogOpen, setCopyDialogOpen] = useState(false)
   const [bulkCopyDialogOpen, setBulkCopyDialogOpen] = useState(false)
-  const [skuLookupOpen, setSKULookupOpen] = useState(false)
   const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null)
 
   const updateItem = (index: number, updates: Partial<LineItem>) => {
@@ -153,14 +152,7 @@ export function LineItemGrid({
     onChange(newItems)
   }
 
-  const handleSKULookup = (itemIndex: number) => {
-    setCurrentItemIndex(itemIndex)
-    setSKULookupOpen(true)
-  }
-
-  const handleApplySKUData = (productName: string, color: string, sizes: Partial<Sizes>) => {
-    if (currentItemIndex === null) return
-
+  const handleApplySKUData = (index: number, productName: string, color: string, sizes: Partial<Sizes>) => {
     const fullSizes: Sizes = {
       XS: 0,
       S: 0,
@@ -172,7 +164,7 @@ export function LineItemGrid({
       ...sizes
     }
 
-    updateItem(currentItemIndex, {
+    updateItem(index, {
       product_name: productName,
       product_color: color,
       sizes: fullSizes
@@ -195,21 +187,13 @@ export function LineItemGrid({
       />
 
       {currentItemIndex !== null && (
-        <>
-          <BulkCopyDecorationsDialog
-            open={bulkCopyDialogOpen}
-            onOpenChange={setBulkCopyDialogOpen}
-            sourceLineItem={items[currentItemIndex]}
-            allLineItems={items}
-            onCopy={handleBulkCopyDecorations}
-          />
-          
-          <SKULookupDialog
-            open={skuLookupOpen}
-            onOpenChange={setSKULookupOpen}
-            onApply={handleApplySKUData}
-          />
-        </>
+        <BulkCopyDecorationsDialog
+          open={bulkCopyDialogOpen}
+          onOpenChange={setBulkCopyDialogOpen}
+          sourceLineItem={items[currentItemIndex]}
+          allLineItems={items}
+          onCopy={handleBulkCopyDecorations}
+        />
       )}
       
       <div className="border border-border rounded-lg overflow-hidden">
@@ -239,11 +223,10 @@ export function LineItemGrid({
               <>
                 <tr key={item.id} className="border-b border-border hover:bg-muted/20 transition-colors">
                   <td className="px-3 py-2.5">
-                    <Input
+                    <InlineSKUSearch
                       value={item.product_name}
-                      onChange={(e) => updateItem(index, { product_name: e.target.value })}
-                      placeholder="e.g., Gildan G500"
-                      className="h-8 border-0 bg-transparent hover:bg-background focus:bg-background px-2"
+                      onApply={(productName, color, sizes) => handleApplySKUData(index, productName, color, sizes)}
+                      onInputChange={(value) => updateItem(index, { product_name: value })}
                     />
                   </td>
                   <td className="px-3 py-2.5">
@@ -335,16 +318,6 @@ export function LineItemGrid({
                       </button>
                       
                       <div className="flex gap-2 flex-wrap mt-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-muted-foreground hover:text-primary"
-                          onClick={() => handleSKULookup(index)}
-                        >
-                          <Sparkle size={14} className="mr-1.5" weight="fill" />
-                          SKU Lookup
-                        </Button>
-
                         {items.length > 1 && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
