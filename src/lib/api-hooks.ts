@@ -1,6 +1,6 @@
 /**
  * API Hooks for Mint Prints Spark Frontend
- * 
+ *
  * These hooks provide easy integration with the mintprints-api
  * while maintaining compatibility with the existing useKV pattern.
  */
@@ -10,8 +10,25 @@ import { apiClient } from './api-adapter'
 import type { Quote, Job, Customer } from './types'
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const API_BASE = 'https://mintprints-api.ronny.works'
+
+// ============================================================================
 // Types
 // ============================================================================
+
+export interface ProductionStats {
+  quote: number
+  art: number
+  screenprint: number
+  embroidery: number
+  dtg: number
+  fulfillment: number
+  complete: number
+  total: number
+}
 
 interface UseAPIDataResult<T> {
   data: T[]
@@ -30,6 +47,55 @@ interface UseAPISingleResult<T> {
 // ============================================================================
 // Hooks
 // ============================================================================
+
+/**
+ * Fetch production stats from the API
+ */
+export function useProductionStats(): {
+  data: ProductionStats | null
+  isLoading: boolean
+  error: Error | null
+  refetch: () => Promise<void>
+} {
+  const [data, setData] = useState<ProductionStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${API_BASE}/api/production-stats`)
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
+      const rawData = await response.json()
+      // API returns strings, convert to numbers
+      const stats: ProductionStats = {
+        quote: parseInt(rawData.quote, 10) || 0,
+        art: parseInt(rawData.art, 10) || 0,
+        screenprint: parseInt(rawData.screenprint, 10) || 0,
+        embroidery: parseInt(rawData.embroidery, 10) || 0,
+        dtg: parseInt(rawData.dtg, 10) || 0,
+        fulfillment: parseInt(rawData.fulfillment, 10) || 0,
+        complete: parseInt(rawData.complete, 10) || 0,
+        total: parseInt(rawData.total, 10) || 0,
+      }
+      setData(stats)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch production stats'))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  return { data, isLoading, error, refetch: fetchData }
+}
 
 /**
  * Fetch quotes from the API with automatic transformation

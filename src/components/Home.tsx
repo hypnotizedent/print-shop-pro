@@ -1,26 +1,27 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DashboardSkeleton } from '@/components/skeletons'
-import { 
-  TrendUp, 
-  TrendDown,
-  FileText, 
-  Briefcase, 
+import {
+  FileText,
+  Briefcase,
   Users,
-  Clock,
   CheckCircle,
-  XCircle,
   CurrencyDollar,
   ArrowRight,
   Calendar,
-  Package,
-  Printer,
   Sparkle,
-  Plus
+  Plus,
+  Palette,
+  TShirt,
+  ThreadsLogo,
+  Package,
+  Warning,
+  ArrowClockwise
 } from '@phosphor-icons/react'
 import type { Quote, Job, Customer, QuoteStatus, JobStatus } from '@/lib/types'
+import { useProductionStats } from '@/lib/api-hooks'
 import { format } from 'date-fns'
 
 interface HomeProps {
@@ -38,9 +39,9 @@ interface HomeProps {
   onNewJob: () => void
 }
 
-export function Home({ 
-  quotes, 
-  jobs, 
+export function Home({
+  quotes,
+  jobs,
   customers,
   onNavigateToQuotes,
   onNavigateToJobs,
@@ -52,63 +53,18 @@ export function Home({
   onNewQuote,
   onNewJob
 }: HomeProps) {
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: productionStats, isLoading, error, refetch } = useProductionStats()
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const stats = useMemo(() => {
-    const oneMonthAgo = new Date()
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
-    
-    const quotesNeedingFollowUp = quotes.filter(q => {
-      const createdDate = new Date(q.created_at)
-      return createdDate >= oneMonthAgo && q.status !== 'approved' && q.status !== 'rejected'
-    })
-    
-    const activeJobs = jobs.filter(j => j.status !== 'delivered')
-    const completedJobs = jobs.filter(j => j.status === 'delivered')
-    
-    const totalJobValue = jobs
-      .filter(j => j.status !== 'delivered')
-      .reduce((sum, j) => {
-        const quote = quotes.find(q => q.id === j.quote_id)
-        return sum + (quote?.total || 0)
-      }, 0)
-    
-    const pendingArtApproval = jobs.filter(j => 
-      j.status === 'pending' || j.status === 'art-approval'
-    )
-    
-    const inProduction = jobs.filter(j => 
-      j.status === 'scheduled' || j.status === 'printing' || j.status === 'finishing'
-    )
-    
-    const readyForPickup = jobs.filter(j => j.status === 'ready')
-    
-    const followUpValue = quotesNeedingFollowUp.reduce((sum, q) => sum + q.total, 0)
-    
-    return {
-      quotesNeedingFollowUp: quotesNeedingFollowUp.length,
-      followUpValue,
-      activeJobs: activeJobs.length,
-      completedJobs: completedJobs.length,
-      totalCustomers: customers.length,
-      totalJobValue,
-      pendingArtApproval: pendingArtApproval.length,
-      inProduction: inProduction.length,
-      readyForPickup: readyForPickup.length,
-    }
-  }, [quotes, jobs, customers])
+  // Calculate in-production total (screenprint + embroidery + dtg)
+  const inProduction = useMemo(() => {
+    if (!productionStats) return 0
+    return productionStats.screenprint + productionStats.embroidery + productionStats.dtg
+  }, [productionStats])
 
   const quotesNeedingFollowUp = useMemo(() => {
     const oneMonthAgo = new Date()
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
-    
+
     return quotes
       .filter(q => {
         const createdDate = new Date(q.created_at)
@@ -159,9 +115,28 @@ export function Home({
     return <DashboardSkeleton />
   }
 
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <Warning size={48} className="mx-auto mb-4 text-destructive" />
+            <h2 className="text-lg font-semibold mb-2">Failed to Load Dashboard</h2>
+            <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
+            <Button onClick={() => refetch()} variant="outline" className="gap-2">
+              <ArrowClockwise size={16} />
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-6 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
@@ -169,7 +144,7 @@ export function Home({
               {format(new Date(), 'EEEE, MMMM d, yyyy')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Your print shop at a glance
+              Production Overview
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -184,74 +159,174 @@ export function Home({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Production Stats Grid */}
+        {productionStats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            {/* Quotes */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-amber-500/10 border-amber-500/20" onClick={onNavigateToQuotes}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-amber-600 mb-2">
+                  <FileText size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Quotes</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.quote.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+
+            {/* Art */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-purple-500/10 border-purple-500/20" onClick={onNavigateToJobs}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-purple-600 mb-2">
+                  <Palette size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Art</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.art.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+
+            {/* Screenprint */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-blue-500/10 border-blue-500/20" onClick={onNavigateToJobs}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-blue-600 mb-2">
+                  <TShirt size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Screen</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.screenprint.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+
+            {/* Embroidery */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-pink-500/10 border-pink-500/20" onClick={onNavigateToJobs}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-pink-600 mb-2">
+                  <ThreadsLogo size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Emb</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.embroidery.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+
+            {/* DTG */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-cyan-500/10 border-cyan-500/20" onClick={onNavigateToJobs}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-cyan-600 mb-2">
+                  <TShirt size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">DTG</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.dtg.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+
+            {/* Fulfillment */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-orange-500/10 border-orange-500/20" onClick={onNavigateToJobs}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-orange-600 mb-2">
+                  <Package size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Fulfill</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.fulfillment.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+
+            {/* Complete */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-green-500/10 border-green-500/20" onClick={onNavigateToJobs}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-green-600 mb-2">
+                  <CheckCircle size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Done</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.complete.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+
+            {/* Total */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-primary/10 border-primary/20" onClick={onNavigateToJobs}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-primary mb-2">
+                  <Briefcase size={18} weight="fill" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Total</span>
+                </div>
+                <p className="text-2xl font-bold">{productionStats.total.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToJobs}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+              <CardTitle className="text-sm font-medium">In Production</CardTitle>
               <Briefcase size={20} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.activeJobs}</div>
+              <div className="text-3xl font-bold">{inProduction}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Not marked as complete
+                Screen + Embroidery + DTG
               </p>
-              <div className="mt-2 text-sm font-medium text-primary">
-                {formatCurrency(stats.totalJobValue)} in production
-              </div>
+              {productionStats && (
+                <div className="mt-3 flex gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {productionStats.screenprint} screen
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {productionStats.embroidery} emb
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {productionStats.dtg} dtg
+                  </Badge>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToQuotes}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Follow-Up Needed</CardTitle>
+              <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
               <FileText size={20} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.quotesNeedingFollowUp}</div>
+              <div className="text-3xl font-bold">{productionStats?.quote.toLocaleString() || 0}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Created this month • Not approved
+                Awaiting customer approval
               </p>
-              <div className="mt-2 text-sm font-medium text-primary">
-                {formatCurrency(stats.followUpValue)} potential value
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Production Status</CardTitle>
-              <Printer size={20} className="text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.inProduction}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.pendingArtApproval} pending approval
-              </p>
-              <div className="mt-2 text-sm font-medium text-accent">
-                {stats.readyForPickup} ready for pickup
-              </div>
+              {productionStats && productionStats.art > 0 && (
+                <div className="mt-3">
+                  <Badge variant="outline" className="text-xs">
+                    {productionStats.art} in art approval
+                  </Badge>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={onNavigateToCustomers}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-              <Users size={20} className="text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Ready for Delivery</CardTitle>
+              <Package size={20} className="text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCustomers}</div>
+              <div className="text-3xl font-bold">{productionStats?.fulfillment || 0}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats.completedJobs} jobs completed
+                Jobs in fulfillment stage
               </p>
+              {productionStats && (
+                <div className="mt-3">
+                  <Badge variant="default" className="text-xs bg-green-600">
+                    {productionStats.complete.toLocaleString()} completed all-time
+                  </Badge>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
+        {/* Active Jobs Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>All Active Jobs</CardTitle>
+                <CardTitle>Active Jobs</CardTitle>
                 <CardDescription>Jobs not marked as delivered, sorted by due date</CardDescription>
               </div>
               <Button variant="ghost" size="sm" onClick={onNavigateToJobs}>
@@ -265,23 +340,22 @@ export function Home({
               {activeJobs.length === 0 ? (
                 <div className="text-center py-12">
                   <Briefcase size={48} className="mx-auto mb-3 text-muted-foreground/50" />
-                  <p className="text-muted-foreground mb-4">No active jobs</p>
+                  <p className="text-muted-foreground mb-4">No active jobs in local data</p>
                   <Button onClick={onNewJob} variant="outline" size="sm" className="gap-2">
                     <Plus size={16} />
                     Create First Job
                   </Button>
                 </div>
               ) : (
-                activeJobs.map(job => {
+                activeJobs.slice(0, 10).map(job => {
                   const quote = quotes.find(q => q.id === job.quote_id)
                   const today = new Date()
                   const dueDate = job.due_date ? new Date(job.due_date) : null
                   const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null
-                  const isUrgent = daysUntilDue !== null && daysUntilDue <= 7 && daysUntilDue >= 0
                   const isOverdue = daysUntilDue !== null && daysUntilDue < 0
-                  
+
                   return (
-                    <div 
+                    <div
                       key={job.id}
                       className="flex items-start justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
                       onClick={() => onSelectJob(job)}
@@ -290,7 +364,7 @@ export function Home({
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-sm">{job.job_number}</p>
                           {job.nickname && (
-                            <span className="text-xs text-muted-foreground truncate">• {job.nickname}</span>
+                            <span className="text-xs text-muted-foreground truncate">- {job.nickname}</span>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground truncate">{job.customer.name}</p>
@@ -298,8 +372,8 @@ export function Home({
                           {dueDate && (
                             <div className="flex items-center gap-1">
                               <Calendar size={12} className="text-muted-foreground" />
-                              <p className="text-xs text-muted-foreground">
-                                {isOverdue ? 'Overdue' : 'Due'} {format(dueDate, 'MMM d')} 
+                              <p className={`text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                {isOverdue ? 'Overdue' : 'Due'} {format(dueDate, 'MMM d')}
                                 {daysUntilDue !== null && ` (${Math.abs(daysUntilDue)}d)`}
                               </p>
                             </div>
@@ -328,10 +402,17 @@ export function Home({
                   )
                 })
               )}
+              {activeJobs.length > 10 && (
+                <Button variant="ghost" className="w-full" onClick={onNavigateToJobs}>
+                  View all {activeJobs.length} active jobs
+                  <ArrowRight size={16} className="ml-2" />
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
 
+        {/* Quotes Needing Follow-Up */}
         {quotesNeedingFollowUp.length > 0 && (
           <Card>
             <CardHeader>
@@ -348,8 +429,8 @@ export function Home({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {quotesNeedingFollowUp.map(quote => (
-                  <div 
+                {quotesNeedingFollowUp.slice(0, 5).map(quote => (
+                  <div
                     key={quote.id}
                     className="flex items-start justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors cursor-pointer"
                     onClick={() => onSelectQuote(quote)}
@@ -358,7 +439,7 @@ export function Home({
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm">{quote.quote_number}</p>
                         {quote.nickname && (
-                          <span className="text-xs text-muted-foreground truncate">• {quote.nickname}</span>
+                          <span className="text-xs text-muted-foreground truncate">- {quote.nickname}</span>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{quote.customer.name}</p>
@@ -374,6 +455,12 @@ export function Home({
                     </div>
                   </div>
                 ))}
+                {quotesNeedingFollowUp.length > 5 && (
+                  <Button variant="ghost" className="w-full" onClick={onNavigateToQuotes}>
+                    View all {quotesNeedingFollowUp.length} quotes
+                    <ArrowRight size={16} className="ml-2" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
